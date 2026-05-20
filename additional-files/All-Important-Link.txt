@@ -4,3 +4,12 @@ https://excalidraw.com/#json=Ip9tGeRY7nQxWXCJSWK3d,RSLL0TcgVA2rkK3VrOADqw
 
 2. https://consensus.app/
 
+
+3. Open LLM
+
+Base URL: https://uu758-aba7-ff5504c2.singapore-a.gpuhub.com:8443/v1
+API Key: ESAP
+Model name: qwen3.5-9b
+
+
+4. Structural Causal Model (SCM)
