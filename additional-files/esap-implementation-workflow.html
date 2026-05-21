@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESAP — Implementation Workflow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid background */
+  body::before {
+    content:'';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* HEADER */
+  header { text-align: center; padding: 60px 0 50px; }
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  h1 { font-size: clamp(28px,5vw,52px); font-weight: 800; line-height: 1.1; color: #fff; }
+  h1 span { color: var(--accent); }
+  .sub { margin-top: 14px; color: var(--muted); font-size: 15px; font-family: var(--mono); }
+
+  /* PHASE OVERVIEW STRIP */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    margin: 40px 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .ph {
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+  }
+  .ph:hover { filter: brightness(1.2); }
+  .ph.active { border-bottom-color: #fff; filter: brightness(1.3); }
+  .ph-num { font-family: var(--mono); font-size: 11px; opacity: 0.6; }
+  .ph-name { font-size: 12px; font-weight: 700; margin-top: 4px; }
+  .ph-1 { background: #0c1f3f; color: var(--accent); }
+  .ph-2 { background: #1a0f3f; color: #a78bfa; }
+  .ph-3 { background: #0f2a1a; color: var(--accent3); }
+  .ph-4 { background: #2a1a0f; color: var(--accent4); }
+  .ph-5 { background: #2a0f0f; color: var(--accent5); }
+  .ph-6 { background: #1a2a1a; color: #34d399; }
+
+  /* SECTION */
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-dot {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 700; font-size: 16px;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 22px; font-weight: 800; }
+  .section-subtitle { font-size: 13px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .timeline-badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* STEP CARDS */
+  .steps { display: flex; flex-direction: column; gap: 12px; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .step:hover { border-color: var(--accent); }
+  .step-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    width: 28px;
+  }
+  .step-title { font-weight: 700; font-size: 15px; flex: 1; }
+  .step-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .tag-build { background: #0c1f3f; color: var(--accent); }
+  .tag-data  { background: #1a0f3f; color: #a78bfa; }
+  .tag-ai    { background: #0f2a1a; color: var(--accent3); }
+  .tag-infra { background: #2a1a0f; color: var(--accent4); }
+  .tag-test  { background: #2a0f0f; color: var(--accent5); }
+
+  .step-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+  .step.open .step-chevron { transform: rotate(90deg); }
+
+  .step-body {
+    display: none;
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .step.open .step-body { display: block; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 12px 0;
+    position: relative;
+  }
+  .code-block .comment { color: #6a737d; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string  { color: #a5d6ff; }
+  .code-block .fn      { color: #d2a8ff; }
+  .code-block .num     { color: #79c0ff; }
+  .code-block .type    { color: #ffa657; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--border); border: none; color: var(--muted);
+    font-family: var(--mono); font-size: 10px; padding: 3px 8px;
+    border-radius: 3px; cursor: pointer; transition: all 0.2s;
+  }
+  .copy-btn:hover { background: var(--accent); color: #000; }
+
+  /* INFO GRID */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .info-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .info-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .info-value { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+
+  /* TECH STACK PILLS */
+  .tech-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .tech-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .tech-pill.primary { border-color: var(--accent); color: var(--accent); }
+  .tech-pill.ai { border-color: var(--accent3); color: var(--accent3); }
+  .tech-pill.warn { border-color: var(--accent4); color: var(--accent4); }
+
+  /* FLOW DIAGRAM inline */
+  .flow {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 0;
+    margin: 12px 0; font-family: var(--mono); font-size: 12px;
+  }
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  .flow-arrow { color: var(--accent); padding: 0 6px; font-size: 14px; }
+
+  /* CHECKLIST */
+  .checklist { margin: 10px 0; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-icon { color: var(--accent3); flex-shrink: 0; margin-top: 1px; }
+
+  /* ALERT BOX */
+  .alert {
+    border-left: 3px solid;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: var(--mono);
+  }
+  .alert-info  { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+  .alert-warn  { border-color: var(--accent4); background: rgba(245,158,11,0.05); }
+  .alert-green { border-color: var(--accent3); background: rgba(16,185,129,0.05); }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); margin: 12px 0; }
+  .data-table th { background: var(--surface2); text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+
+  /* DEMO MILESTONE */
+  .milestones { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 12px 0; }
+  .milestone {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+  .ms-week { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+  .ms-title { font-size: 13px; font-weight: 700; }
+  .ms-desc { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+  p.desc { color: #94a3b8; font-size: 13px; line-height: 1.7; margin: 10px 0; font-family: var(--mono); }
+
+  @media (max-width: 640px) {
+    .phases { grid-template-columns: repeat(3,1fr); }
+    .info-grid { grid-template-columns: 1fr; }
+    .milestones { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; align-items: flex-start; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="badge">ESAP · Implementation Playbook · 2026</div>
+    <h1>Deep Implementation<br><span>Workflow</span></h1>
+    <p class="sub">From zero → working demo · 6 phases · ~10 weeks</p>
+  </header>
+
+  <!-- PHASE OVERVIEW -->
+  <div class="phases">
+    <div class="ph ph-1 active"><div class="ph-num">01</div><div class="ph-name">Access & Data</div></div>
+    <div class="ph ph-2"><div class="ph-num">02</div><div class="ph-name">Data Pipeline</div></div>
+    <div class="ph ph-3"><div class="ph-num">03</div><div class="ph-name">AI Core</div></div>
+    <div class="ph ph-4"><div class="ph-num">04</div><div class="ph-name">Backend API</div></div>
+    <div class="ph ph-5"><div class="ph-num">05</div><div class="ph-name">Frontend UI</div></div>
+    <div class="ph ph-6"><div class="ph-num">06</div><div class="ph-name">Demo & Loop</div></div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 1 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#0c1f3f;color:var(--accent)">01</div>
+      <div>
+        <div class="section-title">Data Access & Environment Setup</div>
+        <div class="section-subtitle">physionet · mimic-iv · bigquery · docker</div>
+      </div>
+      <div class="timeline-badge" style="background:#0c1f3f;color:var(--accent)">Week 1</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">1.1</span>
+          <span class="step-title">Get PhysioNet Access (MIMIC-IV)</span>
+          <span class="step-tag tag-data">data</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">All clinical datasets are gated behind a Data Use Agreement. The process takes 1–3 days.</p>
+          <div class="checklist">
+            <div class="check-item"><span class="check-icon">✓</span><span>Go to <strong>physionet.org</strong> → Create a free account</span></div>
+            <div class="check-item"><span class="check-icon">✓</span><span>Complete the <strong>CITI "Data or Specimens Only Research"</strong> training (free online, ~2 hrs)</span></div>
+            <div class="check-item"><span class="check-icon">✓</span><span>Apply for <strong>MIMIC-IV</strong> access (Beth Israel / PhysioNet DUA) — tick "BigQuery" option</span></div>
+            <div class="check-item"><span class="check-icon">✓</span><span>Also apply for: <strong>MIMIC-IV-Note</strong>, <strong>eICU</strong>, <strong>MIMIC-IV-ECG</strong></span></div>
+            <div class="check-item"><span class="check-icon">✓</span><span>No sign-up needed for <strong>FDA openFDA API</strong> (drug adverse events)</span></div>
+          </div>
+          <div class="alert alert-warn">
+            ⚠ Use your institutional email if you have one — approvals are faster. If not, personal email works fine.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">1.2</span>
+          <span class="step-title">Set up Local Dev Environment</span>
+          <span class="step-tag tag-infra">infra</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <div class="tech-row">
+            <span class="tech-pill primary">Python 3.11+</span>
+            <span class="tech-pill primary">Docker</span>
+            <span class="tech-pill primary">PostgreSQL 15</span>
+            <span class="tech-pill warn">Google Cloud SDK</span>
+            <span class="tech-pill">VS Code</span>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="comment"># 1. Clone the MIMIC-IV pipeline repo</span>
+git clone https://github.com/healthylaife/MIMIC-IV-Data-Pipeline.git
+cd MIMIC-IV-Data-Pipeline
+
+<span class="comment"># 2. Create a virtual environment</span>
+python -m venv esap-env
+source esap-env/bin/activate  <span class="comment"># Windows: esap-env\Scripts\activate</span>
+
+<span class="comment"># 3. Install core dependencies</span>
+pip install pandas numpy sqlalchemy psycopg2-binary \
+            google-cloud-bigquery pyarrow tqdm
+
+<span class="comment"># 4. Authenticate Google Cloud for BigQuery</span>
+gcloud auth application-default login
+gcloud config set project YOUR_GCP_PROJECT_ID
+          </div>
+          <div class="alert alert-info">
+            ℹ  For demo, BigQuery is preferred over local download — MIMIC-IV is ~50GB uncompressed, BigQuery lets you query it directly without downloading.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">1.3</span>
+          <span class="step-title">First Query — Validate Access</span>
+          <span class="step-tag tag-data">data</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">Run this to confirm MIMIC-IV is accessible and explore the schema.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="keyword">from</span> google.cloud <span class="keyword">import</span> bigquery
+
+client = bigquery.<span class="fn">Client</span>()
+
+<span class="comment"># Explore patients table</span>
+query = <span class="string">"""
+  SELECT subject_id, gender, anchor_age, anchor_year
+  FROM `physionet-data.mimiciv_hosp.patients`
+  LIMIT 10
+"""</span>
+
+df = client.<span class="fn">query</span>(query).<span class="fn">to_dataframe</span>()
+<span class="fn">print</span>(df)
+
+<span class="comment"># Count admissions</span>
+query2 = <span class="string">"""
+  SELECT COUNT(*) as total_admissions
+  FROM `physionet-data.mimiciv_hosp.admissions`
+"""</span>
+<span class="comment"># → should return ~524,520 admissions</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 2 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#1a0f3f;color:#a78bfa">02</div>
+      <div>
+        <div class="section-title">Data Pipeline — ETL & Normalisation</div>
+        <div class="section-subtitle">extract · transform · embed · load into unified store</div>
+      </div>
+      <div class="timeline-badge" style="background:#1a0f3f;color:#a78bfa">Week 2–3</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">2.1</span>
+          <span class="step-title">Build Patient Profile Extractor</span>
+          <span class="step-tag tag-build">build</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">Extract and merge data from MIMIC-IV tables to match ESAP's 10-section patient survey schema.</p>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">MIMIC-IV tables used</div>
+              <div class="info-value">patients, admissions, diagnoses_icd, prescriptions, labevents, omr, d_icd_diagnoses</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Maps to ESAP sections</div>
+              <div class="info-value">§1 Demographics · §4 Medical History · §5 Medications · §6 Lab results</div>
+            </div>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="keyword">def</span> <span class="fn">extract_patient_profile</span>(subject_id: <span class="type">int</span>) -> <span class="type">dict</span>:
+    <span class="comment">"""Build ESAP-compatible profile from MIMIC-IV tables"""</span>
+
+    <span class="comment"># § 1 - Demographics</span>
+    demo_q = <span class="string">f"""
+      SELECT p.subject_id, p.gender, p.anchor_age,
+             a.race, a.language
+      FROM `physionet-data.mimiciv_hosp.patients` p
+      JOIN `physionet-data.mimiciv_hosp.admissions` a
+        ON p.subject_id = a.subject_id
+      WHERE p.subject_id = {subject_id}
+      LIMIT 1
+    """</span>
+
+    <span class="comment"># § 4 - Diagnoses (ICD codes → human-readable)</span>
+    diag_q = <span class="string">f"""
+      SELECT d.icd_code, d.icd_version, di.long_title
+      FROM `physionet-data.mimiciv_hosp.diagnoses_icd` d
+      JOIN `physionet-data.mimiciv_hosp.d_icd_diagnoses` di
+        ON d.icd_code = di.icd_code
+      WHERE d.subject_id = {subject_id}
+      ORDER BY d.seq_num
+    """</span>
+
+    <span class="comment"># § 5 - Medications</span>
+    med_q = <span class="string">f"""
+      SELECT drug, dose_val_rx, dose_unit_rx, route, starttime
+      FROM `physionet-data.mimiciv_hosp.prescriptions`
+      WHERE subject_id = {subject_id}
+      ORDER BY starttime DESC
+      LIMIT 20
+    """</span>
+
+    <span class="keyword">return</span> {
+        <span class="string">"demographics"</span>: client.<span class="fn">query</span>(demo_q).<span class="fn">to_dataframe</span>(),
+        <span class="string">"diagnoses"</span>: client.<span class="fn">query</span>(diag_q).<span class="fn">to_dataframe</span>(),
+        <span class="string">"medications"</span>: client.<span class="fn">query</span>(med_q).<span class="fn">to_dataframe</span>(),
+    }
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">2.2</span>
+          <span class="step-title">Clinical Notes → Embeddings (RAG setup)</span>
+          <span class="step-tag tag-ai">ai</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">Take MIMIC-IV-Note discharge summaries, chunk them, embed with ClinicalBERT, and load into a vector store. This is the core of your RAG pipeline.</p>
+          <div class="flow">
+            <div class="flow-node">MIMIC-IV-Note</div><div class="flow-arrow">→</div>
+            <div class="flow-node">chunk (512 tok)</div><div class="flow-arrow">→</div>
+            <div class="flow-node">ClinicalBERT embed</div><div class="flow-arrow">→</div>
+            <div class="flow-node">Qdrant vector DB</div><div class="flow-arrow">→</div>
+            <div class="flow-node">RAG retrieval</div>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+pip install qdrant-client sentence-transformers langchain
+
+<span class="comment"># embed_notes.py</span>
+<span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer
+<span class="keyword">from</span> qdrant_client <span class="keyword">import</span> QdrantClient, models
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+
+model = <span class="fn">SentenceTransformer</span>(<span class="string">"emilyalsentzer/Bio_ClinicalBERT"</span>)
+qdrant = <span class="fn">QdrantClient</span>(<span class="string">"localhost"</span>, port=<span class="num">6333</span>)
+
+<span class="comment"># Create collection</span>
+qdrant.collections.<span class="fn">create_collection</span>(
+    collection_name=<span class="string">"esap_notes"</span>,
+    vectors_config=models.<span class="fn">VectorParams</span>(size=<span class="num">768</span>, distance=models.Distance.COSINE)
+)
+
+<span class="keyword">def</span> <span class="fn">chunk_and_embed_note</span>(subject_id, note_text):
+    <span class="comment"># Simple 512-token chunks with 50-token overlap</span>
+    words = note_text.<span class="fn">split</span>()
+    chunks = [<span class="string">" "</span>.<span class="fn">join</span>(words[i:i+<span class="num">512</span>]) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="fn">len</span>(words), <span class="num">462</span>)]
+    embeddings = model.<span class="fn">encode</span>(chunks)
+    
+    qdrant.<span class="fn">upsert</span>(
+        collection_name=<span class="string">"esap_notes"</span>,
+        points=[models.<span class="fn">PointStruct</span>(
+            id=hash(<span class="string">f"{subject_id}_{i}"</span>) % <span class="num">2**32</span>,
+            vector=emb.<span class="fn">tolist</span>(),
+            payload={<span class="string">"subject_id"</span>: subject_id, <span class="string">"chunk"</span>: chunk}
+        ) <span class="keyword">for</span> i, (chunk, emb) <span class="keyword">in</span> <span class="fn">enumerate</span>(<span class="fn">zip</span>(chunks, embeddings))]
+    )
+          </div>
+          <div class="tech-row">
+            <span class="tech-pill ai">qdrant (run via docker)</span>
+            <span class="tech-pill ai">Bio_ClinicalBERT</span>
+            <span class="tech-pill">docker run -p 6333:6333 qdrant/qdrant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">2.3</span>
+          <span class="step-title">Drug Interaction Data — openFDA API</span>
+          <span class="step-tag tag-data">data</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">No sign-up required. Query the openFDA API for adverse drug event data to power the interaction engine.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="keyword">import</span> requests
+
+<span class="keyword">def</span> <span class="fn">check_drug_adverse_events</span>(drug_name: <span class="type">str</span>) -> <span class="type">dict</span>:
+    url = <span class="string">"https://api.fda.gov/drug/event.json"</span>
+    params = {
+        <span class="string">"search"</span>: <span class="string">f'patient.drug.medicinalproduct:"{drug_name}"'</span>,
+        <span class="string">"count"</span>: <span class="string">"patient.reaction.reactionmeddrapt.exact"</span>,
+        <span class="string">"limit"</span>: <span class="num">10</span>
+    }
+    r = requests.<span class="fn">get</span>(url, params=params)
+    <span class="keyword">return</span> r.<span class="fn">json</span>().<span class="fn">get</span>(<span class="string">"results"</span>, [])
+
+<span class="comment"># Example: check reactions for metformin</span>
+reactions = <span class="fn">check_drug_adverse_events</span>(<span class="string">"metformin"</span>)
+<span class="comment"># → [{"term": "nausea", "count": 12430}, ...]</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 3 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#0f2a1a;color:var(--accent3)">03</div>
+      <div>
+        <div class="section-title">AI Core — LLM + RAG + Agents</div>
+        <div class="section-subtitle">llm · rag · symptom correlation · history summarisation</div>
+      </div>
+      <div class="timeline-badge" style="background:#0f2a1a;color:var(--accent3)">Week 3–5</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">3.1</span>
+          <span class="step-title">Choose Your LLM Strategy</span>
+          <span class="step-tag tag-ai">ai</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <table class="data-table">
+            <thead><tr><th>Option</th><th>Model</th><th>Best for Demo</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>API (fastest)</td><td>Claude claude-sonnet-4-6 / GPT-4o</td><td>✅ Yes</td><td>Pay-per-token</td></tr>
+              <tr><td>Open-source hosted</td><td>BioMistral-7B / Meditron-7B</td><td>✅ Yes (GPU)</td><td>Free, GPU needed</td></tr>
+              <tr><td>Fine-tuned</td><td>Llama-3 + MIMIC notes SFT</td><td>Later stage</td><td>High compute</td></tr>
+            </tbody>
+          </table>
+          <div class="alert alert-green">
+            ✓ Recommendation for demo: Use Claude API or GPT-4o with strong RAG. Faster to build, better quality on day one. Fine-tune later once you have doctor feedback data.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">3.2</span>
+          <span class="step-title">RAG Pipeline — Retrieve + Generate</span>
+          <span class="step-tag tag-ai">ai</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">The core AI loop: given a patient ID + current symptoms, retrieve relevant notes from Qdrant, then pass them to the LLM to generate a clinical summary.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="keyword">import</span> anthropic
+<span class="keyword">from</span> qdrant_client <span class="keyword">import</span> QdrantClient
+<span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer
+
+embed_model = <span class="fn">SentenceTransformer</span>(<span class="string">"emilyalsentzer/Bio_ClinicalBERT"</span>)
+qdrant = <span class="fn">QdrantClient</span>(<span class="string">"localhost"</span>, port=<span class="num">6333</span>)
+llm = anthropic.<span class="fn">Anthropic</span>()
+
+<span class="keyword">def</span> <span class="fn">esap_rag_query</span>(subject_id: <span class="type">int</span>, current_symptoms: <span class="type">str</span>) -> <span class="type">str</span>:
+    <span class="comment"># 1. Embed the query</span>
+    query_vec = embed_model.<span class="fn">encode</span>(current_symptoms).<span class="fn">tolist</span>()
+
+    <span class="comment"># 2. Retrieve top-5 relevant note chunks for this patient</span>
+    hits = qdrant.<span class="fn">search</span>(
+        collection_name=<span class="string">"esap_notes"</span>,
+        query_vector=query_vec,
+        query_filter=models.<span class="fn">Filter</span>(
+            must=[models.<span class="fn">FieldCondition</span>(
+                key=<span class="string">"subject_id"</span>,
+                match=models.<span class="fn">MatchValue</span>(value=subject_id)
+            )]
+        ),
+        limit=<span class="num">5</span>
+    )
+    context = <span class="string">"\n---\n"</span>.<span class="fn">join</span>([h.payload[<span class="string">"chunk"</span>] <span class="keyword">for</span> h <span class="keyword">in</span> hits])
+
+    <span class="comment"># 3. Generate clinical summary with LLM</span>
+    prompt = <span class="string">f"""You are ESAP, a clinical AI assistant.
+
+PATIENT HISTORY CONTEXT (from EHR):
+{context}
+
+CURRENT SYMPTOMS REPORTED TODAY:
+{current_symptoms}
+
+Generate a concise clinical summary for the doctor covering:
+1. Key relevant history
+2. Possible correlations with current symptoms
+3. Flags or alerts (drug interactions, allergy risks)
+4. Suggested next steps
+
+Be factual, cite the records. Do not hallucinate."""</span>
+
+    response = llm.messages.<span class="fn">create</span>(
+        model=<span class="string">"claude-sonnet-4-6"</span>,
+        max_tokens=<span class="num">1000</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}]
+    )
+    <span class="keyword">return</span> response.content[<span class="num">0</span>].text
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">3.3</span>
+          <span class="step-title">Symptom Correlation Agent</span>
+          <span class="step-tag tag-ai">ai</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">A separate agent that compares current symptoms against the patient's history and past diagnoses to flag patterns.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="keyword">def</span> <span class="fn">symptom_correlation_agent</span>(
+    current_symptoms: <span class="type">list</span>,
+    diagnosis_history: <span class="type">list</span>,
+    medications: <span class="type">list</span>
+) -> <span class="type">dict</span>:
+
+    prompt = <span class="string">f"""Analyse symptom correlations for a clinical decision support system.
+
+Current symptoms: {', '.join(current_symptoms)}
+Diagnosis history: {', '.join(diagnosis_history)}
+Current medications: {', '.join(medications)}
+
+Return a JSON object with:
+{{
+  "correlations": [list of symptom-history matches with confidence 0-1],
+  "drug_symptom_flags": [symptoms possibly caused by current meds],
+  "triage_priority": "low|medium|high|critical",
+  "triage_reason": "one sentence explanation"
+}}
+
+Return ONLY the JSON, no preamble."""</span>
+
+    response = llm.messages.<span class="fn">create</span>(
+        model=<span class="string">"claude-sonnet-4-6"</span>,
+        max_tokens=<span class="num">800</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}]
+    )
+    <span class="keyword">import</span> json
+    <span class="keyword">return</span> json.<span class="fn">loads</span>(response.content[<span class="num">0</span>].text)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 4 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#2a1a0f;color:var(--accent4)">04</div>
+      <div>
+        <div class="section-title">Backend API — FastAPI Server</div>
+        <div class="section-subtitle">python · fastapi · postgresql · redis</div>
+      </div>
+      <div class="timeline-badge" style="background:#2a1a0f;color:var(--accent4)">Week 5–6</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">4.1</span>
+          <span class="step-title">Project Structure & FastAPI Setup</span>
+          <span class="step-tag tag-build">build</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+esap-backend/
+├── main.py               <span class="comment"># FastAPI app entry</span>
+├── routers/
+│   ├── patients.py       <span class="comment"># Patient CRUD + registration survey</span>
+│   ├── ai.py             <span class="comment"># RAG query, symptom correlation</span>
+│   ├── feedback.py       <span class="comment"># Doctor feedback capture</span>
+│   └── auth.py           <span class="comment"># JWT auth</span>
+├── services/
+│   ├── rag_service.py    <span class="comment"># RAG pipeline logic</span>
+│   ├── mimic_service.py  <span class="comment"># BigQuery data fetching</span>
+│   └── drug_service.py   <span class="comment"># openFDA integration</span>
+├── models/
+│   ├── patient.py        <span class="comment"># Pydantic schemas</span>
+│   └── feedback.py
+└── docker-compose.yml    <span class="comment"># postgres + qdrant + redis</span>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+pip install fastapi uvicorn sqlalchemy pydantic redis python-jose
+
+<span class="comment"># main.py</span>
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI
+<span class="keyword">from</span> routers <span class="keyword">import</span> patients, ai, feedback
+
+app = <span class="fn">FastAPI</span>(title=<span class="string">"ESAP API"</span>, version=<span class="string">"0.1.0"</span>)
+app.<span class="fn">include_router</span>(patients.router, prefix=<span class="string">"/patients"</span>)
+app.<span class="fn">include_router</span>(ai.router, prefix=<span class="string">"/ai"</span>)
+app.<span class="fn">include_router</span>(feedback.router, prefix=<span class="string">"/feedback"</span>)
+
+<span class="comment"># Key endpoints:</span>
+<span class="comment"># POST /patients/register        → Save patient survey</span>
+<span class="comment"># GET  /patients/{id}/profile    → Get full patient profile</span>
+<span class="comment"># POST /ai/summary               → RAG clinical summary</span>
+<span class="comment"># POST /ai/correlate             → Symptom correlation agent</span>
+<span class="comment"># POST /feedback/correction      → Doctor correction capture</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">4.2</span>
+          <span class="step-title">Doctor Feedback Capture (the loop)</span>
+          <span class="step-tag tag-build">build</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">This is the most important endpoint — it closes the loop. Every doctor correction is stored as a training signal.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="comment"># routers/feedback.py</span>
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">class</span> <span class="type">FeedbackPayload</span>(BaseModel):
+    patient_id: <span class="type">int</span>
+    doctor_id: <span class="type">str</span>
+    ai_output: <span class="type">str</span>        <span class="comment"># What the AI said</span>
+    doctor_correction: <span class="type">str</span> <span class="comment"># What the doctor changed it to</span>
+    correction_type: <span class="type">str</span>   <span class="comment"># "diagnosis"|"drug"|"triage"|"summary"</span>
+    accepted: <span class="type">bool</span>          <span class="comment"># True if doctor accepted AI output</span>
+    notes: <span class="type">str</span> = <span class="string">""</span>
+
+@router.<span class="fn">post</span>(<span class="string">"/correction"</span>)
+<span class="keyword">async def</span> <span class="fn">capture_feedback</span>(payload: <span class="type">FeedbackPayload</span>):
+    <span class="comment"># Store in feedback table</span>
+    record = {
+        **payload.<span class="fn">dict</span>(),
+        <span class="string">"timestamp"</span>: datetime.<span class="fn">utcnow</span>(),
+        <span class="string">"used_for_training"</span>: <span class="keyword">False</span>
+    }
+    db.<span class="fn">feedback</span>.<span class="fn">insert</span>(record)
+    <span class="comment"># Later: batch these for DPO fine-tuning</span>
+    <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"recorded"</span>, <span class="string">"id"</span>: record[<span class="string">"id"</span>]}
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">4.3</span>
+          <span class="step-title">Docker Compose — Full Stack</span>
+          <span class="step-tag tag-infra">infra</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="comment"># docker-compose.yml</span>
+version: <span class="string">'3.9'</span>
+services:
+  api:
+    build: .
+    ports: [<span class="string">"8000:8000"</span>]
+    environment:
+      - DATABASE_URL=postgresql://esap:esap@db:5432/esap
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - QDRANT_HOST=qdrant
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: esap
+      POSTGRES_PASSWORD: esap
+      POSTGRES_DB: esap
+    ports: [<span class="string">"5432:5432"</span>]
+
+  qdrant:
+    image: qdrant/qdrant
+    ports: [<span class="string">"6333:6333"</span>]
+
+  redis:
+    image: redis:7-alpine
+    ports: [<span class="string">"6379:6379"</span>]
+
+<span class="comment"># Run everything:</span>
+docker-compose up -d
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 5 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#2a0f0f;color:var(--accent5)">05</div>
+      <div>
+        <div class="section-title">Frontend — Doctor UI & Patient App</div>
+        <div class="section-subtitle">react · tailwind · doctor dashboard · patient registration</div>
+      </div>
+      <div class="timeline-badge" style="background:#2a0f0f;color:var(--accent5)">Week 6–8</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">5.1</span>
+          <span class="step-title">Doctor Dashboard — Key Components</span>
+          <span class="step-tag tag-build">build</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">Patient Panel</div>
+              <div class="info-value">Demographics · blood group · allergies · chronic conditions at a glance</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">AI Summary Box</div>
+              <div class="info-value">Streamed LLM output · triage badge · Accept / Correct buttons</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Symptom Input</div>
+              <div class="info-value">Typeahead symptom picker → triggers RAG query on submit</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Feedback UI</div>
+              <div class="info-value">Inline correction field · thumbs up/down → POST /feedback/correction</div>
+            </div>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+npx create-react-app esap-frontend
+cd esap-frontend
+npm install axios @tanstack/react-query tailwindcss
+
+<span class="comment"># Key pages:</span>
+<span class="comment"># /register      → 10-section patient survey</span>
+<span class="comment"># /doctor/:id    → Doctor dashboard for a patient</span>
+<span class="comment"># /patient/:id   → Patient-facing health assistant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">5.2</span>
+          <span class="step-title">Streaming AI Responses to UI</span>
+          <span class="step-tag tag-build">build</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">Stream the LLM response token-by-token using Server-Sent Events so the doctor sees the summary appearing in real time.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="comment"># FastAPI streaming endpoint</span>
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> StreamingResponse
+
+@router.<span class="fn">post</span>(<span class="string">"/ai/summary/stream"</span>)
+<span class="keyword">async def</span> <span class="fn">stream_summary</span>(patient_id: int, symptoms: str):
+    <span class="keyword">async def</span> <span class="fn">generate</span>():
+        <span class="keyword">with</span> llm.messages.<span class="fn">stream</span>(
+            model=<span class="string">"claude-sonnet-4-6"</span>,
+            max_tokens=<span class="num">1000</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="fn">build_prompt</span>(patient_id, symptoms)}]
+        ) <span class="keyword">as</span> stream:
+            <span class="keyword">for</span> text <span class="keyword">in</span> stream.<span class="fn">text_stream</span>():
+                <span class="keyword">yield</span> <span class="string">f"data: {text}\n\n"</span>
+    <span class="keyword">return</span> <span class="fn">StreamingResponse</span>(<span class="fn">generate</span>(), media_type=<span class="string">"text/event-stream"</span>)
+
+<span class="comment">// React: consume the stream</span>
+<span class="keyword">const</span> source = <span class="keyword">new</span> <span class="fn">EventSource</span>(<span class="string">`/ai/summary/stream?patient_id=${id}`</span>);
+source.<span class="fn">onmessage</span> = (e) => <span class="fn">setOutput</span>(prev => prev + e.data);
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PHASE 6 ═══════════════════ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#1a2a1a;color:#34d399">06</div>
+      <div>
+        <div class="section-title">Demo Build & Feedback Loop Activation</div>
+        <div class="section-subtitle">end-to-end demo · feedback collection · dpo prep</div>
+      </div>
+      <div class="timeline-badge" style="background:#1a2a1a;color:#34d399">Week 8–10</div>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">6.1</span>
+          <span class="step-title">Demo Patient Flow — End to End</span>
+          <span class="step-tag tag-test">test</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">The complete demo journey to show to stakeholders.</p>
+          <div class="flow" style="flex-direction:column;align-items:stretch;gap:8px">
+            <div class="flow-node">1. Register demo patient (use MIMIC-IV patient #10000032 as seed data)</div>
+            <div class="flow-node">2. Enter today's symptoms: "chest pain, shortness of breath, 3 days"</div>
+            <div class="flow-node">3. AI RAG pipeline retrieves relevant history from embedded notes</div>
+            <div class="flow-node">4. LLM generates clinical summary — streams to Doctor Dashboard</div>
+            <div class="flow-node">5. Triage badge shows: HIGH PRIORITY (cardiac history detected)</div>
+            <div class="flow-node">6. Drug interaction check flags: patient on warfarin → bleeding risk</div>
+            <div class="flow-node">7. Doctor clicks "Correct" → edits one line → feedback saved</div>
+            <div class="flow-node">8. Show the feedback table filling up → "this becomes training data"</div>
+          </div>
+          <div class="alert alert-green">
+            ✓ This one flow demonstrates all 4 ESAP pillars: Data Center + AI Engine + Doctor Interface + Feedback Loop.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header" onclick="toggle(this)">
+          <span class="step-num">6.2</span>
+          <span class="step-title">Activate DPO Fine-tuning (after 100+ feedbacks)</span>
+          <span class="step-tag tag-ai">ai</span>
+          <span class="step-chevron">▶</span>
+        </div>
+        <div class="step-body">
+          <p class="desc">Once you have enough doctor corrections, build a DPO dataset and fine-tune a smaller model (Mistral-7B or Llama-3-8B). This proves the closed loop works.</p>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<span class="comment"># Build DPO dataset from feedback table</span>
+<span class="keyword">def</span> <span class="fn">build_dpo_dataset</span>():
+    corrections = db.<span class="fn">query</span>(<span class="string">"""
+      SELECT ai_output, doctor_correction, correction_type
+      FROM feedback
+      WHERE used_for_training = false
+        AND doctor_correction IS NOT NULL
+      ORDER BY timestamp
+    """</span>)
+
+    dpo_pairs = []
+    <span class="keyword">for</span> row <span class="keyword">in</span> corrections:
+        dpo_pairs.<span class="fn">append</span>({
+            <span class="string">"prompt"</span>: row[<span class="string">"prompt_used"</span>],
+            <span class="string">"chosen"</span>: row[<span class="string">"doctor_correction"</span>],  <span class="comment"># doctor prefers this</span>
+            <span class="string">"rejected"</span>: row[<span class="string">"ai_output"</span>]            <span class="comment"># AI originally said this</span>
+        })
+
+    <span class="comment"># Save as JSONL for TRL DPO trainer</span>
+    <span class="keyword">with</span> <span class="fn">open</span>(<span class="string">"dpo_data.jsonl"</span>, <span class="string">"w"</span>) <span class="keyword">as</span> f:
+        <span class="keyword">for</span> pair <span class="keyword">in</span> dpo_pairs:
+            f.<span class="fn">write</span>(json.<span class="fn">dumps</span>(pair) + <span class="string">"\n"</span>)
+
+<span class="comment"># Fine-tune with HuggingFace TRL</span>
+pip install trl transformers datasets
+<span class="comment"># Then: python train_dpo.py --model mistralai/Mistral-7B-v0.1 --data dpo_data.jsonl</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEMO MILESTONES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="phase-dot" style="background:#1e2d45;color:var(--text)">⚑</div>
+      <div>
+        <div class="section-title">Demo Milestones</div>
+        <div class="section-subtitle">what you can show stakeholders week by week</div>
+      </div>
+    </div>
+    <div class="milestones">
+      <div class="milestone">
+        <div class="ms-week">WEEK 1–2</div>
+        <div class="ms-title">Data Access</div>
+        <div class="ms-desc">Query MIMIC-IV on BigQuery. Show patient table. Print a profile.</div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week">WEEK 3–4</div>
+        <div class="ms-title">RAG Working</div>
+        <div class="ms-desc">Symptom → retrieves relevant notes → LLM outputs clinical summary.</div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week">WEEK 5</div>
+        <div class="ms-title">API Live</div>
+        <div class="ms-desc">FastAPI running. Postman shows all endpoints responding.</div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week">WEEK 6–7</div>
+        <div class="ms-title">UI Connected</div>
+        <div class="ms-desc">Doctor dashboard live. AI summary streams in real time.</div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week">WEEK 8</div>
+        <div class="ms-title">Full Demo</div>
+        <div class="ms-desc">End-to-end flow. Patient → AI → Doctor → Feedback captured.</div>
+      </div>
+      <div class="milestone">
+        <div class="ms-week">WEEK 9–10</div>
+        <div class="ms-title">Loop Proven</div>
+        <div class="ms-desc">Show feedback table. Show DPO dataset being built. Loop is real.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggle(header) {
+    const step = header.parentElement;
+    step.classList.toggle('open');
+  }
+
+  function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.innerText.replace('copy\n','').replace('copied!\n','');
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    });
+  }
+
+  document.querySelectorAll('.ph').forEach((ph, i) => {
+    ph.addEventListener('click', () => {
+      document.querySelectorAll('.ph').forEach(p => p.classList.remove('active'));
+      ph.classList.add('active');
+    });
+  });
+
+  // Auto-open first step of each section
+  document.querySelectorAll('.step:first-child .step-header').forEach(h => h.click());
+</script>
+</body>
+</html>
