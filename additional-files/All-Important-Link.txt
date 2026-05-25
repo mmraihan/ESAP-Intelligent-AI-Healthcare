@@ -13,3 +13,8 @@ Model name: qwen3.5-9b
 
 
 4. Structural Causal Model (SCM)
+
+
+------Optional Model-----------
+
+ BioMistral-7B 
