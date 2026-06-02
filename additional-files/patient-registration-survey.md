@@ -288,3 +288,11 @@ Speech Consent                  → Real-time ASR pipeline (Whisper / Deepgram)
 All structured fields           → Global Health Data Center (versioned, timestamped)
 Doctor corrections (per visit)  → Feedback loop → model fine-tuning / RLHF pipeline
 ```
+
+
+
+
+ConnectionString Route: Healthcare-MIMIC-IV
+
+
+ "data source=176.9.16.194,1433; initial catalog=Healthcare-MIMIC-IV; User Id=sa; Password=Esap.12.Three; MultipleActiveResultSets=True; Application Name=EntityFramework; TrustServerCertificate=True; Encrypt=False"
