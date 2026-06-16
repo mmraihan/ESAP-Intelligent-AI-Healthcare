@@ -1,0 +1,31 @@
+2026-06-15 15:25:22,913  INFO      ============================================================
+2026-06-15 15:25:22,914  INFO      MIMIC-IV .csv.gz  →  PostgreSQL 18
+2026-06-15 15:25:22,914  INFO      Database  : Healthcare-Dataset
+2026-06-15 15:25:22,914  INFO      Source    : f:\Office-Empowering-Energy\ESAP-API\ESAP-Intelligent-AI-Healthcare\Dataset\mimic-iv-3.1\mimic-iv-3.1
+2026-06-15 15:25:22,914  INFO      ============================================================
+2026-06-15 15:25:24,482  INFO      PostgreSQL session tuned for bulk load.
+2026-06-15 15:25:25,576  INFO      Schemas ready: mimic_hosp, mimic_icu
+2026-06-15 15:25:25,577  INFO      Module: hosp  →  schema: mimic_hosp  (22 files)
+2026-06-15 15:25:25,611  INFO        [1/22] admissions  (compressed: 19.0 MB)
+2026-06-15 15:27:21,193  INFO          Done: 546,028 rows in 115s
+2026-06-15 15:27:21,195  INFO        [2/22] d_hcpcs  (compressed: 417.5 KB)
+2026-06-15 15:27:32,032  ERROR         FAILED — d_hcpcs: invalid byte sequence for encoding "UTF8": 0x96
+CONTEXT:  COPY d_hcpcs, line 1579
+
+2026-06-15 15:27:32,036  INFO        [3/22] d_icd_diagnoses  (compressed: 855.8 KB)
+2026-06-15 15:27:47,810  ERROR         FAILED — d_icd_diagnoses: invalid byte sequence for encoding "UTF8": 0xe4 0x6e 0x64
+CONTEXT:  COPY d_icd_diagnoses, line 622
+
+2026-06-15 15:27:47,815  INFO        [4/22] d_icd_procedures  (compressed: 575.4 KB)
+2026-06-15 15:27:58,337  INFO          Done: 86,423 rows in 10s
+2026-06-15 15:27:58,340  INFO        [5/22] d_labitems  (compressed: 12.9 KB)
+2026-06-15 15:28:00,067  INFO          Done: 1,650 rows in 1s
+2026-06-15 15:28:00,070  INFO        [6/22] diagnoses_icd  (compressed: 32.0 MB)
+2026-06-15 15:31:21,458  INFO          Done: 6,364,488 rows in 201s
+2026-06-15 15:31:21,460  INFO        [7/22] drgcodes  (compressed: 9.3 MB)
+2026-06-15 15:32:15,146  INFO          Done: 761,856 rows in 53s
+2026-06-15 15:32:15,150  INFO        [8/22] emar  (compressed: 773.7 MB)
+2026-06-15 15:32:28,779  ERROR         FAILED — emar: invalid byte sequence for encoding "UTF8": 0x96
+CONTEXT:  COPY emar, line 3271
+
+2026-06-15 15:32:28,787  INFO        [9/22] emar_detail  (compressed: 713.5 MB)
