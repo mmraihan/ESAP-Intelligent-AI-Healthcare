@@ -182,3 +182,14 @@ The diagram itself includes the annotation **"Architecture ?"** — indicating t
 ## 11. Summary Statement
 
 ESAP Intelligent AI Healthcare is building an **AI agent platform for the healthcare industry** with two interfaces: one for clinicians (decision support at the point of care) and one for patients (personal health assistant). The system is powered by a centralized, continuously updated healthcare data center, a fine-tuned LLM, and a RAG pipeline. The core R&D bets are on: (1) multi-step AI agents that reason over patient history, (2) real-time speech intelligence in the clinic, and (3) a doctor-feedback flywheel that makes the AI progressively more accurate. The architecture is still in early design phase ("Architecture ?") with the Excalidraw diagram representing the conceptual blueprint rather than an implemented system.
+
+
+
+
+What it does: Once the doctor finalizes a record (accepts/modifies/dismisses the AI's flags), that decision currently only lives in ESAP's own database. EHR Sync is the step where that finalized record gets pushed out to — or pulled in from — the hospital's actual official EHR system (Epic, Cerner, etc.), so ESAP isn't a data silo. This is built per backend-roadmap.md §7 ("Phase 6 — EHR Integration"), using the HL7 FHIR R4 standard: Patient, Condition, MedicationRequest, Observation resources mapped to ESAP's own tables (mapping table at backend-roadmap.md:1869).
+
+Why FHIR specifically: every hospital's EHR speaks a different proprietary API, but nearly all of them expose a FHIR R4 endpoint — so building ESAP's sync layer against FHIR (instead of one-off integrations per hospital) lets it plug into any hospital without bespoke connectors per vendor (project-analysis.md:152).
+
+What's next after EHR Sync — Feedback Loop (Phase 5): This is the RLHF (reinforcement learning from human feedback) step. Every time a doctor modifies or dismisses an AI-generated flag (already captured in the "AI Training Impact" panel right above the pipeline widget in RecordUpdated.tsx:147-182), that correction is queued and used to retrain/fine-tune the AI's clinical reasoning model over time — so the AI gets measurably better at flagging things doctors actually agree with, instead of staying static. This is the part the project doc calls "the most valuable R&D asset" because it's what differentiates ESAP from a one-shot LLM wrapper (project-analysis.md:175).
+
+So in short: EHR Sync = "make the doctor's finalized decision real in the hospital's system of record." Feedback Loop = "make the AI smarter from the doctor's decision." They're sequential but serve different audiences — one is for hospital records/compliance, the other is for model improvement.
