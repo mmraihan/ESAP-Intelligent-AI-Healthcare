@@ -2,6 +2,7 @@
 
 import { DoctorDecision } from "@/components/DoctorReview";
 import { AnalysisResult } from "@/lib/analyze";
+import { useAuth } from "@/lib/auth";
 
 interface Props {
   decision: DoctorDecision;
@@ -16,6 +17,8 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 export default function RecordUpdated({ decision, result, onNewPatient }: Props) {
+  const { user } = useAuth();
+  const doctorName = user?.full_name ?? "Unknown";
   const now = new Date().toLocaleString("en-US", {
     month: "short", day: "numeric", year: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -45,7 +48,7 @@ export default function RecordUpdated({ decision, result, onNewPatient }: Props)
               {now}
             </span>
             <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium border border-blue-200">
-              Signed by {decision.doctorName}
+              Signed by {doctorName}
             </span>
           </div>
         </div>
@@ -220,7 +223,7 @@ export default function RecordUpdated({ decision, result, onNewPatient }: Props)
               const lines = [
                 "ESAP — Clinical Record Update",
                 `Timestamp: ${now}`,
-                `Doctor: ${decision.doctorName}`,
+                `Doctor: ${doctorName}`,
                 "",
                 `PRIMARY DIAGNOSIS: ${decision.primaryDiagnosis}`,
                 decision.icdCode ? `ICD-10: ${decision.icdCode}` : "",

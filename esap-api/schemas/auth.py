@@ -19,6 +19,10 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    refresh_token: str
+
+
 class MeResponse(BaseModel):
     user_id: str
     email: str

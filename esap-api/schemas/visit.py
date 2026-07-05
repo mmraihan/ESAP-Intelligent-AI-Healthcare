@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -6,13 +6,19 @@ from pydantic import BaseModel
 
 class SurveySubmitRequest(BaseModel):
     patient_id: str
+    visit_type: str = "survey"   # "survey" | "registration"
     chief_complaint: str | None = None
-    pain_scale: int | None = None
     symptom_description: str | None = None
+    onset_date: date | None = None
+    onset_type: str | None = None
+    duration: str | None = None
+    pain_scale: int | None = None
+    symptom_location: str | None = None
     associated_symptoms: list[str] | None = None
     aggravating_factors: list[str] | None = None
     relieving_factors: list[str] | None = None
     previous_episodes: bool | None = None
+    self_treatment: str | None = None
     patient_concern: str | None = None
     survey_answers: dict[str, Any] | None = None   # full raw answers blob
 

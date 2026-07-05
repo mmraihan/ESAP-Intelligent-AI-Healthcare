@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AnalysisResult, RiskFlag } from "@/lib/analyze";
+import { apiFetch, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 export interface FlagReview {
   flagId: string;
@@ -25,7 +27,6 @@ export interface DoctorDecision {
   treatmentDetails: Record<string, string>;
   prescriptions: Prescription[];
   followUp: string;
-  doctorName: string;
 }
 
 const TREATMENT_OPTIONS = [
@@ -45,10 +46,13 @@ const FOLLOWUP_OPTIONS = [
 
 interface Props {
   result: AnalysisResult;
+  patientId: string | null;
+  visitId: string | null;
   onSubmit: (decision: DoctorDecision) => void;
 }
 
-export default function DoctorReview({ result, onSubmit }: Props) {
+export default function DoctorReview({ result, patientId, visitId, onSubmit }: Props) {
+  const { user } = useAuth();
   const [flagReviews, setFlagReviews] = useState<Record<string, FlagReview>>(
     Object.fromEntries(
       result.flags.map((f) => [f.id, { flagId: f.id, decision: "accept", note: "" }])
@@ -64,8 +68,8 @@ export default function DoctorReview({ result, onSubmit }: Props) {
     { drug: "", dosage: "", frequency: "" },
   ]);
   const [followUp, setFollowUp] = useState("1 Month");
-  const [doctorName, setDoctorName] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   function setFlagDecision(id: string, decision: FlagReview["decision"]) {
     setFlagReviews((prev) => ({ ...prev, [id]: { ...prev[id], decision } }));
@@ -93,17 +97,17 @@ export default function DoctorReview({ result, onSubmit }: Props) {
     setPrescriptions((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const errs: string[] = [];
     if (!primaryDiagnosis.trim()) errs.push("Primary diagnosis is required.");
     if (!clinicalNotes.trim()) errs.push("Clinical notes are required.");
-    if (!doctorName.trim()) errs.push("Doctor name / ID is required.");
+    if (!patientId || !visitId) errs.push("No linked patient/visit — start from a survey submission.");
     if (treatmentItems.includes("medication") && prescriptions.every((p) => !p.drug.trim()))
       errs.push("Add at least one prescription when medication is selected.");
     setErrors(errs);
     if (errs.length > 0) return;
 
-    onSubmit({
+    const decision: DoctorDecision = {
       flagReviews: Object.values(flagReviews),
       primaryDiagnosis,
       secondaryDiagnosis,
@@ -113,8 +117,32 @@ export default function DoctorReview({ result, onSubmit }: Props) {
       treatmentDetails,
       prescriptions: prescriptions.filter((p) => p.drug.trim()),
       followUp,
-      doctorName,
-    });
+    };
+
+    setSubmitting(true);
+    try {
+      await apiFetch("/api/decisions", {
+        method: "POST",
+        body: JSON.stringify({
+          visit_id: visitId,
+          patient_id: patientId,
+          flag_reviews: decision.flagReviews.map((f) => ({ flagId: f.flagId, decision: f.decision, note: f.note })),
+          primary_diagnosis: decision.primaryDiagnosis,
+          secondary_diagnosis: decision.secondaryDiagnosis,
+          icd_code: decision.icdCode,
+          clinical_notes: decision.clinicalNotes,
+          treatment_items: decision.treatmentItems,
+          treatment_details: decision.treatmentDetails,
+          prescriptions: decision.prescriptions,
+          follow_up: decision.followUp,
+        }),
+      });
+      onSubmit(decision);
+    } catch (err) {
+      setErrors([err instanceof ApiError ? err.message : "Failed to submit decision."]);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const SEVERITY_BORDER: Record<string, string> = {
@@ -391,15 +419,11 @@ export default function DoctorReview({ result, onSubmit }: Props) {
           </div>
           <div>
             <label className="text-xs font-medium text-slate-500 block mb-1">
-              Doctor Name / ID *
+              Signing Doctor
             </label>
-            <input
-              type="text"
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
-              placeholder="Dr. Smith — ID: 10432"
-              className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:outline-none text-sm text-slate-700 placeholder-slate-300"
-            />
+            <div className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm text-slate-600">
+              {user?.full_name ?? "Not signed in"}
+            </div>
           </div>
         </div>
       </section>
@@ -422,12 +446,13 @@ export default function DoctorReview({ result, onSubmit }: Props) {
       {/* ── Submit ── */}
       <button
         onClick={handleSubmit}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:opacity-95 transition-all active:scale-[.99] flex items-center justify-center gap-2"
+        disabled={submitting}
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold text-base shadow-lg hover:shadow-xl hover:opacity-95 disabled:opacity-50 transition-all active:scale-[.99] flex items-center justify-center gap-2"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Submit to Record &amp; Train AI
+        {submitting ? "Submitting…" : "Submit to Record & Train AI"}
       </button>
     </div>
   );

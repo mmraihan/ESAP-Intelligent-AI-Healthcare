@@ -6,15 +6,17 @@ import { registrationSections, RegAnswers } from "@/data/registration-fields";
 interface Props {
   answers: RegAnswers;
   onReset: () => void;
+  patientId?: string;
+  externalId?: string;
 }
 
-export default function RegistrationDone({ answers, onReset }: Props) {
+export default function RegistrationDone({ answers, onReset, externalId }: Props) {
   const now = new Date().toLocaleString("en-US", {
     month: "long", day: "numeric", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
 
-  const patientId = `ESAP-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  const patientId = externalId ?? "—";
   const patientName = (answers["full_name"] as string) || "Patient";
 
   const totalFields = registrationSections.reduce((acc, s) =>

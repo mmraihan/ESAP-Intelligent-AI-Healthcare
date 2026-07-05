@@ -6,6 +6,8 @@ interface Props {
   answers: RegAnswers;
   onBack: () => void;
   onSubmit: () => void;
+  submitting?: boolean;
+  error?: string | null;
 }
 
 function formatValue(value: RegAnswers[string]): string {
@@ -30,7 +32,7 @@ const SECTION_COLORS: Record<string, { border: string; header: string; badge: st
   slate:  { border: "border-slate-200",  header: "bg-slate-100 text-slate-700", badge: "bg-slate-100 text-slate-600" },
 };
 
-export default function RegistrationReview({ answers, onBack, onSubmit }: Props) {
+export default function RegistrationReview({ answers, onBack, onSubmit, submitting, error }: Props) {
   const totalFields = registrationSections.reduce((acc, s) => acc + s.fields.filter((f) => !f.autoCalc).length, 0);
   const answeredFields = registrationSections.reduce((acc, s) =>
     acc + s.fields.filter((f) => {
@@ -187,24 +189,33 @@ export default function RegistrationReview({ answers, onBack, onSubmit }: Props)
           </p>
         </div>
 
+        {/* Submission error */}
+        {error && (
+          <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-semibold text-red-700">Registration failed</p>
+            <p className="text-xs text-red-600 mt-1">{error}</p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3 pb-8">
           <button
             onClick={onBack}
-            className="flex-1 px-6 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:border-blue-300 hover:bg-blue-50 transition-all"
+            disabled={submitting}
+            className="flex-1 px-6 py-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-sm hover:border-blue-300 hover:bg-blue-50 disabled:opacity-50 transition-all"
           >
             ← Edit Answers
           </button>
           <button
             onClick={onSubmit}
-            disabled={requiredMissing.length > 0}
+            disabled={requiredMissing.length > 0 || submitting}
             className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
-              requiredMissing.length > 0
+              requiredMissing.length > 0 || submitting
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-500 to-teal-400 text-white shadow-md hover:shadow-lg hover:opacity-95"
             }`}
           >
-            Submit Registration →
+            {submitting ? "Submitting…" : "Submit Registration →"}
           </button>
         </div>
       </main>

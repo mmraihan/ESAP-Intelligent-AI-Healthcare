@@ -9,6 +9,8 @@ type Answers = Record<string, string | string[] | number | undefined>;
 interface Props {
   result: AnalysisResult;
   answers: Answers;
+  patientId: string | null;
+  visitId: string | null;
   onRestart: () => void;
   onDoctorSubmit: (decision: DoctorDecision) => void;
 }
@@ -33,7 +35,7 @@ const PRIORITY_BADGE = {
   urgent: "bg-red-100 text-red-700",
 };
 
-export default function Dashboard({ result, answers, onRestart, onDoctorSubmit }: Props) {
+export default function Dashboard({ result, answers, patientId, visitId, onRestart, onDoctorSubmit }: Props) {
   const [tab, setTab] = useState<"ai" | "doctor">("ai");
   const risk = RISK_COLORS[result.riskLevel];
   const now = new Date().toLocaleString("en-US", {
@@ -303,7 +305,7 @@ export default function Dashboard({ result, answers, onRestart, onDoctorSubmit }
               </span>
             </div>
             <div className="p-6">
-              <DoctorReview result={result} onSubmit={onDoctorSubmit} />
+              <DoctorReview result={result} patientId={patientId} visitId={visitId} onSubmit={onDoctorSubmit} />
             </div>
           </div>
         )}

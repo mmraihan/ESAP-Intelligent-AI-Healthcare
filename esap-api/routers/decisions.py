@@ -44,7 +44,7 @@ def submit_decision(
     for fr in body.flag_reviews:
         db.add(AIFeedback(
             visit_id=body.visit_id,
-            result_id="",     # placeholder until AI service is wired up in Phase 2
+            result_id=None,    # linked once the AI service persists a real AIAnalysisResult
             doctor_id=current_user.user_id,
             flag_id=fr.flagId,
             decision=fr.decision,

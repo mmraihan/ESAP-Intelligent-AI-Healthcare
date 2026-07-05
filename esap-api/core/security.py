@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -30,15 +32,17 @@ def create_access_token(user_id: str, role: str, email: str) -> str:
     )
 
 
-def create_refresh_token(user_id: str) -> str:
-    return _create_token(
-        {"sub": user_id, "type": "refresh"},
-        timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-
-
 def decode_token(token: str) -> dict[str, Any]:
     try:
         return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
     except JWTError:
         return {}
+
+
+def generate_refresh_token() -> str:
+    """Opaque, DB-backed refresh token (not a JWT) so it can be revoked/rotated."""
+    return secrets.token_urlsafe(64)
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()

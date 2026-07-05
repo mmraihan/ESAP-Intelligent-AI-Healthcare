@@ -6,6 +6,9 @@ import FieldRenderer from "@/components/Registration/FieldRenderer";
 import SectionNav from "@/components/Registration/SectionNav";
 import RegistrationReview from "@/components/Registration/RegistrationReview";
 import RegistrationDone from "@/components/Registration/RegistrationDone";
+import { apiFetch, ApiError } from "@/lib/api";
+import { toPatientCreateRequest } from "@/lib/transformRegistration";
+import LogoutButton from "@/components/LogoutButton";
 
 type Stage = "form" | "review" | "done";
 
@@ -27,6 +30,9 @@ export default function RegistrationWizard() {
   const [sectionIdx, setSectionIdx] = useState(0);
   const [answers, setAnswers] = useState<RegAnswers>({});
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ patientId: string; externalId: string } | null>(null);
 
   const sections = registrationSections;
   const currentSection = sections[sectionIdx];
@@ -67,18 +73,51 @@ export default function RegistrationWizard() {
     }
   }
 
+  async function handleRegistrationSubmit() {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { patient, visit } = toPatientCreateRequest(answers);
+      const created = await apiFetch<{ patient_id: string; external_id: string }>("/api/patients", {
+        method: "POST",
+        body: JSON.stringify(patient),
+      });
+      if (visit) {
+        await apiFetch("/api/surveys", {
+          method: "POST",
+          body: JSON.stringify({ patient_id: created.patient_id, ...visit }),
+        });
+      }
+      setResult({ patientId: created.patient_id, externalId: created.external_id });
+      setStage("done");
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (stage === "review") {
     return (
       <RegistrationReview
         answers={answers}
         onBack={() => setStage("form")}
-        onSubmit={() => setStage("done")}
+        onSubmit={handleRegistrationSubmit}
+        submitting={submitting}
+        error={submitError}
       />
     );
   }
 
   if (stage === "done") {
-    return <RegistrationDone answers={answers} onReset={() => { setAnswers({}); setSectionIdx(0); setStage("form"); }} />;
+    return (
+      <RegistrationDone
+        answers={answers}
+        patientId={result?.patientId}
+        externalId={result?.externalId}
+        onReset={() => { setAnswers({}); setSectionIdx(0); setResult(null); setStage("form"); }}
+      />
+    );
   }
 
   const headerColor = COLOR_HEADER[currentSection.color] ?? COLOR_HEADER.blue;
@@ -110,6 +149,7 @@ export default function RegistrationWizard() {
               </div>
               <span>Section {sectionIdx + 1}/{sections.length}</span>
             </div>
+            <LogoutButton />
             {/* Mobile nav toggle */}
             <button
               onClick={() => setMobileNavOpen(!mobileNavOpen)}

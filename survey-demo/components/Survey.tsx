@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { survey } from "@/data/questions";
 import { analyzeAnswers } from "@/lib/analyze";
+import { apiFetch, ApiError } from "@/lib/api";
 import { DoctorDecision } from "@/components/DoctorReview";
+import LogoutButton from "@/components/LogoutButton";
+import PatientSelect from "@/components/PatientSelect";
 import ProgressBar from "@/components/ProgressBar";
 import QuestionCard from "@/components/QuestionCard";
 import Processing from "@/components/Processing";
@@ -12,7 +15,7 @@ import FeedbackProcessing from "@/components/FeedbackProcessing";
 import RecordUpdated from "@/components/RecordUpdated";
 
 type Answers = Record<string, string | string[] | number | undefined>;
-type Stage = "welcome" | "survey" | "processing" | "dashboard" | "feedback" | "updated";
+type Stage = "welcome" | "select-patient" | "survey" | "processing" | "dashboard" | "feedback" | "updated";
 
 export default function Survey() {
   const [stage, setStage] = useState<Stage>("welcome");
@@ -21,6 +24,10 @@ export default function Survey() {
   const [doctorDecision, setDoctorDecision] = useState<DoctorDecision | null>(null);
   const [animating, setAnimating] = useState(false);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [visitId, setVisitId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submittingSurvey, setSubmittingSurvey] = useState(false);
 
   const questions = survey.questions;
   const current = questions[index];
@@ -41,21 +48,47 @@ export default function Survey() {
   function navigate(dir: "forward" | "back") {
     setDirection(dir);
     setAnimating(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       if (dir === "forward") {
-        if (index < questions.length - 1) setIndex((i) => i + 1);
-        else setStage("processing");
+        if (index < questions.length - 1) {
+          setIndex((i) => i + 1);
+          setAnimating(false);
+        } else {
+          setAnimating(false);
+          await submitSurvey();
+        }
       } else {
         if (index > 0) setIndex((i) => i - 1);
+        setAnimating(false);
       }
-      setAnimating(false);
     }, 220);
+  }
+
+  async function submitSurvey() {
+    if (!patientId) return;
+    setSubmittingSurvey(true);
+    setSubmitError(null);
+    try {
+      const visit = await apiFetch<{ visit_id: string }>("/api/surveys", {
+        method: "POST",
+        body: JSON.stringify({ patient_id: patientId, survey_answers: answers }),
+      });
+      setVisitId(visit.visit_id);
+      setStage("processing");
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : "Failed to submit survey.");
+    } finally {
+      setSubmittingSurvey(false);
+    }
   }
 
   function restart() {
     setAnswers({});
     setIndex(0);
     setDoctorDecision(null);
+    setPatientId(null);
+    setVisitId(null);
+    setSubmitError(null);
     setStage("welcome");
   }
 
@@ -91,9 +124,28 @@ export default function Survey() {
       <Dashboard
         result={analysisResult}
         answers={answers}
+        patientId={patientId}
+        visitId={visitId}
         onRestart={restart}
         onDoctorSubmit={handleDoctorSubmit}
       />
+    );
+  }
+
+  // ── Select Patient ───────────────────────────────────────────────
+  if (stage === "select-patient") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <div className="flex justify-end mb-2">
+            <LogoutButton />
+          </div>
+          <PatientSelect
+            onSelect={(id) => { setPatientId(id); setStage("survey"); }}
+            onBack={() => setStage("welcome")}
+          />
+        </div>
+      </div>
     );
   }
 
@@ -146,11 +198,15 @@ export default function Survey() {
           </div>
 
           <button
-            onClick={() => setStage("survey")}
+            onClick={() => setStage("select-patient")}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white text-lg font-semibold shadow-lg hover:shadow-xl hover:opacity-95 transition-all active:scale-95"
           >
             Start Survey →
           </button>
+
+          <div className="mt-4">
+            <LogoutButton className="mx-auto" />
+          </div>
         </div>
       </div>
     );
@@ -163,6 +219,12 @@ export default function Survey() {
         <div className="mb-6">
           <ProgressBar current={index + 1} total={questions.length} />
         </div>
+
+        {submitError && (
+          <div className="mb-4 rounded-xl border-2 border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            {submitError}
+          </div>
+        )}
 
         <div
           className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-8 transition-all duration-200 ${
@@ -200,14 +262,14 @@ export default function Survey() {
           <span className="text-xs text-slate-400">{index + 1} / {questions.length}</span>
           <button
             onClick={() => navigate("forward")}
-            disabled={!canProceed}
+            disabled={!canProceed || submittingSurvey}
             className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
-              canProceed
+              canProceed && !submittingSurvey
                 ? "bg-gradient-to-r from-blue-500 to-teal-400 text-white shadow-md hover:shadow-lg hover:opacity-95 active:scale-95"
                 : "bg-slate-100 text-slate-300 cursor-not-allowed"
             }`}
           >
-            {index === questions.length - 1 ? "Submit →" : "Next →"}
+            {submittingSurvey ? "Submitting…" : index === questions.length - 1 ? "Submit →" : "Next →"}
           </button>
         </div>
 

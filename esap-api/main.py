@@ -4,8 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+from core.audit import AuditMiddleware
 from database import check_connection, create_tables
-from routers import auth, decisions, patients, visits
+from routers import alerts, appointments, auth, decisions, patients, visits
 
 
 @asynccontextmanager
@@ -31,11 +32,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuditMiddleware)
 
 app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(visits.router)
 app.include_router(decisions.router)
+app.include_router(appointments.router)
+app.include_router(alerts.router)
 
 
 @app.get("/health", tags=["health"])

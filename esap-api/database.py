@@ -27,7 +27,7 @@ def get_db():
 
 
 def create_tables():
-    from models import user, patient, visit, doctor_decision  # noqa: F401
+    from models import alert, appointment, doctor_decision, patient, security, user, visit  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
 
