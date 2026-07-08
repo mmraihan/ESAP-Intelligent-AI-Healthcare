@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     if not check_connection():
         raise RuntimeError("Cannot reach SQL Server — check DB_HOST / credentials in .env")
     create_tables()
-    print("✓ Database connected, tables verified")
+    print("[OK] Database connected, tables verified")
     yield
 
 

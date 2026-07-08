@@ -5,7 +5,6 @@ import { survey } from "@/data/questions";
 import { analyzeAnswers } from "@/lib/analyze";
 import { apiFetch, ApiError } from "@/lib/api";
 import { DoctorDecision } from "@/components/DoctorReview";
-import LogoutButton from "@/components/LogoutButton";
 import PatientSelect from "@/components/PatientSelect";
 import ProgressBar from "@/components/ProgressBar";
 import QuestionCard from "@/components/QuestionCard";
@@ -137,9 +136,6 @@ export default function Survey() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
         <div className="w-full max-w-lg">
-          <div className="flex justify-end mb-2">
-            <LogoutButton />
-          </div>
           <PatientSelect
             onSelect={(id) => { setPatientId(id); setStage("survey"); }}
             onBack={() => setStage("welcome")}
@@ -203,10 +199,6 @@ export default function Survey() {
           >
             Start Survey →
           </button>
-
-          <div className="mt-4">
-            <LogoutButton className="mx-auto" />
-          </div>
         </div>
       </div>
     );

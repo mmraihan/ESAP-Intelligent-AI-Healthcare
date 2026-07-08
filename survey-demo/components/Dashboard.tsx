@@ -55,20 +55,10 @@ export default function Dashboard({ result, answers, patientId, visitId, onResta
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Top Nav ── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 leading-none">ESAP Intelligence</p>
-              <p className="text-sm font-bold text-slate-800 leading-tight">Clinical Dashboard</p>
-            </div>
-          </div>
+      {/* ── Dashboard sub-header ── */}
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between">
+          <p className="text-sm font-bold text-slate-800">Clinical Dashboard</p>
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400 hidden sm:block">{now}</span>
             <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
