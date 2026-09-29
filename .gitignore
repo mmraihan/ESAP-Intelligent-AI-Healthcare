@@ -1,0 +1,22 @@
+# Dataset folder — excluded from version control
+Dataset/
+
+# ML prototype — never commit secrets or MIMIC data (PhysioNet DUA)
+ml-pipeline/.env
+.env
+csv_exports/
+*.pkl
+.DS_Store
+
+# Claude Code local settings/session files — never share prompts/history
+.claude/
+
+# Internal project notes — not for the shared repo
+additional-files/ml-pipeline-project-summary.md
+additional-files/m01-main-run-vs-negcontrol-run.md
+additional-files/project-status-2026-08-20.md
+DB_RESTORE_HANDOFF.md
+additional-files/dataset-configuration-procedure.md
+additional-files/zero-to-everything-roadmap.md
+additional-files/adding-a-new-dataset-and-roadmap.md
+.gstack/

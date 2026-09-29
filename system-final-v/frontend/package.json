@@ -1,0 +1,34 @@
+{
+  "name": "esap-system-final-v",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ESAP Intelligent AI Healthcare — complete product UI (PRODUCT_BLUEPRINT.md). Frontend-only demo; all data is mock. Decision support, not diagnosis.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed:dump": "esbuild scripts/dump-seed.ts --bundle --platform=node --format=esm --alias:@=./src --outfile=scripts/.build/dump-seed.mjs --log-level=warning && node scripts/.build/dump-seed.mjs > src/mock/seed.json && node -e \"require('fs').copyFileSync('src/mock/seed.json','../backend/seed/seed.json')\""
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^22.20.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.9"
+  }
+}

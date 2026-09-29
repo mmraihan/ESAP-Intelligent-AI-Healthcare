@@ -1,0 +1,8 @@
+# MODEL_MODE=real — the scientific stack the model bundles were trained and
+# pickled under. Pinned exactly: a different scikit-learn can unpickle the same
+# bundle and predict different probabilities without raising, so /readyz
+# refuses to serve on any other version (app/predictors/real.py TRAINED_WITH).
+-r requirements.txt
+scikit-learn==1.9.0
+numpy==2.5.1
+scipy==1.17.1

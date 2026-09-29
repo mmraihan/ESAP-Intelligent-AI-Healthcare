@@ -1,0 +1,22 @@
+# ESAP system-final-v backend.
+#
+# Deliberately thin: FastAPI + Pydantic v2 and the standard library. Storage is
+# sqlite3 (stdlib) rather than an ORM — the demo dataset is small, the schema is
+# fixed by the seed, and a single file keeps the "single box, no PHI egress"
+# posture of SYSTEM_DESIGN §7 easy to reason about.
+#
+# Model artifacts are NOT loaded in the default MODEL_MODE=stub. Real mode
+# (MODEL_MODE=real) additionally needs the pinned scientific stack that the
+# artifacts were trained under — see README "Real mode".
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+# The code uses PEP 604 unions (`str | None`). Native on Python 3.10+; on 3.9
+# pydantic v2 needs this pure-Python backport to evaluate them (harmless on newer
+# Pythons). Python 3.10+ is recommended — see README.
+eval_type_backport==0.2.0
+
+# tests
+pytest==8.3.4
+httpx==0.28.1

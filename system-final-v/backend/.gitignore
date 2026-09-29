@@ -1,0 +1,10 @@
+# Data never leaves the machine (PhysioNet DUA) and the demo DB is regenerable.
+*.db
+*.db-shm
+*.db-wal
+*.db.bak*
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
