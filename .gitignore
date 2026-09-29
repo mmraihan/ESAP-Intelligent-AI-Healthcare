@@ -1,9 +1,0 @@
-# Dataset folder — excluded from version control
-Dataset/
-
-# ML prototype — never commit secrets or MIMIC data (PhysioNet DUA)
-ml-pipeline/.env
-.env
-csv_exports/
-*.pkl
-.DS_Store
