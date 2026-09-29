@@ -633,3 +633,39 @@ html[lang="ar"] .tenant-stat-label {
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/* Waitlist (landing page) — copy on the left, the Tally form in a card on the right. */
+.waitlist {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 48px;
+  align-items: center;
+  scroll-margin-top: 90px;
+}
+.waitlist-copy { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+.waitlist-copy h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+.waitlist-accent { color: var(--accent); }
+.waitlist-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+/* Tally draws its own field text, so the form keeps a light panel in both themes. */
+.waitlist-frame { display: block; background: #ffffff; border-radius: var(--radius); padding: 8px 12px; box-sizing: border-box; }
+.waitlist-foot { margin: 0; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
+.waitlist-foot a { color: var(--accent-ink); font-weight: 600; }
+@media (max-width: 860px) {
+  .waitlist { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .waitlist-card { padding: 16px; }
+}

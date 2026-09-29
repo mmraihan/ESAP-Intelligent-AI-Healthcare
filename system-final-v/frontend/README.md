@@ -167,6 +167,20 @@ clinical response shapes in `mock/clinical-types.ts` are transcribed from `API_C
 field-for-field, and `src/api/integration.test.ts` checks the server's payloads against them
 whenever the API is up.
 
+## Deploying (Vercel → care.esap.ai)
+
+`vercel.json` sets the Vite preset and rewrites every route to `index.html`.
+Project settings: **Root Directory** `system-final-v/frontend`.
+
+Environment variables (build-time — redeploy after changing them):
+
+| Variable | Value |
+|---|---|
+| `VITE_API_BASE` | Public HTTPS URL of the backend. Without a reachable backend every page, including the landing page, shows "Cannot reach the ESAP server". |
+| `VITE_TALLY_FORM_ID` | The Tally waitlist form — its id or any `tally.so/r/…` link. Unset, the landing page shows the email fallback instead of the form. |
+
+The backend must list the site in `ESAP_CORS_ORIGINS` (e.g. `https://care.esap.ai`).
+
 ## Tests
 
 `npm test` renders all 69 route/role combinations and fails on any thrown error or any

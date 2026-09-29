@@ -11,6 +11,7 @@ import { MODELS } from "@/mock/db";
 import { Badge, Button, Card } from "@/components/ui/primitives";
 import { RiskGauge } from "@/components/ui/charts";
 import { SiteLayout } from "./SiteLayout";
+import { WaitlistSection } from "./WaitlistSection";
 import {
   ActivityIcon, AlertIcon, ArrowRight, BookIcon, CheckIcon, ClockIcon, GlobeIcon, HeartPulseIcon,
   ScaleIcon, ShieldIcon, SparkIcon, StethoscopeIcon,
@@ -70,6 +71,9 @@ export function LandingPage() {
         <div className="hero-actions">
           <Button variant="primary" onClick={() => nav("/signup")}>Try it on your own cases</Button>
           <Button onClick={() => nav("/evidence")}>See the evidence <ArrowRight size={14} /></Button>
+          <Button onClick={() => document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" })}>
+            Join the waitlist
+          </Button>
         </div>
         <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>
           Free tier, no card. Nothing you enter is retained on the free tier.
@@ -189,6 +193,8 @@ export function LandingPage() {
           </div>
         </Card>
       </section>
+
+      <WaitlistSection />
     </SiteLayout>
   );
 }
