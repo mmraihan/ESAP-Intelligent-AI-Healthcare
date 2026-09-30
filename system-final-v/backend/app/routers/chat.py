@@ -125,8 +125,11 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
             if safe.get("is_female") in (0, 1) and "is_female" not in demo:
                 demo["is_female"] = safe["is_female"]; captured.append("Sex (assistant)")
             vit = draft["features"].setdefault("vitals", {})
+            # The schema hint's zeros invite the model to echo 0 for "not stated";
+            # a 0 kg weight or 0 mmHg pressure is never a real reading.
             for k in ("bp_sys", "bp_dia", "weight_kg"):
-                if isinstance(safe.get(k), (int, float)) and k not in vit:
+                v = safe.get(k)
+                if isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0 and k not in vit:
                     vit[k] = safe[k]
             cc = safe.get("chief_complaint")
             if isinstance(cc, str) and cc.strip() and not _get(draft, "features.notes"):

@@ -144,7 +144,7 @@ export function WorklistPage() {
         <StatTile label="Awaiting co-sign" value={cosign} tone={cosign > 0 ? "warning" : "neutral"} hint="Resident acknowledgements routed to you" />
       </div>
 
-      <ConnectionRequestsCard />
+      {can(role, "patient:write") && <ConnectionRequestsCard />}
 
       <AssistiveLine />
 
