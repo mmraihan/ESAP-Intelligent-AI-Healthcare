@@ -14,42 +14,51 @@
 :root {
   color-scheme: light;
 
-  /* Surfaces / planes */
-  --plane: #eef2f6;
+  /* Surfaces / planes — a cool, sterile clinical white with the faintest
+     aqua cast (scrub-room tile, not office grey). */
+  --plane: #eff5f8;
   --surface-1: #ffffff;
-  --surface-2: #f5f8fa;
-  --surface-sunken: #e9eef3;
+  --surface-2: #f5f9fb;
+  --surface-sunken: #e7eff4;
 
-  /* Ink */
-  --text-primary: #0b1116;
-  --text-secondary: #4a5866;
-  --text-muted: #7d8b99;
+  /* Ink — deep clinical navy rather than neutral black. Muted ink clears
+     WCAG AA (4.5:1) on white so hints and captions stay legible. */
+  --text-primary: #0c1b29;
+  --text-secondary: #43576a;
+  --text-muted: #5c6f82;
   --text-inverse: #ffffff;
 
   /* Lines */
-  --border: rgba(11, 17, 22, 0.1);
-  --border-strong: #c3cedb;
-  --grid: #dde5ed;
+  --border: rgba(12, 27, 41, 0.09);
+  --border-strong: #c4d3df;
+  --grid: #dde7ee;
 
-  /* Brand accent (calm clinical blue) */
-  --accent: #2a6fbf;
-  --accent-strong: #1c5cab;
-  --accent-weak: #e8f0fb;
-  --accent-ink: #12539a;
+  /* Brand accent — trusted medical blue. --accent is for lines/icons;
+     --accent-fill is the solid fill behind white (--on-accent) text. */
+  --accent: #0d6fbd;
+  --accent-strong: #0a5a9c;
+  --accent-weak: #e5f1fb;
+  --accent-ink: #0a4f8a;
+  --accent-fill: #0d6fbd;
+  --accent-fill-strong: #0a5a9c;
+  --on-accent: #ffffff;
 
-  /* Vital — the secondary "instrument" hue. Chrome only (ECG trace, live
-     indicators, monitor accents); never a data-encoding color. */
-  --vital: #0e8a92;
-  --vital-weak: #e2f4f5;
-  --vital-ink: #0a6b72;
+  /* Vital — clinical teal, the secondary "instrument" hue. Chrome only (ECG
+     trace, live indicators, monitor accents); never a data-encoding color. */
+  --vital: #0e9384;
+  --vital-weak: #dff4f1;
+  --vital-ink: #0a6c61;
 
-  /* Status (fixed, never themed as hues; paired with icon + label) */
-  --status-good: #0ca30c;
-  --status-warning: #b5750a;
-  --status-serious: #c05a2e;
-  --status-critical: #c0392b;
-  --status-warning-weak: #fbf1dd;
-  --status-critical-weak: #fbe9e6;
+  /* Status (paired with icon + label, never color alone). Tuned to clinical
+     alarm conventions and AA contrast as text on white. */
+  --status-good: #127436;
+  --status-warning: #b45309;
+  --status-serious: #c2410c;
+  --status-critical: #c8262c;
+  --status-good-weak: #e6f5ec;
+  --status-warning-weak: #fdf2e1;
+  --status-critical-weak: #fdeaea;
+  --status-critical-fill: #c8262c;
   /* Aliases used by a few surfaces (e.g. auth) that speak in "danger" terms. */
   --status-danger: var(--status-critical);
   --status-danger-weak: var(--status-critical-weak);
@@ -68,7 +77,7 @@
 
   /* Sequential ramp for risk gauges (single-hue blue, light->dark).
      Low probability = light/receded; high = saturated. NOT a stoplight. */
-  --seq-track: #e2e8ef;
+  --seq-track: #e2e9ef;
   --seq-100: #cde2fb;
   --seq-250: #86b6ef;
   --seq-400: #3987e5;
@@ -76,22 +85,23 @@
   --seq-600: #184f95;
   --seq-700: #0d366b;
 
-  /* Chart-paper plane texture + the ambient wash behind the app. */
-  --paper-rule: rgba(42, 111, 191, 0.055);
-  --wash-1: rgba(42, 111, 191, 0.09);
-  --wash-2: rgba(14, 138, 146, 0.07);
+  /* ECG chart-paper plane (minor + major rules) and the ambient wash. */
+  --paper-rule: rgba(13, 111, 189, 0.04);
+  --paper-rule-major: rgba(13, 111, 189, 0.07);
+  --wash-1: rgba(13, 111, 189, 0.08);
+  --wash-2: rgba(14, 147, 132, 0.07);
 
   /* Glass chrome (sticky header / floating bars) */
-  --glass: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(11, 17, 22, 0.08);
+  --glass: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(12, 27, 41, 0.08);
 
   /* Radii, shadow, spacing */
   --radius-sm: 7px;
-  --radius: 11px;
-  --radius-lg: 16px;
-  --shadow-1: 0 1px 2px rgba(16, 33, 51, 0.06), 0 1px 3px rgba(16, 33, 51, 0.05);
-  --shadow-2: 0 4px 16px rgba(16, 33, 51, 0.1);
-  --shadow-lift: 0 2px 4px rgba(16, 33, 51, 0.06), 0 12px 28px -10px rgba(16, 33, 51, 0.22);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(12, 40, 66, 0.05), 0 1px 3px rgba(12, 40, 66, 0.05);
+  --shadow-2: 0 10px 30px -6px rgba(12, 40, 66, 0.16);
+  --shadow-lift: 0 2px 4px rgba(12, 40, 66, 0.05), 0 14px 30px -12px rgba(12, 40, 66, 0.24);
 
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
@@ -106,35 +116,43 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --plane: #080c11;
-    --surface-1: #131a22;
-    --surface-2: #1a232c;
-    --surface-sunken: #0e141b;
+    /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
+       room. Never pure black; ink is a soft off-white, never #fff, to cut halation
+       on long night shifts. */
+    --plane: #08111a;
+    --surface-1: #0f1b27;
+    --surface-2: #152332;
+    --surface-sunken: #0b1520;
 
-    --text-primary: #ffffff;
-    --text-secondary: #b3c1cf;
-    --text-muted: #7d8b99;
-    --text-inverse: #0b1116;
+    --text-primary: #e7eef5;
+    --text-secondary: #a8b8c8;
+    --text-muted: #7d91a4;
+    --text-inverse: #08111a;
 
-    --border: rgba(255, 255, 255, 0.11);
-    --border-strong: #33404d;
-    --grid: #232e39;
+    --border: rgba(160, 196, 228, 0.12);
+    --border-strong: #2a3c4f;
+    --grid: #1b2a3a;
 
-    --accent: #3987e5;
-    --accent-strong: #5598e7;
-    --accent-weak: #14273c;
-    --accent-ink: #9ec5f4;
+    --accent: #3a9be6;
+    --accent-strong: #62b1ee;
+    --accent-weak: #10283e;
+    --accent-ink: #a3d3f7;
+    --accent-fill: #1b78c2;
+    --accent-fill-strong: #2386d4;
+    --on-accent: #ffffff;
 
-    --vital: #2bb6bf;
-    --vital-weak: #0e2a2d;
-    --vital-ink: #7fd8de;
+    --vital: #2cc3b1;
+    --vital-weak: #0b2b2b;
+    --vital-ink: #84e3d6;
 
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-serious: #ec835a;
-    --status-critical: #e05c4d;
-    --status-warning-weak: #2a230f;
-    --status-critical-weak: #2e1613;
+    --status-good: #3ccf7a;
+    --status-warning: #f4b740;
+    --status-serious: #f28c5e;
+    --status-critical: #f2695d;
+    --status-good-weak: #0d2a1c;
+    --status-warning-weak: #2b2310;
+    --status-critical-weak: #301716;
+  --status-critical-fill: #c0352d;
 
     --cat-1: #3987e5;
     --cat-2: #d95926;
@@ -146,7 +164,7 @@
     --cat-8: #e66767;
     --cat-other: #898781;
 
-    --seq-track: #232e39;
+    --seq-track: #1e2d3d;
     --seq-100: #14273c;
     --seq-250: #184f95;
     --seq-400: #256abf;
@@ -154,51 +172,60 @@
     --seq-600: #5598e7;
     --seq-700: #86b6ef;
 
-    --paper-rule: rgba(120, 180, 255, 0.045);
-    --wash-1: rgba(57, 135, 229, 0.13);
-    --wash-2: rgba(43, 182, 191, 0.09);
+    --paper-rule: rgba(58, 155, 230, 0.05);
+    --paper-rule-major: rgba(58, 155, 230, 0.085);
+    --wash-1: rgba(58, 155, 230, 0.14);
+    --wash-2: rgba(44, 195, 177, 0.1);
 
-    --glass: rgba(19, 26, 34, 0.82);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass: rgba(15, 27, 39, 0.8);
+    --glass-border: rgba(160, 196, 228, 0.1);
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 30px -10px rgba(0, 0, 0, 0.7);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(160, 196, 228, 0.02);
+    --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 32px -12px rgba(0, 0, 0, 0.75);
     --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --plane: #080c11;
-  --surface-1: #131a22;
-  --surface-2: #1a232c;
-  --surface-sunken: #0e141b;
+  /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
+     room. Never pure black; ink is a soft off-white, never #fff, to cut halation
+     on long night shifts. */
+  --plane: #08111a;
+  --surface-1: #0f1b27;
+  --surface-2: #152332;
+  --surface-sunken: #0b1520;
 
-  --text-primary: #ffffff;
-  --text-secondary: #b3c1cf;
-  --text-muted: #7d8b99;
-  --text-inverse: #0b1116;
+  --text-primary: #e7eef5;
+  --text-secondary: #a8b8c8;
+  --text-muted: #7d91a4;
+  --text-inverse: #08111a;
 
-  --border: rgba(255, 255, 255, 0.11);
-  --border-strong: #33404d;
-  --grid: #232e39;
+  --border: rgba(160, 196, 228, 0.12);
+  --border-strong: #2a3c4f;
+  --grid: #1b2a3a;
 
-  --accent: #3987e5;
-  --accent-strong: #5598e7;
-  --accent-weak: #14273c;
-  --accent-ink: #9ec5f4;
+  --accent: #3a9be6;
+  --accent-strong: #62b1ee;
+  --accent-weak: #10283e;
+  --accent-ink: #a3d3f7;
+  --accent-fill: #1b78c2;
+  --accent-fill-strong: #2386d4;
+  --on-accent: #ffffff;
 
-  --vital: #2bb6bf;
-  --vital-weak: #0e2a2d;
-  --vital-ink: #7fd8de;
+  --vital: #2cc3b1;
+  --vital-weak: #0b2b2b;
+  --vital-ink: #84e3d6;
 
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #e05c4d;
-  --status-warning-weak: #2a230f;
-  --status-critical-weak: #2e1613;
+  --status-good: #3ccf7a;
+  --status-warning: #f4b740;
+  --status-serious: #f28c5e;
+  --status-critical: #f2695d;
+  --status-good-weak: #0d2a1c;
+  --status-warning-weak: #2b2310;
+  --status-critical-weak: #301716;
+  --status-critical-fill: #c0352d;
 
   --cat-1: #3987e5;
   --cat-2: #d95926;
@@ -210,7 +237,7 @@
   --cat-8: #e66767;
   --cat-other: #898781;
 
-  --seq-track: #232e39;
+  --seq-track: #1e2d3d;
   --seq-100: #14273c;
   --seq-250: #184f95;
   --seq-400: #256abf;
@@ -218,16 +245,18 @@
   --seq-600: #5598e7;
   --seq-700: #86b6ef;
 
-  --paper-rule: rgba(120, 180, 255, 0.045);
-  --wash-1: rgba(57, 135, 229, 0.13);
-  --wash-2: rgba(43, 182, 191, 0.09);
+  --paper-rule: rgba(58, 155, 230, 0.05);
+  --paper-rule-major: rgba(58, 155, 230, 0.085);
+  --wash-1: rgba(58, 155, 230, 0.14);
+  --wash-2: rgba(44, 195, 177, 0.1);
 
-  --glass: rgba(19, 26, 34, 0.82);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass: rgba(15, 27, 39, 0.8);
+  --glass-border: rgba(160, 196, 228, 0.1);
 
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 14px 30px -10px rgba(0, 0, 0, 0.7);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(160, 196, 228, 0.02);
+  --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 32px -12px rgba(0, 0, 0, 0.75);
+  --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
 }
 
 /* --- reset / base --- */
@@ -253,9 +282,12 @@ body {
   background-color: var(--plane);
   background-image: radial-gradient(1200px 620px at 12% -8%, var(--wash-1), transparent 62%),
     radial-gradient(900px 520px at 92% -14%, var(--wash-2), transparent 60%),
+    linear-gradient(var(--paper-rule-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-rule-major) 1px, transparent 1px),
     linear-gradient(var(--paper-rule) 1px, transparent 1px),
     linear-gradient(90deg, var(--paper-rule) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 26px 26px, 26px 26px;
+  /* ECG paper: minor 5 mm-style cells, a heavier rule every fifth cell. */
+  background-size: 100% 100%, 100% 100%, 120px 120px, 120px 120px, 24px 24px, 24px 24px;
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -443,16 +475,16 @@ input[type="number"].input {
   transform: translateY(1px) scale(0.995);
 }
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-strong), var(--accent) 70%);
+  background: linear-gradient(135deg, var(--accent-fill-strong), var(--accent-fill) 70%);
   border-color: transparent;
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(11, 17, 22, 0.12), 0 8px 20px -8px var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 1px 2px rgba(11, 17, 22, 0.12), 0 8px 20px -8px color-mix(in srgb, var(--accent-fill) 70%, transparent);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--accent-strong), var(--accent-strong) 70%);
+  background: linear-gradient(135deg, var(--accent-fill-strong), var(--accent-fill-strong) 70%);
   border-color: transparent;
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(11, 17, 22, 0.14), 0 12px 26px -8px var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 2px 4px rgba(11, 17, 22, 0.14), 0 12px 26px -8px color-mix(in srgb, var(--accent-fill) 80%, transparent);
   transform: translateY(-1px);
 }
 /* A light sweep across the primary CTA on hover — the one deliberate flourish
@@ -583,8 +615,8 @@ input[type="number"].input {
   border-radius: 999px;
 }
 .level-required {
-  color: #fff;
-  background: var(--accent);
+  color: var(--on-accent);
+  background: var(--accent-fill);
 }
 .level-recommended {
   color: var(--accent-ink);

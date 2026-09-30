@@ -30,6 +30,17 @@
   padding: 10px 20px;
   border-bottom: 1px solid var(--border);
   min-height: 58px;
+  box-shadow: 0 1px 0 var(--glass-border), 0 6px 18px -14px rgba(12, 40, 66, 0.35);
+}
+/* Clinical accent strip across the top of every signed-in surface. */
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--vital) 60%, var(--accent));
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .topbar-left,
@@ -66,8 +77,9 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-sm);
-  background: linear-gradient(140deg, var(--accent), var(--vital));
-  color: #fff;
+  background: linear-gradient(140deg, var(--accent-fill), var(--vital));
+  color: var(--on-accent);
+  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--accent-fill) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   flex: none;
 }
 
@@ -94,7 +106,7 @@
   overflow-y: auto;
   padding: 16px 12px 12px;
   border-inline-end: 1px solid var(--border);
-  background: var(--surface-1);
+  background: linear-gradient(180deg, var(--surface-1), color-mix(in srgb, var(--surface-1) 88%, var(--surface-2)));
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -112,6 +124,7 @@
 }
 
 .rail-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -128,8 +141,20 @@
 .rail-item.is-active {
   background: var(--accent-weak);
   color: var(--accent-ink);
+  font-weight: 650;
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
+.rail-item.is-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -12px;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--accent), var(--vital));
+}
+.rail-item.is-active .rail-icon { color: var(--accent); }
 .rail-icon { display: grid; place-items: center; flex: none; }
 .rail-label { flex: 1; min-width: 0; }
 .rail-ref {
@@ -276,11 +301,11 @@
 /* ---------- buttons ------------------------------------------------------- */
 
 .btn-danger {
-  background: var(--status-critical);
-  border-color: var(--status-critical);
-  color: #fff;
+  background: var(--status-critical-fill);
+  border-color: var(--status-critical-fill);
+  color: var(--on-accent);
 }
-.btn-danger:hover { filter: brightness(1.08); }
+.btn-danger:hover { filter: brightness(1.08); background: var(--status-critical-fill); border-color: var(--status-critical-fill); color: var(--on-accent); }
 
 .icon-btn {
   display: grid;
@@ -357,7 +382,7 @@
   flex: none;
   transition: background 0.16s var(--ease), border-color 0.16s var(--ease);
 }
-.switch.is-on { background: var(--accent); border-color: var(--accent); }
+.switch.is-on { background: var(--accent-fill); border-color: var(--accent-fill); }
 .switch-knob {
   position: absolute;
   top: 2px;
@@ -695,7 +720,7 @@
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-strong);
   white-space: nowrap;
-  background: var(--surface-1);
+  background: var(--surface-2);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -747,14 +772,14 @@
 }
 .pill-neutral { background: var(--surface-sunken); color: var(--text-secondary); border-color: var(--border); }
 .pill-accent { background: var(--accent-weak); color: var(--accent-ink); }
-.pill-good { background: color-mix(in srgb, var(--status-good) 12%, var(--surface-1)); color: var(--status-good); border-color: color-mix(in srgb, var(--status-good) 30%, transparent); }
+.pill-good { background: var(--status-good-weak); color: var(--status-good); border-color: color-mix(in srgb, var(--status-good) 30%, transparent); }
 .pill-warning { background: var(--status-warning-weak); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 34%, transparent); }
 .pill-critical { background: var(--status-critical-weak); color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 32%, transparent); }
 
 .badge-neutral { background: var(--surface-sunken); color: var(--text-secondary); }
 .badge-critical { background: var(--status-critical-weak); color: var(--status-critical); }
 .badge-warning { background: var(--status-warning-weak); color: var(--status-warning); }
-.badge-good { background: color-mix(in srgb, var(--status-good) 12%, var(--surface-1)); color: var(--status-good); }
+.badge-good { background: var(--status-good-weak); color: var(--status-good); }
 
 .role-badge {
   display: inline-flex;
@@ -1296,8 +1321,8 @@
   position: fixed; right: 20px; bottom: 20px; z-index: 60;
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 16px; border: none; border-radius: 999px; cursor: pointer;
-  background: var(--accent); color: var(--accent-ink, #fff);
-  font: 600 13.5px/1 var(--font-sans); box-shadow: var(--shadow-lift, 0 8px 24px rgba(0,0,0,.18));
+  background: linear-gradient(135deg, var(--accent-fill), color-mix(in srgb, var(--accent-fill) 70%, var(--vital))); color: var(--on-accent);
+  font: 600 13.5px/1 var(--font-sans); box-shadow: var(--shadow-lift);
 }
 .chat-fab:hover { filter: brightness(1.05); }
 .chat-fab .chat-glyph { display: inline-flex; }
@@ -1307,7 +1332,7 @@
   width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 40px));
   display: flex; flex-direction: column;
   background: var(--surface-0); border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 14px); box-shadow: var(--shadow-lift, 0 12px 40px rgba(0,0,0,.22));
+  border-radius: var(--radius-lg, 14px); box-shadow: var(--shadow-lift);
   overflow: hidden;
 }
 .chat-dock-head {
@@ -1324,7 +1349,7 @@
   white-space: pre-wrap; word-break: break-word;
 }
 .chat-assistant { align-self: flex-start; background: var(--surface-2); color: var(--text-primary); border-bottom-left-radius: 4px; }
-.chat-user { align-self: flex-end; background: var(--accent); color: var(--accent-ink, #fff); border-bottom-right-radius: 4px; }
+.chat-user { align-self: flex-end; background: var(--accent-fill); color: var(--on-accent); border-bottom-right-radius: 4px; }
 .chat-typing { opacity: .6; letter-spacing: 2px; }
 .chat-captured {
   display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 12px; border-top: 1px solid var(--border);
