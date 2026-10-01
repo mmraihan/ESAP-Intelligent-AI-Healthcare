@@ -33,7 +33,7 @@ Never commit `.env`, and never paste real keys into chats, tickets or docs.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ESAP_CORS_ORIGINS` | `http://localhost:5175,http://127.0.0.1:5175` | Comma-separated origins allowed to call the API. Production must include the frontend, e.g. `https://esap-intelligent-ai-healthcare-r6cz.vercel.app`. |
+| `ESAP_CORS_ORIGINS` | `http://localhost:5175,http://127.0.0.1:5175` | Comma-separated origins allowed to call the API. Production must include the frontend, e.g. `https://care.esap.ai`. |
 | `ESAP_CORS_ORIGIN_REGEX` | `http://(localhost\|127\.0\.0\.1)(:\d+)?` | Extra origins by pattern (any local port, since Vite moves off 5175 when it is busy). Set to an empty value to turn off. |
 
 ## LLM (chat assistant)
@@ -103,7 +103,8 @@ LLM_TIMEOUT_S=30
 MODEL_MODE=stub
 ESAP_DB_PATH=esap.db
 ESAP_SECRET=<long random value>
-ESAP_CORS_ORIGINS=https://esap-intelligent-ai-healthcare-r6cz.vercel.app
+ESAP_CORS_ORIGINS=https://care.esap.ai,http://localhost:5175,http://127.0.0.1:5175
+ESAP_CORS_ORIGIN_REGEX=https://esap-intelligent-ai-healthcare(-[a-z0-9-]+)?\.vercel\.app
 ESAP_ALLOW_PREFILL=false
 ESAP_DEMO_ALL_ACCESS=false
 
