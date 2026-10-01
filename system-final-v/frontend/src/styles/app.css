@@ -83,13 +83,24 @@
   flex: none;
 }
 
+.brand-glyph svg { display: block; }
+.brand-cross { fill: var(--on-accent); }
+.brand-pulse {
+  fill: none;
+  stroke: var(--accent-fill);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .brand-words {
   display: flex;
   flex-direction: column;
-  line-height: 1.05;
+  gap: 4px;
+  line-height: 1;
 }
-.brand-words strong { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-.brand-words span { font-size: 10.5px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.brand-words strong { font-size: 16px; font-weight: 750; letter-spacing: 0.03em; color: var(--text-primary); }
+.brand-words span { font-size: 9.5px; color: var(--vital-ink); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 
 .shell-body {
   display: grid;
@@ -1364,3 +1375,260 @@
 }
 .chat-dock-input input:focus { outline: 2px solid var(--focus, var(--accent)); outline-offset: 1px; }
 .chat-foot { margin: 0; padding: 0 12px 10px; font-size: 11px; color: var(--text-muted); background: var(--surface-1); }
+
+/* =========================================================================
+   Clinical polish layer.
+   Presentation only: refines the shell, page furniture, tables and the
+   public/auth surfaces toward a calm, hospital-grade read. Every color is a
+   token; the ECG motif is a mask filled with a token, so it themes for free.
+   ========================================================================= */
+
+:root {
+  --ecg-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60'%3E%3Cpath d='M0 30 H78 L86 30 L92 22 L98 30 L108 30 L114 6 L122 54 L128 30 L138 30 L148 19 L158 30 H240' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ---- top bar: workspace tag reads as a live clinical context pill ---- */
+.surface-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px 3px 9px;
+  border-radius: 999px;
+  background: var(--vital-weak);
+  color: var(--vital-ink);
+  border: 1px solid color-mix(in srgb, var(--vital) 22%, transparent);
+  font-size: 12px;
+}
+.surface-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vital);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vital) 22%, transparent);
+}
+@media (max-width: 1000px) { .surface-tag { display: none; } }
+
+.avatar {
+  background: linear-gradient(140deg, var(--accent-weak), var(--vital-weak));
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.identity-btn { box-shadow: var(--shadow-1); }
+
+/* ---- navigation rail: section titles carry a hairline ---- */
+.rail-title { display: flex; align-items: center; gap: 8px; margin-inline-end: 6px; }
+.rail-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.rail-item .rail-icon { color: var(--text-muted); transition: color 0.14s var(--ease); }
+.rail-item:hover .rail-icon { color: var(--accent); }
+.rail-item.is-active .rail-icon { color: var(--accent); }
+
+/* ---- page header: chart-style header with a medical-cross eyebrow ---- */
+.page-head {
+  position: relative;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.page-head::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -1px;
+  width: 72px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--vital));
+}
+.page-eyebrow { display: inline-flex; align-items: center; gap: 7px; }
+.page-eyebrow::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background:
+    linear-gradient(var(--vital), var(--vital)) center / 100% 3px no-repeat,
+    linear-gradient(var(--vital), var(--vital)) center / 3px 100% no-repeat;
+}
+.page-title { font-size: 24px; letter-spacing: -0.02em; }
+
+/* ---- cards & section titles ---- */
+.card-title { letter-spacing: -0.012em; }
+.section-title { display: inline-flex; align-items: center; gap: 9px; }
+.section-title::before {
+  content: "";
+  flex: none;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--vital));
+}
+.card-footnote { border-top-style: dashed; }
+
+/* ---- stat tiles: instrument readouts with tinted icon wells ---- */
+.stat-tile {
+  position: relative;
+  gap: 6px;
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.stat-tile:hover {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  box-shadow: var(--shadow-lift);
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.stat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+}
+.stat-value { font-size: 28px; font-variant-numeric: tabular-nums; }
+.stat-tile.tone-good .stat-icon { background: var(--status-good-weak); color: var(--status-good); }
+.stat-tile.tone-warning .stat-icon { background: var(--status-warning-weak); color: var(--status-warning); }
+.stat-tile.tone-critical .stat-icon { background: var(--status-critical-weak); color: var(--status-critical); }
+
+/* ---- form controls: clearer focus ring, soft inset like a paper form ---- */
+.input,
+.select,
+textarea.input {
+  box-shadow: inset 0 1px 2px rgba(12, 40, 66, 0.04);
+}
+.input:focus-visible,
+.select:focus-visible,
+textarea.input:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.input[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-critical) 22%, transparent);
+}
+
+/* ---- tables: EMR-style banded rows, tinted header ---- */
+.data-table th { color: var(--text-secondary); font-size: 10.5px; letter-spacing: 0.07em; }
+.data-table tbody tr:nth-child(even):not(.is-selected):not(:hover) {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.data-table tbody tr.is-clickable:hover {
+  background: color-mix(in srgb, var(--accent-weak) 75%, var(--surface-1));
+}
+.data-table tbody tr.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+/* ---- alerts: a leading severity bar, the clinical alert convention ---- */
+.banner-good { border-inline-start: 3px solid var(--status-good); }
+.banner-warning { border-inline-start: 3px solid var(--status-warning); }
+.banner-critical { border-inline-start: 3px solid var(--status-critical); }
+.banner-accent { border-inline-start: 3px solid var(--accent); }
+.inline-warn { border-inline-start: 3px solid var(--status-warning); }
+
+/* ---- empty states, modals, cards in grids ---- */
+.empty-state { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.empty-icon {
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.modal { overflow: hidden; }
+.modal-head { background: linear-gradient(180deg, var(--surface-2), var(--surface-1)); }
+.bed-card:hover,
+.tenant-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.risk-row { background: linear-gradient(180deg, var(--surface-1), color-mix(in srgb, var(--surface-2) 60%, var(--surface-1))); }
+
+/* ---- public site ---- */
+.site-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--vital) 60%, var(--accent));
+  pointer-events: none;
+}
+.site { background: transparent; }
+.hero { position: relative; padding-bottom: 56px; }
+.hero::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 44px;
+  background: linear-gradient(90deg, transparent, var(--vital) 20%, var(--accent) 80%, transparent);
+  -webkit-mask: var(--ecg-mask) repeat-x left center / 176px 44px;
+  mask: var(--ecg-mask) repeat-x left center / 176px 44px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.hero-eyebrow { border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+.feature {
+  position: relative;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.feature:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+.feature-icon {
+  background: linear-gradient(140deg, var(--accent-weak), var(--vital-weak));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.plan { box-shadow: var(--shadow-1); }
+.plan.is-featured { box-shadow: 0 0 0 1px var(--accent), var(--shadow-lift); }
+
+/* ---- sign-in: ECG trace running behind the card ---- */
+.auth-page {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+.auth-page::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 90px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, var(--vital), var(--accent));
+  -webkit-mask: var(--ecg-mask) repeat-x center / 360px 90px;
+  mask: var(--ecg-mask) repeat-x center / 360px 90px;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.auth-page > * { position: relative; z-index: 1; }
+.auth-card { position: relative; }
+.auth-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, var(--accent), var(--vital));
+}
+
+/* ---- patient portal hero: soft ECG signature on the trailing edge ---- */
+.patient-hero { position: relative; overflow: hidden; }
+.patient-hero::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: -20px;
+  bottom: 10px;
+  width: 280px;
+  height: 70px;
+  background: var(--vital);
+  -webkit-mask: var(--ecg-mask) no-repeat center / 280px 70px;
+  mask: var(--ecg-mask) no-repeat center / 280px 70px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.patient-hero > * { position: relative; }
+
+/* Arabic: tracking and uppercase break joined letterforms. */
+html[lang="ar"] .stat-label,
+html[lang="ar"] .brand-words span { letter-spacing: 0; text-transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .feature:hover { transform: none; }
+}

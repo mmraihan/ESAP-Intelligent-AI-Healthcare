@@ -15,18 +15,32 @@ import { initials } from "@/lib/format";
 import { AssistiveLine, RoleBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
-  BellIcon, ChevronDown, HeartPulseIcon, LogoutIcon, MenuIcon, UnlockIcon, XIcon,
+  BellIcon, ChevronDown, LogoutIcon, MenuIcon, UnlockIcon, XIcon,
 } from "@/components/ui/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { ChatAssistant } from "./ChatAssistant";
 import { LanguageToggle, t } from "@/i18n";
 import type { NavGroup } from "./nav";
 
-export function BrandMark({ size = 26, withWordmark = true }: { size?: number; withWordmark?: boolean }) {
+/** The ESAP mark: a medical cross with an ECG trace cut through its arm. */
+function BrandGlyph() {
+  return (
+    <svg viewBox="0 0 32 32" width="100%" height="100%" aria-hidden="true" focusable="false">
+      <rect className="brand-cross" x="12" y="5" width="8" height="22" rx="2.2" />
+      <rect className="brand-cross" x="5" y="12" width="22" height="8" rx="2.2" />
+      <polyline
+        className="brand-pulse"
+        points="5.6,16 10.6,16 12.6,13.3 14.8,19.4 17.2,10.6 19.4,18.3 21,16 26.4,16"
+      />
+    </svg>
+  );
+}
+
+export function BrandMark({ size = 30, withWordmark = true }: { size?: number; withWordmark?: boolean }) {
   return (
     <span className="brand">
       <span className="brand-glyph" style={{ width: size, height: size }} aria-hidden="true">
-        <HeartPulseIcon size={size * 0.62} />
+        <BrandGlyph />
       </span>
       {withWordmark && (
         <span className="brand-words">
