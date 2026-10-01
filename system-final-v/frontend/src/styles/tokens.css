@@ -14,55 +14,69 @@
 :root {
   color-scheme: light;
 
-  /* Surfaces / planes — a cool, sterile clinical white with the faintest
-     aqua cast (scrub-room tile, not office grey). */
-  --plane: #eff5f8;
+  /* Surfaces / planes — a calm, cool clinical grey plane under pure-white
+     cards: the read of a modern EHR, not an office app. */
+  --plane: #f1f4f8;
   --surface-1: #ffffff;
-  --surface-2: #f5f9fb;
-  --surface-sunken: #e7eff4;
+  --surface-2: #f7f9fc;
+  --surface-sunken: #e9eef4;
 
   /* Ink — deep clinical navy rather than neutral black. Muted ink clears
      WCAG AA (4.5:1) on white so hints and captions stay legible. */
-  --text-primary: #0c1b29;
-  --text-secondary: #43576a;
-  --text-muted: #5c6f82;
+  --text-primary: #0d1b2a;
+  --text-secondary: #44566a;
+  --text-muted: #5b6d80;
   --text-inverse: #ffffff;
 
-  /* Lines */
-  --border: rgba(12, 27, 41, 0.09);
-  --border-strong: #c4d3df;
-  --grid: #dde7ee;
+  /* Lines — solid hairlines read crisper than translucent ones on white. */
+  --border: #e0e6ee;
+  --border-strong: #c9d4df;
+  --grid: #e2e8ef;
 
-  /* Brand accent — trusted medical blue. --accent is for lines/icons;
+  /* Brand accent — trusted hospital blue. --accent is for lines/icons;
      --accent-fill is the solid fill behind white (--on-accent) text. */
-  --accent: #0d6fbd;
-  --accent-strong: #0a5a9c;
-  --accent-weak: #e5f1fb;
-  --accent-ink: #0a4f8a;
-  --accent-fill: #0d6fbd;
-  --accent-fill-strong: #0a5a9c;
+  --accent: #0b6bb0;
+  --accent-strong: #08578f;
+  --accent-weak: #e8f2fa;
+  --accent-ink: #074f84;
+  --accent-fill: #0b6bb0;
+  --accent-fill-strong: #08578f;
   --on-accent: #ffffff;
 
   /* Vital — clinical teal, the secondary "instrument" hue. Chrome only (ECG
      trace, live indicators, monitor accents); never a data-encoding color. */
-  --vital: #0e9384;
-  --vital-weak: #dff4f1;
-  --vital-ink: #0a6c61;
+  --vital: #0d9488;
+  --vital-weak: #e2f5f2;
+  --vital-ink: #0a6a61;
 
   /* Status (paired with icon + label, never color alone). Tuned to clinical
      alarm conventions and AA contrast as text on white. */
-  --status-good: #127436;
+  --status-good: #13743a;
   --status-warning: #b45309;
   --status-serious: #c2410c;
-  --status-critical: #c8262c;
-  --status-good-weak: #e6f5ec;
-  --status-warning-weak: #fdf2e1;
-  --status-critical-weak: #fdeaea;
-  --status-critical-fill: #c8262c;
+  --status-critical: #c42a2f;
+  --status-good-weak: #e7f5ec;
+  --status-warning-weak: #fdf3e3;
+  --status-critical-weak: #fcebeb;
+  --status-critical-fill: #c42a2f;
   /* Aliases used by a few surfaces (e.g. auth) that speak in "danger" terms. */
   --status-danger: var(--status-critical);
   --status-danger-weak: var(--status-critical-weak);
   --surface-0: var(--plane);
+
+  /* Navigation rail — deep hospital navy, the anchoring chrome of clinical
+     systems. Its own token set so the rail can stay dark in light mode. */
+  --rail-bg: #0b2136;
+  --rail-bg-end: #0a1b2c;
+  --rail-text: #c3d1de;
+  --rail-text-strong: #ffffff;
+  --rail-text-muted: #8da2b6;
+  --rail-hover: rgba(255, 255, 255, 0.06);
+  --rail-active: rgba(77, 182, 230, 0.16);
+  --rail-active-border: rgba(110, 196, 236, 0.28);
+  --rail-indicator: #2cc3b1;
+  --rail-icon-active: #7fd0f2;
+  --rail-border: rgba(255, 255, 255, 0.08);
 
   /* Categorical slots (CCSR families) — validated 8-hue order, light */
   --cat-1: #2a78d6;
@@ -85,32 +99,32 @@
   --seq-600: #184f95;
   --seq-700: #0d366b;
 
-  /* ECG chart-paper plane (minor + major rules) and the ambient wash. */
-  --paper-rule: rgba(13, 111, 189, 0.04);
-  --paper-rule-major: rgba(13, 111, 189, 0.07);
-  --wash-1: rgba(13, 111, 189, 0.08);
-  --wash-2: rgba(14, 147, 132, 0.07);
+  /* ECG chart-paper plane (minor + major rules) and the ambient wash. Kept
+     faint: texture, never pattern. */
+  --paper-rule: rgba(11, 107, 176, 0.025);
+  --paper-rule-major: rgba(11, 107, 176, 0.045);
+  --wash-1: rgba(11, 107, 176, 0.07);
+  --wash-2: rgba(13, 148, 136, 0.06);
 
   /* Glass chrome (sticky header / floating bars) */
-  --glass: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(12, 27, 41, 0.08);
+  --glass: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(13, 27, 42, 0.07);
 
   /* Radii, shadow, spacing */
-  --radius-sm: 7px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow-1: 0 1px 2px rgba(12, 40, 66, 0.05), 0 1px 3px rgba(12, 40, 66, 0.05);
-  --shadow-2: 0 10px 30px -6px rgba(12, 40, 66, 0.16);
-  --shadow-lift: 0 2px 4px rgba(12, 40, 66, 0.05), 0 14px 30px -12px rgba(12, 40, 66, 0.24);
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-1: 0 1px 2px rgba(16, 32, 52, 0.05);
+  --shadow-2: 0 12px 32px -8px rgba(16, 32, 52, 0.18), 0 2px 6px rgba(16, 32, 52, 0.06);
+  --shadow-lift: 0 1px 2px rgba(16, 32, 52, 0.05), 0 8px 22px -10px rgba(16, 32, 52, 0.2);
 
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
 
   --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
 
-  /* One easing curve for the whole product: a slight overshoot that reads
-     responsive rather than floaty. */
-  --ease: cubic-bezier(0.32, 0.72, 0.26, 1.02);
+  /* One easing curve for the whole product: calm and decisive. */
+  --ease: cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -119,31 +133,31 @@
     /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
        room. Never pure black; ink is a soft off-white, never #fff, to cut halation
        on long night shifts. */
-    --plane: #08111a;
-    --surface-1: #0f1b27;
-    --surface-2: #152332;
-    --surface-sunken: #0b1520;
+    --plane: #08121c;
+    --surface-1: #0e1a26;
+    --surface-2: #132231;
+    --surface-sunken: #0a1520;
 
-    --text-primary: #e7eef5;
-    --text-secondary: #a8b8c8;
-    --text-muted: #7d91a4;
-    --text-inverse: #08111a;
+    --text-primary: #e6edf4;
+    --text-secondary: #a7b7c7;
+    --text-muted: #8094a8;
+    --text-inverse: #08121c;
 
-    --border: rgba(160, 196, 228, 0.12);
-    --border-strong: #2a3c4f;
-    --grid: #1b2a3a;
+    --border: #1d2d3e;
+    --border-strong: #2b3d50;
+    --grid: #1a2939;
 
-    --accent: #3a9be6;
-    --accent-strong: #62b1ee;
-    --accent-weak: #10283e;
-    --accent-ink: #a3d3f7;
-    --accent-fill: #1b78c2;
-    --accent-fill-strong: #2386d4;
+    --accent: #3d9fe0;
+    --accent-strong: #66b4ea;
+    --accent-weak: #0f2840;
+    --accent-ink: #a5d4f5;
+    --accent-fill: #1873b8;
+    --accent-fill-strong: #2183cc;
     --on-accent: #ffffff;
 
     --vital: #2cc3b1;
-    --vital-weak: #0b2b2b;
-    --vital-ink: #84e3d6;
+    --vital-weak: #0b2a2a;
+    --vital-ink: #86e2d5;
 
     --status-good: #3ccf7a;
     --status-warning: #f4b740;
@@ -152,7 +166,19 @@
     --status-good-weak: #0d2a1c;
     --status-warning-weak: #2b2310;
     --status-critical-weak: #301716;
-  --status-critical-fill: #c0352d;
+    --status-critical-fill: #c0352d;
+
+    --rail-bg: #0a1622;
+    --rail-bg-end: #08121c;
+    --rail-text: #b4c3d2;
+    --rail-text-strong: #f1f5f9;
+    --rail-text-muted: #7b90a4;
+    --rail-hover: rgba(255, 255, 255, 0.05);
+    --rail-active: rgba(61, 159, 224, 0.16);
+    --rail-active-border: rgba(61, 159, 224, 0.3);
+    --rail-indicator: #2cc3b1;
+    --rail-icon-active: #7fc6f0;
+    --rail-border: #1a2938;
 
     --cat-1: #3987e5;
     --cat-2: #d95926;
@@ -172,17 +198,17 @@
     --seq-600: #5598e7;
     --seq-700: #86b6ef;
 
-    --paper-rule: rgba(58, 155, 230, 0.05);
-    --paper-rule-major: rgba(58, 155, 230, 0.085);
-    --wash-1: rgba(58, 155, 230, 0.14);
-    --wash-2: rgba(44, 195, 177, 0.1);
+    --paper-rule: rgba(61, 159, 224, 0.03);
+    --paper-rule-major: rgba(61, 159, 224, 0.055);
+    --wash-1: rgba(61, 159, 224, 0.12);
+    --wash-2: rgba(44, 195, 177, 0.08);
 
-    --glass: rgba(15, 27, 39, 0.8);
-    --glass-border: rgba(160, 196, 228, 0.1);
+    --glass: rgba(14, 26, 38, 0.9);
+    --glass-border: rgba(160, 196, 228, 0.08);
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(160, 196, 228, 0.02);
-    --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.55);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 32px -12px rgba(0, 0, 0, 0.75);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 30px -12px rgba(0, 0, 0, 0.7);
     --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
   }
 }
@@ -192,31 +218,31 @@
   /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
      room. Never pure black; ink is a soft off-white, never #fff, to cut halation
      on long night shifts. */
-  --plane: #08111a;
-  --surface-1: #0f1b27;
-  --surface-2: #152332;
-  --surface-sunken: #0b1520;
+  --plane: #08121c;
+  --surface-1: #0e1a26;
+  --surface-2: #132231;
+  --surface-sunken: #0a1520;
 
-  --text-primary: #e7eef5;
-  --text-secondary: #a8b8c8;
-  --text-muted: #7d91a4;
-  --text-inverse: #08111a;
+  --text-primary: #e6edf4;
+  --text-secondary: #a7b7c7;
+  --text-muted: #8094a8;
+  --text-inverse: #08121c;
 
-  --border: rgba(160, 196, 228, 0.12);
-  --border-strong: #2a3c4f;
-  --grid: #1b2a3a;
+  --border: #1d2d3e;
+  --border-strong: #2b3d50;
+  --grid: #1a2939;
 
-  --accent: #3a9be6;
-  --accent-strong: #62b1ee;
-  --accent-weak: #10283e;
-  --accent-ink: #a3d3f7;
-  --accent-fill: #1b78c2;
-  --accent-fill-strong: #2386d4;
+  --accent: #3d9fe0;
+  --accent-strong: #66b4ea;
+  --accent-weak: #0f2840;
+  --accent-ink: #a5d4f5;
+  --accent-fill: #1873b8;
+  --accent-fill-strong: #2183cc;
   --on-accent: #ffffff;
 
   --vital: #2cc3b1;
-  --vital-weak: #0b2b2b;
-  --vital-ink: #84e3d6;
+  --vital-weak: #0b2a2a;
+  --vital-ink: #86e2d5;
 
   --status-good: #3ccf7a;
   --status-warning: #f4b740;
@@ -226,6 +252,18 @@
   --status-warning-weak: #2b2310;
   --status-critical-weak: #301716;
   --status-critical-fill: #c0352d;
+
+  --rail-bg: #0a1622;
+  --rail-bg-end: #08121c;
+  --rail-text: #b4c3d2;
+  --rail-text-strong: #f1f5f9;
+  --rail-text-muted: #7b90a4;
+  --rail-hover: rgba(255, 255, 255, 0.05);
+  --rail-active: rgba(61, 159, 224, 0.16);
+  --rail-active-border: rgba(61, 159, 224, 0.3);
+  --rail-indicator: #2cc3b1;
+  --rail-icon-active: #7fc6f0;
+  --rail-border: #1a2938;
 
   --cat-1: #3987e5;
   --cat-2: #d95926;
@@ -245,17 +283,17 @@
   --seq-600: #5598e7;
   --seq-700: #86b6ef;
 
-  --paper-rule: rgba(58, 155, 230, 0.05);
-  --paper-rule-major: rgba(58, 155, 230, 0.085);
-  --wash-1: rgba(58, 155, 230, 0.14);
-  --wash-2: rgba(44, 195, 177, 0.1);
+  --paper-rule: rgba(61, 159, 224, 0.03);
+  --paper-rule-major: rgba(61, 159, 224, 0.055);
+  --wash-1: rgba(61, 159, 224, 0.12);
+  --wash-2: rgba(44, 195, 177, 0.08);
 
-  --glass: rgba(15, 27, 39, 0.8);
-  --glass-border: rgba(160, 196, 228, 0.1);
+  --glass: rgba(14, 26, 38, 0.9);
+  --glass-border: rgba(160, 196, 228, 0.08);
 
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(160, 196, 228, 0.02);
-  --shadow-2: 0 8px 28px rgba(0, 0, 0, 0.55);
-  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 32px -12px rgba(0, 0, 0, 0.75);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 14px 30px -12px rgba(0, 0, 0, 0.7);
   --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
 }
 
@@ -273,9 +311,14 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
+  /* Inter's recommended tracking at UI sizes: keeps dense tables on one line. */
+  letter-spacing: -0.011em;
   color: var(--text-primary);
+  /* Inter: disambiguated glyphs (cv05 = l with tail, cv08 = upper-case i with
+     serifs, ss02 open digits) so MRNs, doses and lab values never misread. */
+  font-feature-settings: "cv05" 1, "cv08" 1, "ss02" 1;
   /* Chart paper: two hairline rules over the plane, with a soft clinical wash
      in the top corners so the page reads as an instrument surface rather than
      a flat grey. Fixed so the texture never scrolls with the content. */
@@ -299,7 +342,7 @@ h4 {
   margin: 0;
   font-weight: 650;
   line-height: 1.25;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.02em;
 }
 p {
   margin: 0;
@@ -412,8 +455,9 @@ a {
 .select,
 textarea.input {
   width: 100%;
-  padding: 9px 11px;
+  padding: 8px 11px;
   font: inherit;
+  font-size: 14px;
   color: var(--text-primary);
   background: var(--surface-1);
   border: 1px solid var(--border-strong);
@@ -422,7 +466,7 @@ textarea.input {
 .input:hover,
 .select:hover,
 textarea.input:hover {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
 }
 .input:focus-visible,
 .select:focus-visible,
@@ -457,8 +501,10 @@ input[type="number"].input {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 16px;
+  padding: 8px 15px;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.005em;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface-1);
@@ -468,24 +514,23 @@ input[type="number"].input {
 }
 .btn:hover {
   background: var(--surface-2);
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
   color: var(--accent-ink);
 }
 .btn:active {
   transform: translateY(1px) scale(0.995);
 }
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-fill-strong), var(--accent-fill) 70%);
-  border-color: transparent;
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--on-accent);
-  box-shadow: 0 1px 2px rgba(11, 17, 22, 0.12), 0 8px 20px -8px color-mix(in srgb, var(--accent-fill) 70%, transparent);
+  box-shadow: 0 1px 2px rgba(16, 32, 52, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--accent-fill-strong), var(--accent-fill-strong) 70%);
-  border-color: transparent;
+  background: var(--accent-fill-strong);
+  border-color: var(--accent-fill-strong);
   color: var(--on-accent);
-  box-shadow: 0 2px 4px rgba(11, 17, 22, 0.14), 0 12px 26px -8px color-mix(in srgb, var(--accent-fill) 80%, transparent);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--accent-fill) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 /* A light sweep across the primary CTA on hover — the one deliberate flourish
    in the product, reserved for the single most important action on a screen. */
@@ -501,8 +546,9 @@ input[type="number"].input {
   opacity: 0;
   pointer-events: none;
 }
-.btn-primary:hover::after {
-  animation: sheen 0.75s var(--ease);
+/* The sheen is retired: clinical software should feel steady, not showy. */
+.btn-primary::after {
+  display: none;
 }
 @keyframes sheen {
   0% {
@@ -790,7 +836,7 @@ input[type="number"].input {
   bottom: 0;
   height: 2px;
   border-radius: 2px 2px 0 0;
-  background: linear-gradient(90deg, var(--accent), var(--vital));
+  background: var(--accent);
   transition: left 0.32s var(--ease), width 0.32s var(--ease), opacity 0.2s var(--ease);
 }
 

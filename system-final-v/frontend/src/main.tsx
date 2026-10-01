@@ -6,6 +6,8 @@ import { App } from "./App";
 import { I18nProvider } from "./i18n";
 import { boot } from "./api/bootstrap";
 import { useSession } from "./lib/session";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
 import "./styles/app.css";
 
 /**
