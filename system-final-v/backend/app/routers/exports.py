@@ -153,7 +153,26 @@ def _payload(kind: str, actor: Actor, tenant_id: str, scope: dict) -> tuple[list
     if kind == "patient_record":
         if actor.role != "patient":
             raise ApiError(403, "A full patient record export is the patient's own right of access.")
+        from ..care_team import encounters_for, for_patient as care_team_for
+
+        # The readable PDF needs a header (who this record belongs to) and the
+        # stays it covers. Stays are the patient-safe subset only: no risk
+        # scores, no differential, no audit covariates (§13.6).
+        encounters = sorted(encounters_for(actor.user_id),
+                            key=lambda e: e.get("admittedAt") or "", reverse=True)
+        latest = encounters[0]["patient"] if encounters else {}
         return {
+            "patient": {
+                # The account holder's own name heads their record.
+                "name": display_name(actor) or latest.get("name"),
+                "email": actor.email,
+                "mrn": latest.get("mrn"), "age": latest.get("age"), "sex": latest.get("sex"),
+            },
+            "encounters": [{
+                k: e.get(k) for k in ("id", "admittedAt", "admissionType", "unitName", "bed",
+                                      "chiefComplaint", "attending", "nurse", "state")
+            } for e in encounters],
+            "careTeam": care_team_for(actor.user_id),
             "records": db.docs("SELECT doc FROM records WHERE patient_id=?", (actor.user_id,)),
             "results": db.docs("SELECT doc FROM released_results WHERE patient_id=?", (actor.user_id,)),
             "consents": db.docs("SELECT doc FROM consents WHERE patient_id=?", (actor.user_id,)),

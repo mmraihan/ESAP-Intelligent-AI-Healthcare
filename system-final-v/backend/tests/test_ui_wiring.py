@@ -255,3 +255,15 @@ def test_seeded_patients_are_scored_by_the_assessor(client, auth):
 def test_fairness_and_drift_are_empty_until_measured(client, auth):
     boot = client.get("/api/v1/bootstrap", headers=auth("privacy_officer")).json()
     assert boot["subgroup_fairness"] == [] and boot["drift"] == []
+
+
+def test_patient_record_export_carries_what_the_pdf_prints(client, auth):
+    r = client.post("/api/v1/exports", headers=auth("patient"), json={
+        "kind": "patient_record", "reason": "Patient right of access request"})
+    assert r.status_code == 201
+    data = r.json()["data"]
+    assert data["patient"]["name"] and data["patient"]["email"] == "delia.salib@example.com"
+    assert {"records", "results", "consents", "careTeam", "encounters"} <= set(data)
+    # Stays are the patient-safe subset: never a score, a differential or an audit covariate.
+    for e in data["encounters"]:
+        assert not {"risks", "topDifferential", "patient"} & set(e)

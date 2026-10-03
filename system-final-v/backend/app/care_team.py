@@ -28,11 +28,16 @@ def _person(name: str | None) -> str | None:
     return person(name)
 
 
-def for_patient(portal_id: str) -> list[dict]:
+def encounters_for(portal_id: str) -> list[dict]:
+    """Every encounter whose clinical patient is linked to this portal account."""
     links = db.document("portal_links") or {}
     clinical_ids = {cid for cid, pid in links.items() if pid == portal_id} | {portal_id}
-    encounters = [e for e in db.docs("SELECT doc FROM encounters")
-                  if e["patient"]["id"] in clinical_ids]
+    return [e for e in db.docs("SELECT doc FROM encounters")
+            if e["patient"]["id"] in clinical_ids]
+
+
+def for_patient(portal_id: str) -> list[dict]:
+    encounters = encounters_for(portal_id)
     current = [e for e in encounters if e.get("state") != "closed"] or encounters
     current.sort(key=lambda e: e.get("admittedAt") or "", reverse=True)
 

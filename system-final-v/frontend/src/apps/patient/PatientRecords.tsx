@@ -19,6 +19,7 @@ import {
 import { act } from "@/api/actions";
 import { api } from "@/api/client";
 import { RequestDialog, type RequestSpec } from "./RequestDialog";
+import type { ExportMeta, RecordExport } from "@/lib/recordPdf";
 
 /** Save JSON through the browser. The export itself was recorded server-side first. */
 function saveJson(filename: string, data: unknown) {
@@ -51,10 +52,29 @@ export function PatientRecords() {
   const [toast, setToast] = useState<string | null>(null);
   const [request, setRequest] = useState<RequestSpec | null>(null);
 
-  /** The whole record — a right-of-access export, recorded first, then saved as a file. */
+  /** The whole record — a right-of-access export, recorded first, then saved as a readable PDF. */
   async function downloadAll() {
     const message = await act(
-      () => api.post<{ data: unknown }>("/api/v1/exports", { kind: "patient_record", reason: "Patient right of access request" }),
+      async () => {
+        // The PDF library is loaded only when someone actually asks for a PDF.
+        const [res, pdf] = await Promise.all([
+          api.post<{ export: ExportMeta; data: RecordExport }>("/api/v1/exports", { kind: "patient_record", reason: "Patient right of access request" }),
+          import("@/lib/recordPdf"),
+        ]);
+        return { res, pdf };
+      },
+      ({ res, pdf }) => {
+        pdf.buildRecordPdf(res.data, res.export).save(pdf.recordFileName(res.data, res.export));
+        return t("Your whole record has been downloaded");
+      },
+    );
+    setToast(message);
+  }
+
+  /** The same export as a structured file another hospital's system can read. */
+  async function downloadStructured() {
+    const message = await act(
+      () => api.post<{ data: unknown }>("/api/v1/exports", { kind: "patient_record", reason: "Patient right of access request (structured file)" }),
       (res) => {
         saveJson("my-health-record.json", res.data);
         return t("Your whole record has been downloaded");
@@ -94,7 +114,12 @@ export function PatientRecords() {
         eyebrow={t("My records")}
         title={t("Everything on your record")}
         lede={t("Your visit summaries, test results and letters. This is your record — you can download all of it, at any time, without asking anyone.")}
-        actions={<Button variant="primary" icon={<DownloadIcon size={16} />} onClick={() => void downloadAll()}>{t("Download everything")}</Button>}
+        actions={
+          <div className="row" style={{ gap: 8 }}>
+            <Button icon={<GlobeIcon size={16} />} onClick={() => void downloadStructured()}>{t("Structured file")}</Button>
+            <Button variant="primary" icon={<DownloadIcon size={16} />} onClick={() => void downloadAll()}>{t("Download everything (PDF)")}</Button>
+          </div>
+        }
       />
 
       <Banner tone="accent" icon={<ShieldIcon size={18} />} title={t("You have a legal right to all of this")}>

@@ -438,6 +438,8 @@ export const AR: Record<string, string> = {
     "ملخصات زياراتك ونتائج فحوصك ورسائلك. هذا سجلك، ويمكنك تنزيله كاملًا في أي وقت دون أن تستأذن أحدًا.",
   "Preparing your full record — you will get an email when it is ready": "جارٍ تجهيز سجلك الكامل، وستصلك رسالة بريد إلكتروني عندما يصبح جاهزًا",
   "Download everything": "تنزيل كل شيء",
+  "Download everything (PDF)": "تنزيل كل شيء (PDF)",
+  "Structured file": "ملف منظم",
   "You have a legal right to all of this": "لك حق قانوني في الحصول على كل هذا",
   "You do not need to give a reason, and nobody can charge you for an electronic copy. If a download does not work or something seems to be missing, tell the hospital’s privacy officer — that is exactly what they are there for.":
     "لست بحاجة لذكر السبب، ولا يحق لأحد أن يطالبك بمقابل مالي للنسخة الإلكترونية. إذا لم ينجح التنزيل أو بدا أن شيئًا مفقودًا، فأخبر مسؤول الخصوصية في المستشفى، فهذه مهمته تحديدًا.",
