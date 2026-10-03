@@ -1,0 +1,3 @@
+Step-1:  For Individual Patinet https://esap-intelligent-ai-healthcare-r6cz.vercel.app/signup
+Step-2: go to tenant_owner	Hospital Admin
+Step: 3 physicia 	amara.okonkwo@styves.example
