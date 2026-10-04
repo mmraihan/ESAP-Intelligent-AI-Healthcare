@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESAP Clinical AI</title>
+<meta name="description" content="Product overview of ESAP Clinical AI: intake-time clinical decision support for hospitals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --text: #16202e;
+  --muted: #566274;
+  --line: #dde3eb;
+  --accent: #1d5fa8;
+  --accent-soft: #e3edf9;
+  --accent-ink: #ffffff;
+  --good: #1f7a4d;
+  --good-soft: #e2f3ea;
+  --warn: #9a5b00;
+  --warn-soft: #fbf0dc;
+  --bar: #1d5fa8;
+  --bar-track: #e3e8ef;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1319;
+    --surface: #161d26;
+    --surface-2: #1c2531;
+    --text: #e6ebf2;
+    --muted: #9aa7b8;
+    --line: #2a3542;
+    --accent: #6fa8ec;
+    --accent-soft: #1b2c42;
+    --accent-ink: #0e1319;
+    --good: #5fcf98;
+    --good-soft: #15302a;
+    --warn: #f0b25a;
+    --warn-soft: #33281a;
+    --bar: #6fa8ec;
+    --bar-track: #2a3542;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1319;
+  --surface: #161d26;
+  --surface-2: #1c2531;
+  --text: #e6ebf2;
+  --muted: #9aa7b8;
+  --line: #2a3542;
+  --accent: #6fa8ec;
+  --accent-soft: #1b2c42;
+  --accent-ink: #0e1319;
+  --good: #5fcf98;
+  --good-soft: #15302a;
+  --warn: #f0b25a;
+  --warn-soft: #33281a;
+  --bar: #6fa8ec;
+  --bar-track: #2a3542;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { line-height: 1.2; margin: 0; }
+h1, h2 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; letter-spacing: -.01em; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+section { padding: 64px 0; border-top: 1px solid var(--line); }
+.eyebrow { font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.lead { color: var(--muted); font-size: 1.08rem; max-width: 720px; margin-top: 12px; }
+.muted { color: var(--muted); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
+.brand { font-weight: 700; letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+.brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: .8rem; font-weight: 700; }
+.nav { display: flex; gap: 18px; margin-left: auto; font-size: .9rem; }
+.nav a { color: var(--muted); text-decoration: none; }
+.nav a:hover { color: var(--text); }
+.theme-btn { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: .85rem; cursor: pointer; }
+@media (max-width: 820px) { .nav { display: none; } .theme-btn { margin-left: auto; } }
+
+/* hero */
+.hero { padding: 72px 0 56px; border-top: 0; }
+.hero h1 { font-size: clamp(2.1rem, 5.4vw, 3.4rem); max-width: 820px; }
+.hero .lead { font-size: 1.18rem; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: .85rem; font-weight: 500; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 40px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+.stat b { display: block; font-size: 1.8rem; font-family: "Source Serif 4", Georgia, serif; }
+.stat span { color: var(--muted); font-size: .88rem; }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* cards & grids */
+.grid { display: grid; gap: 16px; margin-top: 32px; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 900px) { .g3, .g5 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .g2, .g3, .g5 { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+.card h3 { margin-bottom: 8px; }
+.card p { color: var(--muted); font-size: .95rem; }
+.tag { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); margin-bottom: 12px; }
+.model-code { font-weight: 700; color: var(--accent); font-size: .85rem; letter-spacing: .04em; }
+.model-q { font-weight: 600; margin: 6px 0 8px; }
+
+/* callout */
+.callout { margin-top: 28px; border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 16px 20px; border-radius: 0 10px 10px 0; }
+.callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+
+/* flow */
+.flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; margin-top: 36px; counter-reset: step; }
+.step { position: relative; padding: 0 10px; text-align: center; }
+.step .dot { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 12px; background: var(--surface); border: 2px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-weight: 700; position: relative; z-index: 1; }
+.step:not(:last-child)::after { content: ""; position: absolute; top: 22px; left: calc(50% + 22px); right: calc(-50% + 22px); height: 2px; background: var(--line); }
+.step h3 { font-size: .95rem; }
+.step p { color: var(--muted); font-size: .84rem; margin-top: 4px; }
+.step .who { display: inline-block; margin-top: 8px; font-size: .74rem; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.flow.f4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) {
+  .flow, .flow.f4 { grid-template-columns: 1fr; gap: 18px; }
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 14px; text-align: left; padding: 0; }
+  .step .dot { margin: 0; }
+  .step:not(:last-child)::after { top: 44px; left: 21px; right: auto; width: 2px; height: calc(100% - 26px); }
+}
+
+/* timeline cut diagram */
+.cut { margin-top: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }
+.cut-bar { display: grid; grid-template-columns: 1fr 3px 1fr; align-items: stretch; margin-top: 14px; border-radius: 10px; overflow: hidden; }
+.cut-bar .before { background: var(--accent-soft); padding: 14px 16px; }
+.cut-bar .line { background: var(--accent); }
+.cut-bar .after { background: repeating-linear-gradient(135deg, var(--surface-2) 0 10px, var(--bg) 10px 20px); padding: 14px 16px; color: var(--muted); }
+.cut-bar b { display: block; font-size: .9rem; color: var(--text); margin-bottom: 4px; }
+.cut-bar span { font-size: .85rem; }
+@media (max-width: 600px) { .cut-bar { grid-template-columns: 1fr; } .cut-bar .line { height: 3px; } }
+
+/* tables */
+.table-wrap { overflow-x: auto; margin-top: 28px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.meter { width: 140px; height: 8px; border-radius: 99px; background: var(--bar-track); overflow: hidden; margin-top: 6px; }
+.meter i { display: block; height: 100%; background: var(--bar); border-radius: 99px; }
+
+/* status */
+.status { display: inline-block; font-size: .75rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.s-live { background: var(--good-soft); color: var(--good); }
+.s-build { background: var(--accent-soft); color: var(--accent); }
+.s-plan { background: var(--surface-2); color: var(--muted); }
+.s-warn { background: var(--warn-soft); color: var(--warn); }
+
+/* roles */
+.surface-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.surface-list li { font-size: .8rem; padding: 3px 9px; border-radius: 6px; background: var(--surface-2); color: var(--text); }
+
+/* roadmap */
+.phases { margin-top: 32px; display: grid; gap: 12px; }
+.phase { display: grid; grid-template-columns: 90px 1fr auto; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow); }
+.phase .ph { font-weight: 700; color: var(--accent); font-size: .85rem; letter-spacing: .04em; }
+.phase h3 { font-size: 1rem; }
+.phase p { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+@media (max-width: 600px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+
+/* check list */
+.checks { list-style: none; padding: 0; margin: 12px 0 0; }
+.checks li { position: relative; padding-left: 26px; margin: 8px 0; color: var(--muted); font-size: .95rem; }
+.checks li::before { content: ""; position: absolute; left: 2px; top: 7px; width: 12px; height: 7px; border-left: 2px solid var(--good); border-bottom: 2px solid var(--good); transform: rotate(-45deg); }
+
+/* cta */
+.cta { background: var(--accent); color: var(--accent-ink); border-radius: 18px; padding: 40px 32px; margin-top: 8px; }
+.cta h2 { color: var(--accent-ink); }
+.cta p { opacity: .9; margin-top: 10px; max-width: 700px; }
+.cta ol { margin: 18px 0 0; padding-left: 20px; }
+.cta li { margin: 6px 0; }
+
+/* problem table */
+.prob td:first-child { width: 34%; }
+.prob td:first-child strong { display: block; }
+
+/* architecture diagram */
+.arch { margin-top: 32px; display: grid; gap: 14px; }
+.lane { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+.lane-title { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.chain { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; }
+.node { flex: 1 1 0; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.node b { display: block; font-size: .9rem; margin-bottom: 3px; }
+.node span { font-size: .8rem; color: var(--muted); display: block; line-height: 1.45; }
+.node.hl { background: var(--accent-soft); border-color: var(--accent); }
+.arrow { flex: 0 0 26px; display: grid; place-items: center; color: var(--accent); font-weight: 700; }
+.bridge { text-align: center; font-size: .85rem; color: var(--muted); }
+.bridge b { color: var(--accent); }
+.wall { border: 2px dashed var(--warn); color: var(--warn); background: var(--warn-soft); border-radius: 10px; padding: 8px 12px; font-size: .85rem; text-align: center; font-weight: 600; }
+@media (max-width: 900px) {
+  .chain { flex-direction: column; }
+  .arrow { flex-basis: 22px; transform: rotate(90deg); }
+}
+
+/* saas planes */
+.planes { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 32px; }
+.control { background: var(--accent); color: var(--accent-ink); border-radius: 14px; padding: 18px 20px; }
+.control b { font-size: 1rem; }
+.control p { opacity: .9; font-size: .9rem; margin-top: 4px; }
+.tenants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tenant { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+.tenant b { display: block; }
+.tenant .small { margin-top: 4px; }
+.tenant .lock { display: inline-block; margin-top: 10px; font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--good-soft); color: var(--good); }
+@media (max-width: 760px) { .tenants { grid-template-columns: 1fr; } }
+.onboard { counter-reset: ob; list-style: none; padding: 0; margin: 28px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.onboard li { counter-increment: ob; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+.onboard li::before { content: counter(ob); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .85rem; margin-bottom: 10px; }
+.onboard b { display: block; font-size: .95rem; }
+.onboard span { display: block; font-size: .85rem; color: var(--muted); margin-top: 4px; }
+@media (max-width: 900px) { .onboard { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .onboard { grid-template-columns: 1fr; } }
+
+footer { padding: 36px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+footer p + p { margin-top: 8px; }
+
+@media print {
+  .topbar, .theme-btn { display: none; }
+  body { background: #fff; }
+  section { padding: 28px 0; page-break-inside: avoid; }
+  .card, .stat, .table-wrap, .phase, .cut { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="brand-mark">E</span> ESAP Clinical AI</div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#why">Why ESAP</a>
+      <a href="#problems">Problems solved</a>
+      <a href="#who">Who uses it</a>
+      <a href="#people">For individuals</a>
+      <a href="#how">How it works</a>
+      <a href="#engine">Behind it</a>
+      <a href="#saas">As SaaS</a>
+      <a href="#results">Results</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch light or dark theme">Theme</button>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Product overview</div>
+    <h1>A second opinion at the moment of admission.</h1>
+    <p class="lead">ESAP is clinical decision support for hospitals. When a patient is admitted, it
+      uses only what is known at that moment and gives the care team a ranked list of likely
+      conditions plus four risk estimates, each explained and each checked for accuracy. A
+      clinician reviews every estimate and makes the decision. People who are not in hospital can use
+      it too: they describe their health problem and take a clear summary to a doctor.</p>
+    <div class="pill-row">
+      <span class="pill">Decision support, not diagnosis</span>
+      <span class="pill">Works alongside your existing EHR</span>
+      <span class="pill">Every estimate explained</span>
+      <span class="pill">Calibrated &amp; fairness-audited</span>
+      <span class="pill">For hospitals, doctors and individuals</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>5</b><span>predictions per admission</span></div>
+      <div class="stat"><b>~500</b><span>condition categories scored</span></div>
+      <div class="stat"><b>546k</b><span>admissions in the research data</span></div>
+      <div class="stat"><b>15</b><span>roles, each with its own view</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why">
+  <div class="wrap">
+    <div class="eyebrow">Why this product</div>
+    <h2>The first hours of an admission shape the whole stay</h2>
+    <p class="lead">Within minutes of a patient arriving, the team has to decide what to look for,
+      who needs closer watching, whether an ICU bed may be needed and when discharge planning should
+      start. These decisions are made under time pressure, with incomplete information, for many
+      patients at once.</p>
+    <div class="grid g3">
+      <div class="card"><span class="tag">The gap</span><h3>Early risk is hard to see</h3><p>Patients who will later need the ICU, stay long or come back within a month often look ordinary at the door. Their warning signs are spread across old records, home medications and a first set of labs that nobody has time to piece together.</p></div>
+      <div class="card"><span class="tag">The trust problem</span><h3>Most clinical AI is hard to trust</h3><p>Many tools give a score without a reason, are tested with information from later in the stay (so they look better than they are) and are not checked for fairness. Clinicians learn to ignore them.</p></div>
+      <div class="card"><span class="tag">The practical problem</span><h3>Hospitals do not want another system</h3><p>Hospitals are not replacing their EHR. They want focused tools that sit on top of what they already run, are quick to set up and do not add clicks or alarms.</p></div>
+    </div>
+    <div class="callout">
+      <strong>ESAP's answer:</strong> one assessment at admission that gives five useful estimates,
+      each with its reasoning shown, honestly tested, checked for fairness and reviewed by a clinician,
+      running alongside the hospital's existing EHR.
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEMS -->
+<section id="problems">
+  <div class="wrap">
+    <div class="eyebrow">Problems it solves</div>
+    <h2>What changes for the hospital</h2>
+    <div class="table-wrap">
+      <table class="prob">
+        <thead><tr><th>The problem today</th><th>How ESAP helps</th><th>Who benefits</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A possible condition is missed at admission</strong><span class="muted small">Especially in busy departments or with patients who have long histories</span></td><td class="muted">A ranked list of conditions the patient may already have, with the evidence behind each one, prompts the team to check them.</td><td class="muted">Physicians, residents, NPs/PAs</td></tr>
+          <tr><td><strong>Deterioration is noticed late</strong><span class="muted small">ICU needs and high-risk patients are recognised hours into the stay</span></td><td class="muted">ICU and mortality estimates from the first hour, so the team knows who to watch closely.</td><td class="muted">Physicians, charge nurses</td></tr>
+          <tr><td><strong>Nurse staffing is set without a risk picture</strong></td><td class="muted">A unit view that ranks every patient by ICU risk, with a structured shift handoff.</td><td class="muted">Charge nurses, bedside nurses</td></tr>
+          <tr><td><strong>Discharge planning starts too late</strong><span class="muted small">Leading to longer stays and avoidable readmissions</span></td><td class="muted">A length-of-stay range and a readmission estimate from day one, so arrangements start early.</td><td class="muted">Case managers, bed management</td></tr>
+          <tr><td><strong>Black-box AI nobody trusts</strong></td><td class="muted">Every number comes with a "Why?" panel, a calibration badge and labelled weaknesses. Clinicians can check the basis themselves.</td><td class="muted">Clinicians, CMIO</td></tr>
+          <tr><td><strong>AI bias and compliance risk</strong></td><td class="muted">Race, insurance and marital status are never used by the models, a fairness audit runs across patient groups, and every access is logged.</td><td class="muted">Privacy officer, quality team, legal</td></tr>
+          <tr><td><strong>Long, costly IT projects</strong></td><td class="muted">Standard connections (HL7, FHIR, SMART on FHIR, single sign-on), no data migration, and cloud or on-premises options.</td><td class="muted">IT, hospital leadership</td></tr>
+          <tr><td><strong>Patients left out of the conversation</strong></td><td class="muted">A patient portal (English and Arabic) with doctor-written summaries, symptom reports before visits, and control over who sees their record.</td><td class="muted">Patients, carers</td></tr>
+          <tr><td><strong>Short consultations, unclear histories</strong><span class="muted small">People outside hospital struggle to explain their problem in a few minutes</span></td><td class="muted">Anyone can describe their symptoms from home and bring a one-page summary to any doctor, with no hospital admission needed.</td><td class="muted">The public, independent doctors, clinics</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT -->
+<section id="what">
+  <div class="wrap">
+    <div class="eyebrow">What it does</div>
+    <h2>Five questions answered at intake</h2>
+    <p class="lead">The admitting team gets all five answers in seconds, from the information already
+      collected at the door: demographics, how the patient arrived, vital signs, early labs, past
+      diagnoses, home medications and the admission note.</p>
+    <div class="grid g5">
+      <div class="card">
+        <div class="model-code">M-01</div>
+        <div class="model-q">What might the patient already have?</div>
+        <p>A ranked differential across ~500 standard condition categories (AHRQ CCSR).</p>
+      </div>
+      <div class="card">
+        <div class="model-code">M-02</div>
+        <div class="model-q">In-hospital mortality</div>
+        <p>How often similar admissions did not survive to discharge.</p>
+      </div>
+      <div class="card">
+        <div class="model-code">M-03</div>
+        <div class="model-q">ICU admission</div>
+        <p>How often similar admissions needed intensive care during the stay.</p>
+      </div>
+      <div class="card">
+        <div class="model-code">M-04</div>
+        <div class="model-q">30-day readmission</div>
+        <p>How often similar patients came back within 30 days. Useful for early discharge planning.</p>
+      </div>
+      <div class="card">
+        <div class="model-code">M-05</div>
+        <div class="model-q">Length of stay</div>
+        <p>A range in days (for example 4–8 days), not a single guess.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>How to read a number.</strong> "Mortality 31%" means that of past admissions that
+      looked like this one at admission, about 31 in 100 did not survive to discharge. It describes a
+      group of similar patients, not a forecast for this one. ESAP says this on every results screen.
+    </div>
+  </div>
+</section>
+
+<!-- WHO -->
+<section id="who">
+  <div class="wrap">
+    <div class="eyebrow">Who uses it</div>
+    <h2>One platform, four workspaces, fifteen roles</h2>
+    <p class="lead">Each person sees only what their job needs. The server enforces the permissions on
+      every request, so hiding a button is never the only protection.</p>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Clinical workspace</span>
+        <h3>Doctors, nurses and the wider care team</h3>
+        <p>Physicians admit, assess, read the explanations and sign off. Nurses capture the intake and
+          vital signs, and the charge nurse sees the whole unit ranked by ICU risk to plan staffing and
+          handoffs. Case managers plan discharges from the length-of-stay and readmission estimates.</p>
+        <ul class="surface-list"><li>Attending</li><li>Resident / Fellow</li><li>NP / PA</li><li>Charge nurse</li><li>Bedside nurse</li><li>Case manager</li><li>Pharmacist</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">Hospital admin console</span>
+        <h3>The people who run and oversee the deployment</h3>
+        <p>Admins manage staff, units, integrations and what the models display. The privacy officer
+          reviews the audit log. The quality team monitors usage, accuracy and fairness. Billing sees
+          usage and invoices. None of these roles can open a patient chart.</p>
+        <ul class="surface-list"><li>Hospital admin</li><li>IT admin</li><li>Privacy officer</li><li>QI auditor</li><li>Billing admin</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">Patient portal</span>
+        <h3>Patients and their carers</h3>
+        <p>Patients read summaries their doctor wrote for them, send symptom updates before a visit,
+          download their records and decide who may see them. Available in English and Arabic,
+          including right-to-left layout.</p>
+        <ul class="surface-list"><li>Patient / Caregiver</li><li>Individual (no hospital needed)</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">Platform operations</span>
+        <h3>ESAP's own support team</h3>
+        <p>ESAP staff set up hospitals, monitor system health and roll out model updates. They have no
+          standing access to patient data. In an emergency, access is limited to one patient, needs a
+          written reason and a second approver, expires automatically and appears in your audit log.
+          Your hospital can switch this route off entirely.</p>
+        <ul class="surface-list"><li>Platform operator</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PEOPLE -->
+<section id="people">
+  <div class="wrap">
+    <div class="eyebrow">Not only for hospitals</div>
+    <h2>Anyone can prepare for a doctor's consultation</h2>
+    <p class="lead">You do not need to be admitted to a hospital to use ESAP. Anyone can create a free
+      personal account, describe their health problem in their own words and take a clear summary to a
+      doctor. Independent doctors, small clinics and telehealth doctors can use ESAP without a hospital
+      too.</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">For the public</span>
+        <h3>Describe your problem, then see a doctor well prepared</h3>
+        <ol class="checks" style="list-style:none">
+          <li><strong>Sign up</strong> with an email, in English or Arabic. No hospital link is needed.</li>
+          <li><strong>Tell us how you feel.</strong> Answer about five minutes of simple questions: what is bothering you, when it started, whether it is getting worse, other things you have noticed, the medicines you take and the questions you want to ask.</li>
+          <li><strong>Get a one-page summary</strong> of what has changed, what you take and your questions. You choose which parts to include.</li>
+          <li><strong>Share it with a doctor:</strong> download it, show it on your phone during the consultation, or send it to your care team once you are linked to a clinician or hospital.</li>
+          <li><strong>Keep control:</strong> decide who can see your information, and take access away at any time.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <span class="tag">For independent doctors</span>
+        <h3>The full clinical toolkit, without a hospital contract</h3>
+        <ol class="checks" style="list-style:none">
+          <li><strong>Self-serve sign-up</strong> for solo doctors, NPs, PAs, telehealth-only practices and small clinics. Ready the same day, with no IT project.</li>
+          <li><strong>A clinical attestation</strong> at sign-up confirms the user is trained to read risk estimates.</li>
+          <li><strong>The same five estimates</strong> and "Why?" explanations as the hospital version, for the doctor's own patients.</li>
+          <li><strong>Better consultations:</strong> the patient's own summary arrives before the visit, so time is spent on care, not on collecting history.</li>
+          <li><strong>A private account:</strong> each doctor's data is kept separate from everyone else's.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="flow f4">
+      <div class="step"><div class="dot">1</div><div><h3>Person describes the problem</h3><p>Guided questions in plain language, from home.</p><span class="who">Member of the public</span></div></div>
+      <div class="step"><div class="dot">2</div><div><h3>ESAP prepares a summary</h3><p>Symptoms, timeline, medicines and questions on one page.</p><span class="who">Automatic</span></div></div>
+      <div class="step"><div class="dot">3</div><div><h3>Consultation</h3><p>The doctor reads the summary and examines the patient.</p><span class="who">Doctor</span></div></div>
+      <div class="step"><div class="dot">4</div><div><h3>Doctor decides</h3><p>If needed, the doctor runs an ESAP assessment and shares a plain-language summary back.</p><span class="who">Doctor → patient</span></div></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Safe by design.</strong> ESAP does not diagnose members of the public or show them risk
+      scores. It helps them explain their problem clearly, and the doctor makes every clinical decision.
+      If someone reports warning signs such as chest pain or trouble breathing right now, ESAP tells them
+      to get urgent help instead of filling in a form.
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>From the admission form to a reviewed result</h2>
+    <div class="flow">
+      <div class="step"><div class="dot">1</div><div><h3>Admit</h3><p>Patient details are captured on the intake form, or arrive from the hospital's admission feed.</p><span class="who">Nurse or physician</span></div></div>
+      <div class="step"><div class="dot">2</div><div><h3>Freeze at admission</h3><p>The admission time is stamped. Nothing recorded later can enter an estimate.</p><span class="who">Automatic</span></div></div>
+      <div class="step"><div class="dot">3</div><div><h3>Assess</h3><p>All five models run and each result is calibrated.</p><span class="who">Physician / NP / PA</span></div></div>
+      <div class="step"><div class="dot">4</div><div><h3>Explain</h3><p>A <em>Why?</em> panel lists the inputs that raised or lowered each estimate.</p><span class="who">Automatic</span></div></div>
+      <div class="step"><div class="dot">5</div><div><h3>Review</h3><p>The physician acknowledges it. Other roles escalate to the physician.</p><span class="who">Care team</span></div></div>
+      <div class="step"><div class="dot">6</div><div><h3>Share</h3><p>The physician can release a plain-language summary to the patient portal.</p><span class="who">Physician → patient</span></div></div>
+    </div>
+
+    <div class="cut">
+      <h3>The admission-time cut</h3>
+      <p class="muted small" style="margin-top:6px">This is the rule that makes the numbers honest. A model that
+        could see later test results or discharge notes would look far more accurate than it really is
+        at the bedside. ESAP's data pipeline and every estimate enforce this rule.</p>
+      <div class="cut-bar" role="img" aria-label="Information known before admission is used; anything recorded after admission is never used">
+        <div class="before"><b>Used by the models</b><span>Age and sex, how the patient arrived, vital signs and labs taken at or before admission, past diagnoses, home medications, the admission note</span></div>
+        <div class="line"></div>
+        <div class="after"><b>Never used</b><span>Later labs, treatment response, later notes, discharge information. These are saved to the chart but never reach a model.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENGINE -->
+<section id="engine">
+  <div class="wrap">
+    <div class="eyebrow">Behind the scenes</div>
+    <h2>How the technology works</h2>
+    <p class="lead">There are two separate sides. The <strong>training side</strong> builds and tests
+      the models on a research dataset. The <strong>live side</strong> uses the finished, frozen models
+      on your patients. The two never share data.</p>
+
+    <div class="arch">
+      <div class="lane">
+        <div class="lane-title">1 · Training side (done by ESAP, before release)</div>
+        <div class="chain">
+          <div class="node"><b>Research data</b><span>MIMIC-IV: 546,028 de-identified hospital admissions</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Admission-time cut</b><span>Every feature limited to what was known at admission</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Train &amp; calibrate</b><span>Five models, with percentages matched to real outcomes</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Test honestly</b><span>Unseen patients, checked by subgroup, with a leakage alarm and a fairness check</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node hl"><b>Frozen model files</b><span>Each version fingerprinted and released</span></div>
+        </div>
+      </div>
+
+      <div class="wall">Separation: live patient data never goes back to the training side</div>
+
+      <div class="lane">
+        <div class="lane-title">2 · Live side (every admission, in seconds)</div>
+        <div class="chain">
+          <div class="node"><b>Intake</b><span>Form in ESAP, or the EHR admission feed</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Freeze at admission</b><span>Admission time stamped; later data is blocked</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node hl"><b>Five models</b><span>Loaded once from the frozen files and run together</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Safety checks</b><span>Calibration badge, missing-input warning, degraded label</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Explain</b><span>Inputs that raised or lowered each estimate</span></div>
+          <div class="arrow" aria-hidden="true">→</div>
+          <div class="node"><b>Save &amp; log</b><span>Stored with the model version and written to the audit log</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">The models</span><h3>The smallest model that does the job</h3><p>Mainly well-tested gradient-boosted tree and linear models, chosen because their reasoning can be shown exactly. The length-of-stay model gives a range with 95% coverage. Larger AI models are added only when they measurably improve accuracy.</p></div>
+      <div class="card"><span class="tag">Explanations</span><h3>Computed from the model, not written by AI</h3><p>For the differential, each input's contribution is calculated exactly and adds up to the score. For the risk models, each input is removed in turn and the case scored again. A language model may put the result into one sentence, but it never invents the reasons.</p></div>
+      <div class="card"><span class="tag">Reliability</span><h3>Refuses to serve wrong numbers</h3><p>The system will not start if a model file is missing or the software versions differ from those used in training. Every result records exactly which model version produced it.</p></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Web application</strong></td><td class="muted">React + TypeScript, one design system, light and dark themes, English and Arabic, works on desktop, tablet and phone</td></tr>
+          <tr><td><strong>API server</strong></td><td class="muted">Python (FastAPI), with every permission checked on the server</td></tr>
+          <tr><td><strong>Database</strong></td><td class="muted">PostgreSQL for hospitals (SQLite for single-user and demo), with an append-only audit log</td></tr>
+          <tr><td><strong>Models</strong></td><td class="muted">scikit-learn models with calibration. Optional GPU only for the upcoming clinical-note models.</td></tr>
+          <tr><td><strong>Standards</strong></td><td class="muted">HL7v2, FHIR R4, SMART on FHIR, OIDC / SAML single sign-on, SCIM, CCSR condition codes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SAAS -->
+<section id="saas">
+  <div class="wrap">
+    <div class="eyebrow">ESAP as a service (SaaS)</div>
+    <h2>How the SaaS works</h2>
+    <p class="lead">ESAP runs many hospitals on one platform. Each hospital (a <em>tenant</em>) gets its
+      own separate space: its own staff, units, settings, patients and audit log. A small central
+      service manages the hospitals but never holds patient data.</p>
+
+    <div class="planes">
+      <div class="control">
+        <b>Central management (control plane): no patient data</b>
+        <p>Creates and configures hospitals, rolls out model updates, monitors health and handles
+          incidents. It stores only hospital-level information such as name, plan, region and settings.</p>
+      </div>
+      <div class="bridge">sets up and manages ↓ &nbsp;·&nbsp; <b>each hospital's data stays inside its own space</b></div>
+      <div class="tenants">
+        <div class="tenant"><b>Hospital A</b><span class="small muted">Shared cloud, separated at database level by row-level security</span><br><span class="lock">Isolated</span></div>
+        <div class="tenant"><b>Hospital B</b><span class="small muted">Its own schema or its own database, by contract</span><br><span class="lock">Isolated</span></div>
+        <div class="tenant"><b>Hospital C</b><span class="small muted">On-premises, inside the hospital's own network</span><br><span class="lock">Fully separate</span></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:40px">From signed agreement to go-live</h3>
+    <ol class="onboard">
+      <li><b>Agreement &amp; BAA</b><span>Contract and Business Associate Agreement signed. Nothing is activated without a BAA.</span></li>
+      <li><b>Hospital created</b><span>ESAP sets up your space in the chosen region and isolation level, in a six-step wizard.</span></li>
+      <li><b>First administrator invited</b><span>Your Hospital Admin gets a secure, single-use invite link.</span></li>
+      <li><b>Units &amp; staff</b><span>The admin adds units and invites staff, one by one or in bulk, each with a role and scope.</span></li>
+      <li><b>Connect systems</b><span>Your IT team connects single sign-on, the admission feed and FHIR from the admin console.</span></li>
+      <li><b>Configure</b><span>Choose which models run, per-unit settings, alert thresholds, data retention and patient-portal access.</span></li>
+      <li><b>Clinical check</b><span>Your clinical lead reviews sample cases, calibration and fairness, then signs off.</span></li>
+      <li><b>Go live</b><span>Real admissions flow in. Usage, accuracy and fairness are monitored from day one.</span></li>
+    </ol>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">Always improving</span><h3>Safe model updates</h3><p>A new model version first goes to a small share of traffic. It moves forward only if <em>every</em> patient group meets the accuracy bar, and it is rolled back automatically if calibration drifts. Enterprise hospitals can stay on a fixed version.</p></div>
+      <div class="card"><span class="tag">Always watched</span><h3>Monitoring &amp; support</h3><p>Data drift, calibration, feed delays and response times are monitored for every hospital. Incidents are tracked, with updates published to your IT lead.</p></div>
+      <div class="card"><span class="tag">Self-service</span><h3>You stay in control</h3><p>Your admins manage staff, roles, units, integrations and model display settings themselves. Billing is based on assessments used, which you can see in the admin console.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section id="trust">
+  <div class="wrap">
+    <div class="eyebrow">Built for clinical trust</div>
+    <h2>Safety features that cannot be switched off</h2>
+    <p class="lead">These features come with every plan and every deployment. A hospital cannot turn
+      them off, and they are not sold as add-ons.</p>
+    <div class="grid g3">
+      <div class="card"><span class="tag">Explainable</span><h3>A "Why?" panel on every estimate</h3><p>It shows which inputs moved the number, in which direction and by how much. The explanation comes from the model itself, never from a text generator, so a clinician can check the reasoning.</p></div>
+      <div class="card"><span class="tag">Calibrated</span><h3>Percentages that mean what they say</h3><p>Of patients given 30%, close to 30% had the outcome. Each result carries a calibration badge. If key inputs had to be estimated, the badge is removed, not hidden.</p></div>
+      <div class="card"><span class="tag">Fair</span><h3>No race, insurance or marital status in the models</h3><p>These are recorded only so a fairness audit can check that the models perform evenly across patient groups. They never appear on a clinical screen.</p></div>
+      <div class="card"><span class="tag">Honest</span><h3>Weaknesses are labelled</h3><p>A model with a known limit carries a visible <em>degraded</em> label wherever it appears. Performance is reported separately for patients with and without prior history.</p></div>
+      <div class="card"><span class="tag">Human in charge</span><h3>The clinician decides</h3><p>Worklists stay in clinical order, not ranked by a model score. Acknowledging a result records that it was reviewed, not that anyone agreed with it.</p></div>
+      <div class="card"><span class="tag">Audited</span><h3>Every access is logged</h3><p>Every view, change, export and refused request goes to an append-only audit log that your privacy officer can search and report on.</p></div>
+    </div>
+    <div class="callout">
+      <strong>Regulatory approach.</strong> ESAP is designed to qualify as non-device clinical
+      decision support under the FDA's January 2026 CDS guidance: it supports a qualified clinician,
+      shows the basis for every recommendation so it can be checked independently, and never shows
+      patients a raw score.
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="wrap">
+    <div class="eyebrow">Measured results</div>
+    <h2>How accurate are the models?</h2>
+    <p class="lead">Measured on patients the models never saw during training, from MIMIC-IV, a large
+      de-identified hospital dataset (364,627 patients, 546,028 admissions). Every model is calibrated,
+      reported separately for patients with and without prior history, and checked for data leakage.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Model</th><th>Main measure</th><th>Result</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>M-03</strong> ICU admission</td>
+            <td>AUROC</td>
+            <td class="num">0.83<div class="meter" aria-hidden="true"><i style="width:83%"></i></div></td>
+            <td class="muted">Ranks patients who will need the ICU above those who will not in 83 of 100 random pairs. Meets its target.</td>
+          </tr>
+          <tr>
+            <td><strong>M-02</strong> Mortality</td>
+            <td>AUROC</td>
+            <td class="num">0.80<div class="meter" aria-hidden="true"><i style="width:80%"></i></div></td>
+            <td class="muted">Strong separation using admission data only. Work to reach the 0.87 target band continues.</td>
+          </tr>
+          <tr>
+            <td><strong>M-04</strong> 30-day readmission</td>
+            <td>AUROC</td>
+            <td class="num">0.68<div class="meter" aria-hidden="true"><i style="width:68%"></i></div></td>
+            <td class="muted">In line with the published limit for predicting readmission at admission. Labelled <em>degraded</em> for first-time patients.</td>
+          </tr>
+          <tr>
+            <td><strong>M-05</strong> Length of stay</td>
+            <td>Range accuracy</td>
+            <td class="num">95%<div class="meter" aria-hidden="true"><i style="width:95%"></i></div></td>
+            <td class="muted">The predicted range contains the real stay for 95% of patients, as intended. Typical error is 2.9 days.</td>
+          </tr>
+          <tr>
+            <td><strong>M-01</strong> Differential</td>
+            <td>Recall@20</td>
+            <td><span class="status s-build">Validation in progress</span></td>
+            <td class="muted">Proof of concept complete. The full-scale run and leakage checks are finishing before we publish a headline number.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:12px">AUROC: 0.5 is a coin toss and 1.0 is perfect. Calibration error is 0.001–0.005 across M-02 to M-05, meaning the
+      percentages closely match real outcomes. These are retrospective research results; performance at your hospital is measured
+      during the pilot.</p>
+
+    <div class="callout warn">
+      <strong>Why we publish our limits.</strong> Clinical AI tools are often shown with numbers that look
+      better than they will perform at the bedside, because later information leaked into the test.
+      ESAP has an automatic alarm for results that look too good and runs a control test before any
+      such result is trusted. We would rather show you an honest 0.80 than a leaked 0.95.
+    </div>
+  </div>
+</section>
+
+<!-- DEPLOY -->
+<section id="deploy">
+  <div class="wrap">
+    <div class="eyebrow">Integration &amp; deployment</div>
+    <h2>Fits into the systems you already run</h2>
+    <p class="lead">ESAP does not replace your EHR. It reads what your EHR already records and never
+      writes back to it. No data migration is needed.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Connection</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><strong>HL7v2 ADT feed</strong></td><td class="muted">An admission message creates the encounter and sets the admission time automatically.</td></tr>
+          <tr><td><strong>SMART on FHIR</strong></td><td class="muted">Opens ESAP inside the EHR with the patient already selected.</td></tr>
+          <tr><td><strong>FHIR R4 read</strong></td><td class="muted">Reads problem lists, medications and labs.</td></tr>
+          <tr><td><strong>Single sign-on (OIDC / SAML) &amp; SCIM</strong></td><td class="muted">Staff sign in with their hospital identity. Accounts are created and removed automatically.</td></tr>
+          <tr><td><strong>Webhooks</strong></td><td class="muted">Sends ESAP's own events (such as "result acknowledged") to your systems.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">Option A</span><h3>Cloud (SaaS)</h3><p>Hosted by ESAP for health systems and hospital groups. Isolation options range from a shared database with row-level security to a dedicated database, depending on your contract.</p></div>
+      <div class="card"><span class="tag">Option B</span><h3>On-premises / private cloud</h3><p>The whole system runs inside your hospital's own network or cloud account. Patient data never leaves your perimeter. Suited to community hospitals with strict data-residency needs.</p></div>
+      <div class="card"><span class="tag">Option C</span><h3>Individuals &amp; independent doctors</h3><p>Self-serve accounts. Members of the public prepare for consultations. Solo doctors, clinics and telehealth practices get the clinical tools, with the same explanations and safeguards.</p></div>
+    </div>
+    <p class="small muted" style="margin-top:14px">All three options run from the same code base, so every customer gets the same features, fixes and safeguards.</p>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security">
+  <div class="wrap">
+    <div class="eyebrow">Security &amp; privacy</div>
+    <h2>Privacy by design</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>How the product is built</h3>
+        <ul class="checks">
+          <li>Permissions are checked on the server for every request, with each role limited to its own patients or unit</li>
+          <li>Append-only audit log covering reads as well as changes</li>
+          <li>Each hospital's data is separate from every other hospital's</li>
+          <li>Records moving between hospitals require patient consent, and uncertain identity matches are never merged automatically</li>
+          <li>Patients control who sees their record and can withdraw access at any time</li>
+          <li>The research data used to train the models is kept completely apart from live patient data</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Compliance programme</h3>
+        <ul class="checks">
+          <li>HIPAA / HITECH: ESAP acts as your Business Associate, with a BAA signed before any patient data is shared</li>
+          <li>A written FDA non-device CDS assessment for each model before it goes live</li>
+          <li>SOC 2 Type II, then HITRUST, on the path to general availability</li>
+          <li>GDPR requirements (legal basis, DPIA, transfer mechanism) resolved before any EU deployment</li>
+        </ul>
+        <p class="small muted" style="margin-top:12px">Certifications are in preparation. Their current status is shared openly during procurement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="wrap">
+    <div class="eyebrow">Where we are today</div>
+    <h2>Status and roadmap</h2>
+    <p class="lead">A complete working product is ready to demonstrate today, running on synthetic
+      (made-up) patients so no real patient data is involved. It can also run on the trained models.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Clinical workspace, admin console, operations console and patient portal (69 screens)</td><td><span class="status s-live">Built</span></td></tr>
+          <tr><td>Server-enforced permissions for 15 roles, audit log, invites, record transfer workflow</td><td><span class="status s-live">Built</span></td></tr>
+          <tr><td>M-02 to M-05 trained and validated at full scale</td><td><span class="status s-live">Done</span></td></tr>
+          <tr><td>M-01 differential, tabular model</td><td><span class="status s-live">Serving</span></td></tr>
+          <tr><td>M-01 clinical-note and patient-history models (for higher accuracy)</td><td><span class="status s-build">In development</span></td></tr>
+          <tr><td>Automated test suite (200+ tests) and a check that runs against the live system</td><td><span class="status s-live">In place</span></td></tr>
+          <tr><td>Personal accounts for the public: guided symptom questions, one-page summary for a doctor, sharing controls</td><td><span class="status s-live">Built</span></td></tr>
+          <tr><td>Self-serve accounts for independent doctors</td><td><span class="status s-live">Built</span></td></tr>
+          <tr><td>"Find a doctor" directory to connect individuals with clinicians</td><td><span class="status s-plan">Designed</span></td></tr>
+          <tr><td>"Next best test" recommendation</td><td><span class="status s-plan">Designed</span></td></tr>
+          <tr><td>Live EHR connection at a partner hospital</td><td><span class="status s-plan">Pilot phase</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="phases">
+      <div class="phase"><div class="ph">PHASE 1</div><div><h3>First partner hospital</h3><p>One hospital live with real sign-in, permissions, audit and a signed BAA.</p></div><span class="status s-build">Next</span></div>
+      <div class="phase"><div class="ph">PHASE 1.5</div><div><h3>Individuals &amp; independent doctors</h3><p>Personal accounts for the public and self-serve accounts for solo doctors and clinics, alongside Phase 1.</p></div><span class="status s-plan">Parallel</span></div>
+      <div class="phase"><div class="ph">PHASE 2</div><div><h3>Multiple hospitals</h3><p>Many hospitals on shared infrastructure with contractual isolation levels.</p></div><span class="status s-plan">Planned</span></div>
+      <div class="phase"><div class="ph">PHASE 3</div><div><h3>Records across hospitals</h3><p>Safe patient record transfer between ESAP hospitals and through the national TEFCA network.</p></div><span class="status s-plan">Planned</span></div>
+      <div class="phase"><div class="ph">PHASE 4</div><div><h3>Patient portal at scale</h3><p>Clinician-released summaries for patients and carers.</p></div><span class="status s-plan">Planned</span></div>
+      <div class="phase"><div class="ph">ONGOING</div><div><h3>Model improvements</h3><p>Note and history models, combined scoring, and "next best test". Each ships only after passing its own leakage and calibration checks.</p></div><span class="status s-build">Continuous</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="next">
+  <div class="wrap">
+    <div class="cta">
+      <h2>Next step: a focused pilot</h2>
+      <p>A 60–90 day pilot on one unit or department, with a signed BAA, a capped number of
+        assessments and no automatic renewal. It ends with a report on your own data: accuracy,
+        calibration, fairness and usage, plus a return-on-investment worksheet built from your own
+        costs.</p>
+      <ol>
+        <li>A live demonstration for your clinical and IT leads</li>
+        <li>Pick the pilot unit and agree the success measures</li>
+        <li>Connect the admission feed and single sign-on</li>
+        <li>Run the pilot, then review the results together</li>
+      </ol>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>ESAP Clinical AI</strong> is clinical decision support. It does not diagnose, and every
+      estimate is reviewed by a qualified clinician who makes the decision. It is not for emergencies.</p>
+    <p>Model results are retrospective, measured on the de-identified MIMIC-IV research dataset. The
+      demonstration system uses synthetic patients only.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById("themeBtn");
+  var order = ["system", "light", "dark"], cur = "system";
+  try { cur = localStorage.getItem("esap-theme") || "system"; } catch (e) {}
+  function apply() {
+    if (cur === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", cur);
+    btn.textContent = "Theme: " + cur.charAt(0).toUpperCase() + cur.slice(1);
+  }
+  btn.addEventListener("click", function () {
+    cur = order[(order.indexOf(cur) + 1) % order.length];
+    try { localStorage.setItem("esap-theme", cur); } catch (e) {}
+    apply();
+  });
+  apply();
+})();
+</script>
+</body>
+</html>
