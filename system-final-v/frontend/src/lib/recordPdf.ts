@@ -81,6 +81,8 @@ export function buildRecordPdf(data: RecordExport, meta: ExportMeta): jsPDF {
   const patient = data.patient ?? {};
   const name = clean(patient.name || "Patient");
   const mrn = clean(patient.mrn || "Not assigned");
+  // MRNs are often stored as "MRN-401644"; don't print "MRN MRN-401644".
+  const mrnTag = /^mrn/i.test(mrn) ? mrn : `MRN ${mrn}`;
   let y = 0;
 
   const color = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
@@ -139,7 +141,7 @@ export function buildRecordPdf(data: RecordExport, meta: ExportMeta): jsPDF {
     font("bold", 9); color(INK);
     doc.text("ESAP Clinical AI - Patient Health Record", M + 11, 13.5);
     font("normal", 8); color(MUTED);
-    doc.text(`${name}  |  MRN ${mrn}`, PAGE_W - M, 13.5, { align: "right" });
+    doc.text(`${name}  |  ${mrnTag}`, PAGE_W - M, 13.5, { align: "right" });
     doc.setDrawColor(...RULE);
     doc.setLineWidth(0.3);
     doc.line(M, 18, PAGE_W - M, 18);
@@ -364,7 +366,7 @@ export function buildRecordPdf(data: RecordExport, meta: ExportMeta): jsPDF {
     font("bold", 7); color(ACCENT);
     doc.text("CONFIDENTIAL - PERSONAL HEALTH INFORMATION", M, PAGE_H - 9.5);
     font("normal", 7); color(MUTED);
-    doc.text(`${name}  |  MRN ${mrn}  |  ESAP Clinical AI`, M, PAGE_H - 6);
+    doc.text(`${name}  |  ${mrnTag}  |  ESAP Clinical AI`, M, PAGE_H - 6);
     doc.text(`Page ${i} of ${pages}`, PAGE_W - M, PAGE_H - 9.5, { align: "right" });
   }
   return doc;

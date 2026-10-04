@@ -7,7 +7,8 @@
  * other hospitals are clearly labelled as such.
  */
 import { useMemo, useState } from "react";
-import { RECORDS } from "@/mock/db";
+import { CARE_TEAM, RECORDS } from "@/mock/db";
+import { useSession } from "@/lib/session";
 import type { RecordDocument } from "@/mock/types";
 import { dateLabel } from "@/lib/format";
 import { t, tr } from "@/i18n";
@@ -64,7 +65,15 @@ export function PatientRecords() {
         return { res, pdf };
       },
       ({ res, pdf }) => {
-        pdf.buildRecordPdf(res.data, res.export).save(pdf.recordFileName(res.data, res.export));
+        // A server that predates the header fields still returns the record;
+        // the PDF then names the signed-in account holder rather than "Patient".
+        const { name, email } = useSession.getState();
+        const data: RecordExport = {
+          ...res.data,
+          patient: { ...res.data.patient, name: res.data.patient?.name || name, email: res.data.patient?.email || email },
+          careTeam: res.data.careTeam ?? CARE_TEAM,
+        };
+        pdf.buildRecordPdf(data, res.export).save(pdf.recordFileName(data, res.export));
         return t("Your whole record has been downloaded");
       },
     );
