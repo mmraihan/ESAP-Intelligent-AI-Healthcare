@@ -1,0 +1,11 @@
+{
+  "name": "esap-showreel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ESAP Clinical AI 60-second motion-graphics showreel (HTML/JS timeline -> frames -> ffmpeg)",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs 16x9 && node render.mjs 9x16"
+  },
+  "dependencies": { "playwright-core": "^1.50.0" }
+}
