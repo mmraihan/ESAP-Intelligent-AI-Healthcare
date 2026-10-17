@@ -24,17 +24,35 @@ const STAGE_LABEL: Record<RolloutStage["stage"], string> = {
   rolled_back: "Rolled back",
 };
 
+/**
+ * `POST /ops/rollout` appends a new entry every time a version moves, so the
+ * server's list is a history log, not a state table. The current stage of a
+ * version is its most recent entry; a version rolled back after reaching
+ * "full" must not keep showing as live.
+ */
+function currentStages(log: RolloutStage[]): RolloutStage[] {
+  const latest = new Map<string, RolloutStage>();
+  for (const r of [...log].sort((a, b) => b.startedAt.localeCompare(a.startedAt))) {
+    const k = `${r.modelId}-${r.version}`;
+    if (!latest.has(k)) latest.set(k, r);
+  }
+  return [...latest.values()];
+}
+
 export function OpsRollout() {
+  const current = currentStages(ROLLOUTS);
   const [traffic, setTraffic] = useState<Record<string, number>>(
-    Object.fromEntries(ROLLOUTS.map((r) => [`${r.modelId}-${r.version}`, r.trafficPct])),
+    Object.fromEntries(current.map((r) => [`${r.modelId}-${r.version}`, r.trafficPct])),
   );
   const [rollingBack, setRollingBack] = useState<RolloutStage | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const active = ROLLOUTS.filter((r) => r.stage !== "rolled_back");
+  const active = current.filter((r) => r.stage !== "rolled_back");
   const canaries = active.filter((r) => r.stage === "canary");
   const held = active.filter((r) => r.stage === "partial");
-  const rolledBack = ROLLOUTS.filter((r) => r.stage === "rolled_back");
+  // History keeps every rollback event, newest first.
+  const rolledBack = ROLLOUTS.filter((r) => r.stage === "rolled_back")
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 
   return (
     <>
@@ -59,7 +77,7 @@ export function OpsRollout() {
         pulled 36 hours later.
       </Banner>
 
-      {ROLLOUTS.filter((r) => r.stage !== "rolled_back").map((r) => {
+      {active.map((r) => {
         const model = MODELS.find((m) => m.id === r.modelId);
         if (!model) return null; // rollout for a model not in the catalogue — skip rather than crash
         const key = `${r.modelId}-${r.version}`;
@@ -184,7 +202,7 @@ export function OpsRollout() {
               <thead><tr><th>Model</th><th>Version</th><th>When</th><th>Why</th></tr></thead>
               <tbody>
                 {rolledBack.map((r) => (
-                  <tr key={`${r.modelId}-${r.version}`}>
+                  <tr key={`${r.modelId}-${r.version}-${r.startedAt}`}>
                     <td><strong>{r.modelId}</strong></td>
                     <td className="mono">{r.version}</td>
                     <td className="muted">{ago(r.startedAt)}</td>
