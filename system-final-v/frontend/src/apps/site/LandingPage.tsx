@@ -84,6 +84,59 @@ function useScrollReveal() {
   return ref;
 }
 
+/**
+ * Counts up to `to` once, the first time it scrolls into view. Marketing-only
+ * delight (seen once per visit), so it may run longer than UI motion; reduced
+ * motion and non-numeric values render the final figure immediately.
+ */
+function CountUp({ to, suffix = "" }: { to: string; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const target = Number.parseInt(to, 10);
+  const numeric = /^\d+$/.test(to);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !numeric) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || typeof IntersectionObserver === "undefined" || target === 0) return;
+    let raf = 0;
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const dur = 1100;
+      const tick = (now: number) => {
+        const k = Math.min(1, (now - start) / dur);
+        const eased = 1 - Math.pow(1 - k, 4); // ease-out quart
+        el.textContent = `${Math.round(target * eased)}${suffix}`;
+        if (k < 1) raf = requestAnimationFrame(tick);
+      };
+      el.textContent = `0${suffix}`;
+      raf = requestAnimationFrame(tick);
+    }, { threshold: 0.6 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [numeric, target, suffix]);
+  return <span ref={ref} className="tnum">{to}{suffix}</span>;
+}
+
+const STEPS = [
+  {
+    icon: <UserIcon size={20} />,
+    title: "Admit",
+    body: "An ADT message or the intake form opens the encounter and stamps t₀ — the admission time every input is cut at.",
+  },
+  {
+    icon: <ChartIcon size={20} />,
+    title: "Estimate",
+    body: "Five models score the intake-only record. Each estimate is calibrated, or its badge is suppressed when the input is too thin.",
+  },
+  {
+    icon: <StethoscopeIcon size={20} />,
+    title: "Review",
+    body: "The clinician reads the number, its drivers and its limits on one card, and makes the call. The run is written to the audit log.",
+  },
+];
+
 /** Full-circle progress ring (decorative; the number is always printed beside it). */
 function Ring({ p, tone, size = 92, label }: { p: number; tone: string; size?: number; label?: string }) {
   const r = size / 2 - 7;
@@ -192,7 +245,7 @@ export function LandingPage() {
             </p>
             <div className="hero-actions lp-in" style={{ "--i": 3 } as CSSProperties}>
               <Button variant="primary" className="lp-cta" onClick={() => nav("/signup")}>
-                <ArrowRight size={15} /> Try it on your own cases
+                Try it on your own cases <ArrowRight size={15} />
               </Button>
               <Button onClick={() => nav("/evidence")}>
                 <FileIcon size={15} /> See the evidence <ArrowRight size={13} />
@@ -204,6 +257,42 @@ export function LandingPage() {
             </p>
           </div>
           <HeroPreview />
+        </section>
+
+        <section className="lp-stats" data-reveal aria-label="ESAP at a glance">
+          <div className="lp-stat">
+            <strong><CountUp to={String(MODELS.length || 5)} /></strong>
+            <span>outcomes estimated at the moment of admission</span>
+          </div>
+          <div className="lp-stat">
+            <strong>{/^\d+$/.test(labelsScored) ? <CountUp to={labelsScored} /> : labelsScored}</strong>
+            <span>conditions ranked in the differential</span>
+          </div>
+          <div className="lp-stat">
+            <strong className="tnum">0</strong>
+            <span>inputs taken from after admission</span>
+          </div>
+          <div className="lp-stat">
+            <strong className="tnum">0</strong>
+            <span>raw scores ever shown to a patient</span>
+          </div>
+        </section>
+
+        <section className="lp-section">
+          <header className="lp-section-head" data-reveal>
+            <span className="lp-kicker">How it works</span>
+            <h2>From admission to a reviewed estimate</h2>
+          </header>
+          <ol className="lp-steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="lp-step" data-reveal style={{ "--i": i } as CSSProperties}>
+                <span className="lp-step-num">{i + 1}</span>
+                <span className="lp-step-icon">{s.icon}</span>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="lp-section">
@@ -310,7 +399,7 @@ export function LandingPage() {
               <div>
                 <h3 style={{ fontSize: 15, margin: "0 0 10px" }}>Not yet</h3>
                 <ul className="caveat-list">
-                  <li><AlertIcon size={14} /> M-04 readmission is serving <strong>degraded</strong> — close to chance on patients with no prior admission, and labelled as such everywhere it appears.</li>
+                  <li><AlertIcon size={14} /> <span>M-04 readmission is serving <strong>degraded</strong> — close to chance on patients with no prior admission, and labelled as such everywhere it appears.</span></li>
                   <li><AlertIcon size={14} /> Note-embedding and sequence towers are built but not fused into production scoring.</li>
                   <li><AlertIcon size={14} /> Next-best-test is designed and deliberately renders empty until it is validated.</li>
                   <li><AlertIcon size={14} /> No outcome study yet. Before/after numbers are associations, and we say so on the screen that shows them.</li>

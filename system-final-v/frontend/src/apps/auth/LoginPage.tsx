@@ -2,37 +2,34 @@
  * Sign in (§10.8, §10.10, §10.12).
  *
  * SSO first, password second — a hospital that signs in with local passwords
- * ends up with shared passwords, which destroys the audit trail. The demo role
- * picker is on this screen because it is the honest place for it: a real build
- * would have three separate sign-in surfaces on three different hostnames.
+ * ends up with shared passwords, which destroys the audit trail. SSO is not
+ * wired up in this build, so the screen says so rather than showing a dead
+ * button.
+ *
+ * The demo role picker no longer lives here: it is on an unlinked route
+ * (DemoAccessPage, mounted only when VITE_DEMO_ACCESS_PATH is set).
  */
-import { useState } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ROLES, type RoleCode } from "@/lib/rbac";
+import { ROLES } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
-import { DEMO_IDENTITY } from "@/mock/db";
-import { LanguageToggle, t } from "@/i18n";
-import { BrandMark } from "@/components/shell/AppShell";
-import { ThemeToggle } from "@/components/shell/ThemeToggle";
-import { Badge, Banner, Button, Card, Field, TextInput } from "@/components/ui/primitives";
-import { EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, UserIcon } from "@/components/ui/icons";
+import { t } from "@/i18n";
+import { Banner } from "@/components/ui/primitives";
+import { AlertIcon, ArrowRight, EyeIcon, EyeOffIcon, HeartPulseIcon, LockIcon, MailIcon, ShieldIcon, StethoscopeIcon } from "@/components/ui/icons";
 import { api } from "@/api/client";
-
-const DEMO_GROUPS: { title: string; note: string; roles: RoleCode[] }[] = [
-  { title: "Clinical workspace", note: "Doctors and nurses. Guest-reachable in production.", roles: ["physician", "resident", "charge_nurse", "staff_nurse", "case_manager"] },
-  { title: "Hospital admin console", note: "Tenant-walled. A separate bundle in production.", roles: ["tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor"] },
-  { title: "Platform ops console", note: "Not on public DNS. VPN and hardware key only.", roles: ["super_admin"] },
-  { title: "Patient portal", note: "Plain language, released content only.", roles: ["patient"] },
-];
+import { AuthLayout } from "./AuthLayout";
 
 export function LoginPage() {
   const nav = useNavigate();
-  const { signIn, signInWithPassword, verifyMfa, cancelMfa, mfaPending, pending, error } = useSession();
+  const { signInWithPassword, verifyMfa, cancelMfa, mfaPending, pending, error } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
+  const [capsLock, setCapsLock] = useState(false);
   const [resetNote, setResetNote] = useState<string | null>(null);
+  // Bumped on every failed attempt so the error banner re-runs its shake.
+  const [attempt, setAttempt] = useState(0);
 
   /**
    * There is no email service, so a reset goes to the hospital admin's request
@@ -41,7 +38,7 @@ export function LoginPage() {
    */
   async function forgot() {
     if (!email.trim()) {
-      setResetNote(t("Enter your email address above, then choose “Forgotten your password?” again."));
+      setResetNote(t("Enter your email address above, then choose “Forgot password?” again."));
       return;
     }
     try {
@@ -52,12 +49,10 @@ export function LoginPage() {
     }
   }
 
-  function enter(role: RoleCode) {
-    void signIn(role).then(() => nav(ROLES[role].home)).catch(() => undefined);
-  }
-
   /** Real credentials against the API. The role comes back in the session. */
-  async function submit() {
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (pending || !email.trim() || !password) return;
     try {
       await signInWithPassword(email.trim(), password);
       // A second factor may be required; if so, wait on the code step rather
@@ -65,164 +60,145 @@ export function LoginPage() {
       if (useSession.getState().mfaPending) return;
       nav(ROLES[useSession.getState().role].home);
     } catch {
-      // `error` on the store already holds the server's message.
+      setAttempt((n) => n + 1); // `error` on the store already holds the server's message.
     }
   }
 
-  async function submitMfa() {
+  async function submitMfa(e: FormEvent) {
+    e.preventDefault();
+    if (pending || mfaCode.trim().length < 6) return;
     try {
       await verifyMfa(mfaCode.trim());
       setMfaCode("");
       nav(ROLES[useSession.getState().role].home);
     } catch {
-      // `error` on the store already holds the server's message.
+      setAttempt((n) => n + 1);
     }
   }
 
-  return (
-    <div className="auth-page">
-      <div className="stack" style={{ gap: 18, width: "100%", maxWidth: 820, alignItems: "center" }}>
-        <div className="row" style={{ justifyContent: "space-between", width: "100%", maxWidth: 440, gap: 10 }}>
-          <BrandMark />
-          <div className="row" style={{ gap: 8 }}>
-            <LanguageToggle compact />
-            <ThemeToggle compact />
-          </div>
-        </div>
+  const trackCaps = (e: KeyboardEvent<HTMLInputElement>) => setCapsLock(e.getModifierState?.("CapsLock") ?? false);
 
-        <div className="auth-card">
+  const failure = error ? (
+    <div key={attempt} className="auth-shake">
+      <Banner tone="critical" icon={<ShieldIcon size={16} />} title={t("Could not sign in")}>{error}</Banner>
+    </div>
+  ) : null;
+
+  return (
+    <AuthLayout variant="signin">
+      {mfaPending ? (
+        <form className="auth-card auth-step" onSubmit={submitMfa} noValidate>
           <div className="auth-head">
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em" }}>{t("Sign in")}</h1>
-            <p className="muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>
-              {t("Use your hospital account. If you do not have one, your administrator invites you — ESAP does not create clinical accounts directly.")}
+            <span className="auth-kicker"><ShieldIcon size={13} /> {t("Two-step verification")}</span>
+            <h1 className="auth-title">{t("Check your authenticator")}</h1>
+            <p className="auth-sub">{t("Enter the 6-digit code from your authenticator app to finish signing in.")}</p>
+          </div>
+          {failure}
+          <label className="auth-field">
+            <span className="auth-label">{t("Verification code")}</span>
+            <input
+              className="input auth-input auth-otp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              maxLength={6}
+              placeholder="000000"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.currentTarget.value.replace(/\D/g, ""))}
+            />
+          </label>
+          <button type="submit" className="btn btn-primary auth-submit" disabled={pending || mfaCode.trim().length < 6}>
+            {pending ? <><span className="esap-spinner" /> {t("Verifying…")}</> : t("Verify and sign in")}
+          </button>
+          <button type="button" className="auth-link" onClick={cancelMfa}>{t("Use a different account")}</button>
+        </form>
+      ) : (
+        <form className="auth-card auth-step" onSubmit={submit} noValidate>
+          <div className="auth-head">
+            <h1 className="auth-title">{t("Welcome back")}</h1>
+            <p className="auth-sub">
+              {t("Sign in with your hospital account. No account yet? Your administrator sends you an invite.")}
             </p>
           </div>
 
-          {mfaPending ? (
-            <div className="stack" style={{ gap: 12 }}>
-              <p className="muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>
-                {t("Enter the 6-digit code from your authenticator app to finish signing in.")}
-              </p>
-              {error ? (
-                <Banner tone="critical" icon={<ShieldIcon size={16} />} title={t("Could not sign in")}>{error}</Banner>
-              ) : null}
-              <Field label={t("Verification code")}>
-                <TextInput
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="123456"
-                  value={mfaCode}
-                  onChange={(e) => setMfaCode(e.currentTarget.value)}
-                />
-              </Field>
-              <Button variant="primary" disabled={pending || mfaCode.trim().length < 6} onClick={() => void submitMfa()}>
-                {pending ? t("Verifying…") : t("Verify and sign in")}
-              </Button>
-              <button type="button" className="link-btn" style={{ marginInlineStart: 0 }} onClick={cancelMfa}>
-                {t("Use a different account")}
-              </button>
-            </div>
-          ) : (
-          <>
-              <Button variant="primary" icon={<KeyIcon size={16} />} onClick={() => enter("physician")}>
-                {t("Explore the demo as an attending physician")}
-              </Button>
-              <p className="muted" style={{ margin: "-4px 0 0", fontSize: 12, lineHeight: 1.5 }}>
-                {t("Hospital single sign-on is not connected here yet")}
-              </p>
-              <div className="auth-divider">{t("or sign in with a password")}</div>
+          {failure}
 
-              {error ? (
-                <Banner tone="critical" icon={<ShieldIcon size={16} />} title={t("Could not sign in")}>
-                  {error}
-                </Banner>
-              ) : null}
+          <label className="auth-field">
+            <span className="auth-label">{t("Work email")}</span>
+            <span className="auth-input-wrap">
+              <MailIcon size={16} />
+              <input
+                className="input auth-input"
+                type="email"
+                placeholder="you@hospital.example"
+                autoComplete="username"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.currentTarget.value)}
+              />
+            </span>
+          </label>
 
-              <Field label={t("Email")}>
-                <TextInput
-                  type="email"
-                  placeholder="you@hospital.example"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.currentTarget.value)}
-                />
-              </Field>
-              <Field label={t("Password")}>
-                <div style={{ position: "relative", display: "flex" }}>
-                  <TextInput
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••••"
-                    autoComplete="current-password"
-                    style={{ flex: 1, paddingInlineEnd: 38 }}
-                    value={password}
-                    onChange={(e) => setPassword(e.currentTarget.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") void submit(); }}
-                  />
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    style={{ position: "absolute", insetInlineEnd: 4, top: "50%", transform: "translateY(-50%)" }}
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? t("Hide password") : t("Show password")}
-                  >
-                    {showPassword ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
-                  </button>
-                </div>
-              </Field>
-              <Button
-                variant="primary"
-                disabled={pending || !email.trim() || !password}
-                onClick={() => void submit()}
+          <div className="auth-field">
+            <span className="auth-label-row">
+              <label className="auth-label" htmlFor="login-password">{t("Password")}</label>
+              <button type="button" className="auth-link is-inline" onClick={() => void forgot()}>{t("Forgot password?")}</button>
+            </span>
+            <span className="auth-input-wrap">
+              <LockIcon size={16} />
+              <input
+                id="login-password"
+                className="input auth-input has-action"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••••"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.currentTarget.value)}
+                onKeyUp={trackCaps}
+                onKeyDown={trackCaps}
+              />
+              <button
+                type="button"
+                className="auth-eye"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? t("Hide password") : t("Show password")}
+                aria-pressed={showPassword}
               >
-                {pending ? t("Signing in…") : t("Sign in")}
-              </Button>
-
-              <div className="auth-alt">
-                <button type="button" className="link-btn" style={{ marginInlineStart: 0 }} onClick={() => void forgot()}>{t("Forgotten your password?")}</button>
-                {resetNote && <p className="muted" role="status" style={{ margin: 0, fontSize: 12.5 }}>{resetNote}</p>}
-                <button type="button" className="link-btn" style={{ marginInlineStart: 0 }} onClick={() => nav("/signup")}>
-                  {t("I am a solo clinician — create an individual account")}
-                </button>
-                <button type="button" className="link-btn" style={{ marginInlineStart: 0 }} onClick={() => nav("/welcome")}>
-                  {t("I am a patient")}
-                </button>
-              </div>
-          </>
-          )}
-        </div>
-
-        {/* Only when the server offers demo accounts (ESAP_DEMO_PICKER). */}
-        {Object.keys(DEMO_IDENTITY).length > 0 && (
-        <Card
-          title={t("Demo — sign in as any role")}
-          subtitle={t("This picker exists only in the demonstration build")}
-          footnote={t("In production these are three separate deployables on three different hostnames: a guest-reachable clinical app, a tenant-walled admin console, and an ops console that is not on public DNS at all. A single bundle containing all three is a demo convenience, not the architecture.")}
-        >
-          <div className="stack" style={{ gap: 14 }}>
-            {DEMO_GROUPS.map((g) => (
-              <div key={g.title}>
-                <div className="row" style={{ gap: 8, alignItems: "baseline", marginBottom: 6, flexWrap: "wrap" }}>
-                  <strong style={{ fontSize: 13 }}>{t(g.title)}</strong>
-                  <span className="muted" style={{ fontSize: 11.5 }}>{t(g.note)}</span>
-                </div>
-                <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-                  {g.roles.filter((r) => DEMO_IDENTITY[r]).map((r) => (
-                    <Button key={r} size="sm" icon={<UserIcon size={13} />} onClick={() => enter(r)}>
-                      {t(ROLES[r].label)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            ))}
+                {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+              </button>
+            </span>
+            {capsLock && <span className="auth-hint is-warn" role="status"><AlertIcon size={13} /> {t("Caps Lock is on")}</span>}
+            {resetNote && <span className="auth-hint" role="status">{resetNote}</span>}
           </div>
-          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            <Badge tone="neutral">{t("All data synthetic")}</Badge>
-            <Badge tone="neutral">{t("Live API")}</Badge>
-            <Badge tone="neutral">{t("No real PHI anywhere")}</Badge>
+
+          <button type="submit" className="btn btn-primary auth-submit" disabled={pending || !email.trim() || !password}>
+            {pending ? <><span className="esap-spinner" /> {t("Signing in…")}</> : <>{t("Sign in")} <ArrowRight size={15} /></>}
+          </button>
+
+          <p className="auth-sso"><ShieldIcon size={13} /> {t("Hospital single sign-on is not connected in this build yet.")}</p>
+
+          <div className="auth-divider">{t("New to ESAP?")}</div>
+
+          <div className="auth-paths">
+            <button type="button" className="auth-path" onClick={() => nav("/signup")}>
+              <span className="auth-path-icon"><StethoscopeIcon size={18} /></span>
+              <span className="auth-path-text">
+                <strong>{t("Solo clinician")}</strong>
+                <small>{t("Create an individual account")}</small>
+              </span>
+              <ArrowRight size={14} />
+            </button>
+            <button type="button" className="auth-path" onClick={() => nav("/welcome")}>
+              <span className="auth-path-icon"><HeartPulseIcon size={18} /></span>
+              <span className="auth-path-text">
+                <strong>{t("Patient or carer")}</strong>
+                <small>{t("Open the patient portal")}</small>
+              </span>
+              <ArrowRight size={14} />
+            </button>
           </div>
-        </Card>
-        )}
-      </div>
-    </div>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

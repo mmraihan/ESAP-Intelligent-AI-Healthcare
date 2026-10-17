@@ -3,6 +3,7 @@
  * follows the OS, and an explicit pick always wins over it (§14.3 token layering).
  */
 import { useTheme, type ThemeMode } from "@/theme/ThemeProvider";
+import { switchTheme } from "@/theme/themeTransition";
 import { MonitorIcon, MoonIcon, SunIcon } from "@/components/ui/icons";
 import { t } from "@/i18n";
 
@@ -23,7 +24,12 @@ export function ThemeToggle({ compact }: { compact?: boolean }) {
           role="radio"
           aria-checked={mode === o.value}
           className={`theme-opt${mode === o.value ? " is-active" : ""}`}
-          onClick={() => setMode(o.value)}
+          onClick={(e) => {
+            if (o.value === mode) return;
+            // Keyboard activation reports (0,0); keyboard actions switch instantly.
+            if (!e.clientX && !e.clientY) setMode(o.value);
+            else switchTheme(o.value, setMode, { x: e.clientX, y: e.clientY });
+          }}
           title={o.value === "system" ? t("Follow the operating system (currently {mode})", { mode: t(resolved === "dark" ? "Dark" : "Light") }) : t(o.label)}
         >
           {o.icon}

@@ -13,6 +13,8 @@ import {
 } from "@/api/actions";
 import { Badge, Button, Card, Field, Select, TextInput } from "@/components/ui/primitives";
 import { Toast } from "@/components/ui/overlays";
+import { useSession } from "@/lib/session";
+import { can } from "@/lib/rbac";
 
 /** Patient side: request to connect with a hospital, and see request status. */
 export function PatientConnectCard() {
@@ -96,15 +98,20 @@ export function PatientConnectCard() {
 
 /** Clinician side: accept pending patient connection requests. */
 export function ConnectionRequestsCard() {
+  const role = useSession((s) => s.role);
+  // Accepting admits the patient, so the server gates both the list and the
+  // accept on patient:write. Roles without it (e.g. case manager) share the
+  // worklist screen; don't ask for a list the server will refuse.
+  const allowed = can(role, "patient:write");
   const [requests, setRequests] = useState<ConnectionRequest[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   async function load() {
-    if (!isLive()) return;
+    if (!allowed || !isLive()) return;
     try { setRequests((await listConnectionRequests()).requests); } catch { /* ignore */ }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [allowed]);
 
   async function accept(id: string) {
     setBusy(id);

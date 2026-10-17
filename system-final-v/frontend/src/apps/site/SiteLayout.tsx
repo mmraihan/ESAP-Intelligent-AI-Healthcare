@@ -1,9 +1,10 @@
 /** Shell for the public marketing and evidence pages (§16). */
-import type { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { Button, cx } from "@/components/ui/primitives";
+import { MenuIcon, XIcon } from "@/components/ui/icons";
 
 const LINKS = [
   { to: "/product", label: "Product" },
@@ -14,9 +15,30 @@ const LINKS = [
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const nav = useNavigate();
+  const { pathname } = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // The bar gains a shadow once the page scrolls under it.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close the phone menu on navigation and on Escape.
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   return (
     <div className="site">
-      <header className="site-nav glass">
+      <header className={cx("site-nav glass", scrolled && "is-scrolled")}>
         <div className="row" style={{ gap: 20, alignItems: "center" }}>
           <Link to="/product" className="brand-link"><BrandMark /></Link>
           <nav className="site-nav-links" aria-label="Main">
@@ -27,11 +49,31 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
         </div>
-        <div className="row" style={{ gap: 10 }}>
+        <div className="row site-nav-actions" style={{ gap: 10 }}>
           <ThemeToggle compact />
-          <Button size="sm" onClick={() => nav("/login")}>Sign in</Button>
+          <Button size="sm" className="site-nav-signin" onClick={() => nav("/login")}>Sign in</Button>
           <Button size="sm" variant="primary" onClick={() => nav("/signup")}>Try it free</Button>
+          <button
+            type="button"
+            className="icon-btn site-menu-btn"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="site-mobile-menu"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {menuOpen ? <XIcon size={18} /> : <MenuIcon size={18} />}
+          </button>
         </div>
+        {menuOpen && (
+          <nav id="site-mobile-menu" className="site-mobile" aria-label="Main">
+            {LINKS.map((l) => (
+              <NavLink key={l.to} to={l.to} className={({ isActive }) => cx("site-mobile-link", isActive && "is-active")}>
+                {l.label}
+              </NavLink>
+            ))}
+            <Button onClick={() => nav("/login")}>Sign in</Button>
+          </nav>
+        )}
       </header>
 
       <main className="site-main">{children}</main>

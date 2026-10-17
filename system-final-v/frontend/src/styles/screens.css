@@ -462,7 +462,7 @@
 .big-choice.is-selected { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-ink); }
 .big-choice-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius); background: var(--surface-2); flex: none; }
 .big-choice strong { display: block; font-size: 16px; font-weight: 650; }
-.big-choice span { display: block; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
+.big-choice > div > span { display: block; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
 
 .qa-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .qa-list li {

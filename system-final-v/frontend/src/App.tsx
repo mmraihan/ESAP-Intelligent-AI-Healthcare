@@ -28,6 +28,18 @@ import { LoginPage } from "@/apps/auth/LoginPage";
 import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
 import { CaregiverAcceptPage } from "@/apps/auth/CaregiverAcceptPage";
+
+/**
+ * The demo role picker's route. Set VITE_DEMO_ACCESS_PATH in a gitignored
+ * .env.local (e.g. "/some-unguessable-slug"); leave it unset and the page is
+ * not mounted at all. Lazy, so its code is fetched only on that path.
+ */
+const DEMO_ACCESS_PATH = (() => {
+  const raw = ((import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_DEMO_ACCESS_PATH ?? "").trim();
+  if (!raw) return null;
+  return raw.startsWith("/") ? raw : `/${raw}`;
+})();
+const DemoAccessPage = lazy(() => import("@/apps/auth/DemoAccessPage").then((m) => ({ default: m.DemoAccessPage })));
 import { useDataVersion } from "@/hooks/useData";
 import { ScreenErrorBoundary } from "@/components/shell/ScreenErrorBoundary";
 import { SOURCE } from "@/mock/db";
@@ -252,6 +264,10 @@ export function App() {
       <Route path="/evidence" element={<ModelEvidencePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      {/* Unlisted demo role picker — exists only when VITE_DEMO_ACCESS_PATH is set. */}
+      {DEMO_ACCESS_PATH && (
+        <Route path={DEMO_ACCESS_PATH} element={<Suspense fallback={null}><DemoAccessPage /></Suspense>} />
+      )}
       <Route path="/invite/:token" element={<InviteAcceptPage />} />
       <Route path="/caregiver/accept/:token" element={<CaregiverAcceptPage />} />
       <Route path="/welcome" element={<Page><PatientWelcome /></Page>} />

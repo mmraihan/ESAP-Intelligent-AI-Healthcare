@@ -6,9 +6,16 @@ import { App } from "./App";
 import { I18nProvider } from "./i18n";
 import { boot } from "./api/bootstrap";
 import { useSession } from "./lib/session";
-import "@fontsource-variable/inter";
+import { installPointerGlow } from "./theme/interactions";
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "./styles/app.css";
+// Theme + motion layer; must load after app.css so it wins at equal specificity.
+import "./styles/vault.css";
+import "./styles/public.css";
+
+installPointerGlow();
 
 /**
  * Fill the data store before the first paint.
