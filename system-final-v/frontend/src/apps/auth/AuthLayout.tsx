@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { LanguageToggle, t } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { BedIcon, HeartPulseIcon, InfoIcon, RefreshIcon } from "@/components/ui/icons";
 
 const COPY = {
@@ -22,29 +23,6 @@ const COPY = {
     lede: "An individual seat takes a minute. Clinicians get the clinical interface; patients get the plain-language portal.",
   },
 } as const;
-
-/** One P-QRS-T complex, 150 units wide on a 60-unit baseline; four make the strip. */
-const beat = (x: number) =>
-  `L${x + 30},60 Q${x + 37},50 ${x + 44},60 L${x + 56},60 L${x + 60},68 L${x + 66},14 L${x + 72},92 ` +
-  `L${x + 77},60 L${x + 92},60 Q${x + 104},44 ${x + 116},60 L${x + 150},60`;
-const ECG_PATH = `M0,60 ${[0, 150, 300, 450].map(beat).join(" ")}`;
-
-/** Decorative heart monitor. Four beats per 3.2s sweep = 75 bpm, matching the icon's pulse. */
-function HeartMonitor() {
-  return (
-    <div className="auth-monitor" aria-hidden="true">
-      <div className="auth-pulse">
-        <span className="auth-pulse-ring" />
-        <span className="auth-pulse-ring" style={{ animationDelay: "0.8s" }} />
-        <span className="auth-pulse-core"><HeartPulseIcon size={26} /></span>
-      </div>
-      <svg className="auth-ecg" viewBox="0 0 600 110" preserveAspectRatio="none">
-        <path className="auth-ecg-base" d={ECG_PATH} pathLength={1000} />
-        <path className="auth-ecg-trace" d={ECG_PATH} pathLength={1000} />
-      </svg>
-    </div>
-  );
-}
 
 /** Illustrative values only — the preview says so, and it is hidden from assistive tech. */
 const PREVIEW = [

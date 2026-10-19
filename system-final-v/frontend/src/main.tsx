@@ -8,11 +8,10 @@ import { boot } from "./api/bootstrap";
 import { useSession } from "./lib/session";
 import { installPointerGlow } from "./theme/interactions";
 import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "./styles/app.css";
-// Theme + motion layer; must load after app.css so it wins at equal specificity.
-import "./styles/vault.css";
+// Console component layer; must load after app.css so it wins at equal specificity.
+import "./styles/console.css";
 import "./styles/public.css";
 
 installPointerGlow();

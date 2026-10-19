@@ -1,56 +1,92 @@
 /* =========================================================================
-   ESAP design tokens + base styles.
-   Theme-aware: light palette on bare :root; dark redefined under BOTH the OS
-   media query (guarded so an explicit light toggle still wins) and the
-   [data-theme="dark"] scope (so the toggle wins both ways). Every color is a
-   token; no color is defined only inside a media block.
+   ESAP design tokens + base styles — the ONE source for every surface.
 
-   Chart palettes (--cat-*, --seq-*) are the validated dataviz reference
-   instance and are NOT retuned here. The clinical chrome around them —
-   surfaces, ink, motion — is tuned for a cool, instrument-panel read:
-   chart-paper plane, hairline rules, tabular numerals, ECG motion.
+   The palette is the reference language (additional-files/reference-files/
+   ESAP_Clinical_AI_Landing_Page_1*.png), shared by the public site, the auth
+   pages and every signed-in console:
+     light — pale cool plane, white cards, dark-teal primary, teal ink;
+     dark  — deep navy plane, navy cards, bright cyan primary, cyan ink.
+
+   Light lives on bare :root. Dark is defined twice, as the house pattern
+   requires: under the OS media query (guarded so an explicit light toggle
+   still wins) and under [data-theme="dark"] (so the toggle wins both ways).
+   `.pub-night` shares the dark selector so a landing band can be forced dark.
+   Tokens that only reference other tokens (rail, focus) are declared once on
+   :root: they resolve against whichever set is active.
+
+   Not retuned here, on purpose: the data-viz palettes (--cat-*, --seq-*) and
+   the clinical --status-* hues are validated encodings, not decoration.
+   Marketing-only tokens (hero gradients, halos, mock slabs) stay in
+   public.css as --pub-*.
    ========================================================================= */
 
 :root {
   color-scheme: light;
 
-  /* Surfaces / planes — a calm, cool clinical grey plane under pure-white
-     cards: the read of a modern EHR, not an office app. */
-  --plane: #f4f8f9;
-  --surface-1: #ffffff;
-  --surface-2: #f6fafa;
-  --surface-sunken: #e9f1f2;
+  /* ---- type ---- */
+  --font-sans: "DM Sans Variable", "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Display type is the same face, set heavier and tighter, as the reference does. */
+  --font-display: var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
 
-  /* Ink — deep clinical navy rather than neutral black. Muted ink clears
-     WCAG AA (4.5:1) on white so hints and captions stay legible. */
-  --text-primary: #0c1f2b;
-  --text-secondary: #435a68;
-  --text-muted: #5a6f7c;
+  /* ---- motion: one vocabulary (emil-design-eng / animate skills) ---- */
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-press: 140ms;
+  --dur-fast: 180ms;
+  --dur-base: 240ms;
+
+  /* ---- shape: buttons + inputs 12px, cards 16px, sheets 20px ---- */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* ---- surfaces ---- */
+  --plane: #f6f9fb;
+  --surface-1: #ffffff;
+  --surface-2: #f3f7f9;
+  --surface-sunken: #e8eff3;
+
+  /* ---- ink (muted clears WCAG AA 4.5:1 on white) ---- */
+  --text-primary: #0b1e2b;
+  --text-secondary: #3a4d5c;
+  --text-muted: #566877;
   --text-inverse: #ffffff;
 
-  /* Lines — solid hairlines read crisper than translucent ones on white. */
-  --border: #e0eaec;
-  --border-strong: #c8d7db;
-  --grid: #e2ebed;
+  /* ---- lines ---- */
+  --border: #dde7ec;
+  --border-strong: #c5d4dc;
+  --grid: #e4ecf0;
 
-  /* Brand accent — trusted hospital blue. --accent is for lines/icons;
-     --accent-fill is the solid fill behind white (--on-accent) text. */
+  /* ---- accent: --accent for lines/icons, --accent-ink for text, --accent-fill
+     is the solid fill behind --on-accent text. ---- */
   --accent: #0d8f86;
   --accent-strong: #0a736c;
-  --accent-weak: #e2f4f1;
+  --accent-weak: #e1f3f0;
   --accent-ink: #07665e;
-  --accent-fill: #0d3b36;
-  --accent-fill-strong: #12524b;
+  --accent-fill: #0b3f3b;
+  --accent-fill-strong: #0f554f;
   --on-accent: #ffffff;
+  /* Text on a --status-*-fill (destructive buttons): white in both themes. */
+  --on-status: #ffffff;
 
-  /* Vital — clinical teal, the secondary "instrument" hue. Chrome only (ECG
-     trace, live indicators, monitor accents); never a data-encoding color. */
-  --vital: #1fae74;
+  /* ---- vital: secondary instrument hue. Chrome only, never data. ---- */
+  --vital: #1f9e6a;
   --vital-weak: #e3f6ec;
   --vital-ink: #0b6f47;
 
-  /* Status (paired with icon + label, never color alone). Tuned to clinical
-     alarm conventions and AA contrast as text on white. */
+  /* ---- brand gradient stops + the glyph ---- */
+  --brand-1: #0f9c93;
+  --brand-2: #22b573;
+  --brand-3: #2f80ed;
+  --brand-4: #7c5cf6;
+  --brand-glyph: linear-gradient(140deg, #0f9c93, #1aa6a0 50%, #22b573);
+  --brand-glyph-ink: #ffffff;
+
+  /* ---- status (system states only; always icon + label) ---- */
   --status-good: #13743a;
   --status-warning: #b45309;
   --status-serious: #c2410c;
@@ -59,26 +95,8 @@
   --status-warning-weak: #fdf3e3;
   --status-critical-weak: #fcebeb;
   --status-critical-fill: #c42a2f;
-  /* Aliases used by a few surfaces (e.g. auth) that speak in "danger" terms. */
-  --status-danger: var(--status-critical);
-  --status-danger-weak: var(--status-critical-weak);
-  --surface-0: var(--plane);
 
-  /* Navigation rail — deep hospital navy, the anchoring chrome of clinical
-     systems. Its own token set so the rail can stay dark in light mode. */
-  --rail-bg: #0b2530;
-  --rail-bg-end: #081c25;
-  --rail-text: #c3d1de;
-  --rail-text-strong: #ffffff;
-  --rail-text-muted: #8da2b6;
-  --rail-hover: rgba(255, 255, 255, 0.06);
-  --rail-active: rgba(45, 212, 191, 0.14);
-  --rail-active-border: rgba(45, 212, 191, 0.28);
-  --rail-indicator: #2dd4bf;
-  --rail-icon-active: #7fe3d4;
-  --rail-border: rgba(255, 255, 255, 0.08);
-
-  /* Categorical slots (CCSR families) — validated 8-hue order, light */
+  /* ---- categorical slots (CCSR families) — validated 8-hue order, light ---- */
   --cat-1: #2a78d6;
   --cat-2: #eb6834;
   --cat-3: #1baf7a;
@@ -89,8 +107,7 @@
   --cat-8: #e34948;
   --cat-other: #898781;
 
-  /* Sequential ramp for risk gauges (single-hue blue, light->dark).
-     Low probability = light/receded; high = saturated. NOT a stoplight. */
+  /* ---- sequential ramp for risk (single-hue blue). NOT a stoplight. ---- */
   --seq-track: #e2e9ef;
   --seq-100: #cde2fb;
   --seq-250: #86b6ef;
@@ -99,74 +116,83 @@
   --seq-600: #184f95;
   --seq-700: #0d366b;
 
-  /* ECG chart-paper plane (minor + major rules) and the ambient wash. Kept
-     faint: texture, never pattern. */
-  --paper-rule: rgba(13, 143, 134, 0.018);
-  --paper-rule-major: rgba(13, 143, 134, 0.03);
-  --wash-1: rgba(13, 143, 134, 0.08);
-  --wash-2: rgba(59, 130, 246, 0.06);
+  /* ---- plane washes: soft glows at the top edges, no grid ---- */
+  --wash-1: rgba(15, 156, 147, 0.08);
+  --wash-2: rgba(47, 128, 237, 0.05);
 
-  /* Glass chrome (sticky header / floating bars) */
+  /* ---- glass chrome (top bar, floating bars) ---- */
   --glass: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(12, 31, 43, 0.07);
+  --glass-border: rgba(11, 30, 43, 0.08);
 
-  /* Radii, shadow, spacing */
-  --radius-sm: 8px;
-  --radius: 10px;
-  --radius-lg: 16px;
-  --shadow-1: 0 1px 2px rgba(12, 40, 48, 0.05);
-  --shadow-2: 0 18px 40px -12px rgba(12, 40, 48, 0.22), 0 2px 6px rgba(12, 40, 48, 0.06);
-  --shadow-lift: 0 1px 2px rgba(12, 40, 48, 0.05), 0 14px 30px -14px rgba(12, 40, 48, 0.26);
+  /* ---- depth ---- */
+  --shadow-1: 0 1px 2px rgba(11, 30, 43, 0.05);
+  --shadow-2: 0 24px 50px -22px rgba(11, 30, 43, 0.22), 0 2px 6px rgba(11, 30, 43, 0.05);
+  --shadow-lift: 0 1px 2px rgba(11, 30, 43, 0.05), 0 22px 44px -22px rgba(13, 110, 104, 0.32);
+  --glow: rgba(13, 143, 134, 0.22);
+  --spot: rgba(13, 143, 134, 0.07);
 
+  /* ---- primary button: solid dark teal (light) / cyan gradient (dark) ---- */
+  --btn-primary-bg: #0b3f3b;
+  --btn-primary-bg-hover: #0f554f;
+  --btn-primary-ink: #ffffff;
+  --btn-primary-glow: rgba(11, 63, 59, 0.32);
 
-  /* Brand gradient stops (reference landing): teal -> green, plus a cool blue. */
-  --brand-1: #0f9c93;
-  --brand-2: #22b573;
-  --brand-3: #3b82f6;
-  --brand-4: #8b5cf6;
-  --glow: rgba(13, 143, 134, 0.18);
-  --btn-primary-bg: var(--accent-fill);
-
-  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
-
+  /* ---- derived (resolve against the active set; no dark copy needed) ---- */
+  --surface-0: var(--plane);
+  --status-danger: var(--status-critical);
+  --status-danger-weak: var(--status-critical-weak);
   --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
-
-  /* One easing curve for the whole product: calm and decisive. */
-  --ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+  /* The navigation rail is part of the page, not a slab of navy: the card
+     surface, with the accent marking where you are. */
+  --rail-bg: color-mix(in srgb, var(--surface-1) 90%, transparent);
+  --rail-bg-end: var(--rail-bg);
+  --rail-text: var(--text-secondary);
+  --rail-text-strong: var(--text-primary);
+  --rail-text-muted: var(--text-muted);
+  --rail-hover: var(--surface-2);
+  --rail-active: var(--accent-weak);
+  --rail-active-border: color-mix(in srgb, var(--accent) 24%, transparent);
+  --rail-indicator: var(--accent);
+  --rail-icon-active: var(--accent-ink);
+  --rail-border: var(--border);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
-       room. Never pure black; ink is a soft off-white, never #fff, to cut halation
-       on long night shifts. */
+    /* Deep navy: the low-glare plane of a reading room. Never pure black;
+       ink is a soft off-white to cut halation on night shifts. */
     --plane: #050b1a;
-    --surface-1: #0a1329;
-    --surface-2: #0e1a35;
-    --surface-sunken: #070f22;
+    --surface-1: #0b1530;
+    --surface-2: #0f1c3b;
+    --surface-sunken: #081128;
 
-    --text-primary: #e8eef8;
-    --text-secondary: #a9b6cf;
-    --text-muted: #8593ae;
+    --text-primary: #eef3ff;
+    --text-secondary: #b6c2df;
+    --text-muted: #8e9bbd;
     --text-inverse: #050b1a;
 
-    --border: #18264a;
-    --border-strong: #25375f;
-    --grid: #15213f;
+    --border: #19284f;
+    --border-strong: #26386a;
+    --grid: #15223f;
 
     --accent: #22d3ee;
     --accent-strong: #67e8f9;
     --accent-weak: #0a2440;
-    --accent-ink: #8be9f8;
-    --accent-fill: #0b7cbf;
-    --accent-fill-strong: #0a8fd6;
-    --on-accent: #ffffff;
+    --accent-ink: #7fe6f7;
+    --accent-fill: #22d3ee;
+    --accent-fill-strong: #38bdf8;
+    --on-accent: #03141f;
 
     --vital: #2dd4bf;
     --vital-weak: #09283a;
     --vital-ink: #8cefe0;
+
+    --brand-1: #22d3ee;
+    --brand-2: #3b82f6;
+    --brand-3: #60a5fa;
+    --brand-4: #a78bfa;
+    --brand-glyph: linear-gradient(140deg, #22d3ee, #3b82f6);
 
     --status-good: #3ccf7a;
     --status-warning: #f4b740;
@@ -176,18 +202,6 @@
     --status-warning-weak: #2b2310;
     --status-critical-weak: #301716;
     --status-critical-fill: #c0352d;
-
-    --rail-bg: #071026;
-    --rail-bg-end: #050b1a;
-    --rail-text: #b4c3d2;
-    --rail-text-strong: #f1f5f9;
-    --rail-text-muted: #7b90a4;
-    --rail-hover: rgba(255, 255, 255, 0.05);
-    --rail-active: rgba(34, 211, 238, 0.13);
-    --rail-active-border: rgba(34, 211, 238, 0.3);
-    --rail-indicator: #22d3ee;
-    --rail-icon-active: #67e8f9;
-    --rail-border: #16234a;
 
     --cat-1: #3987e5;
     --cat-2: #d95926;
@@ -207,58 +221,59 @@
     --seq-600: #5598e7;
     --seq-700: #86b6ef;
 
-    --paper-rule: rgba(34, 211, 238, 0.018);
-    --paper-rule-major: rgba(34, 211, 238, 0.03);
-    --wash-1: rgba(34, 211, 238, 0.10);
-    --wash-2: rgba(139, 92, 246, 0.13);
+    --wash-1: rgba(34, 211, 238, 0.09);
+    --wash-2: rgba(139, 92, 246, 0.1);
 
-    --glass: rgba(6, 12, 30, 0.78);
-    --glass-border: rgba(120, 170, 255, 0.10);
+    --glass: rgba(5, 11, 26, 0.78);
+    --glass-border: rgba(120, 160, 255, 0.13);
 
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 20px 44px -12px rgba(0, 0, 0, 0.7);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 18px 36px -14px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(34, 211, 238, 0.06);
+    --shadow-2: 0 26px 56px -24px rgba(0, 0, 0, 0.8);
+    --shadow-lift: 0 0 32px rgba(34, 211, 238, 0.12), 0 22px 44px -22px rgba(0, 0, 0, 0.85);
+    --glow: rgba(34, 211, 238, 0.3);
+    --spot: rgba(34, 211, 238, 0.09);
 
-    --brand-1: #22d3ee;
-    --brand-2: #60a5fa;
-    --brand-3: #3b82f6;
-    --brand-4: #a78bfa;
-    --glow: rgba(34, 211, 238, 0.28);
-    --btn-primary-bg: linear-gradient(110deg, #0891b2, #2563eb);
-    --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
+    --btn-primary-bg: linear-gradient(100deg, #22d3ee, #3b9cf6);
+    --btn-primary-bg-hover: linear-gradient(100deg, #4fe0f4, #5aaefa);
+    --btn-primary-ink: #03141f;
+    --btn-primary-glow: rgba(34, 211, 238, 0.42);
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+.pub-night {
   color-scheme: dark;
-  /* Deep clinical navy — the low-glare plane of a bedside monitor / reading
-     room. Never pure black; ink is a soft off-white, never #fff, to cut halation
-     on long night shifts. */
   --plane: #050b1a;
-  --surface-1: #0a1329;
-  --surface-2: #0e1a35;
-  --surface-sunken: #070f22;
+  --surface-1: #0b1530;
+  --surface-2: #0f1c3b;
+  --surface-sunken: #081128;
 
-  --text-primary: #e8eef8;
-  --text-secondary: #a9b6cf;
-  --text-muted: #8593ae;
+  --text-primary: #eef3ff;
+  --text-secondary: #b6c2df;
+  --text-muted: #8e9bbd;
   --text-inverse: #050b1a;
 
-  --border: #18264a;
-  --border-strong: #25375f;
-  --grid: #15213f;
+  --border: #19284f;
+  --border-strong: #26386a;
+  --grid: #15223f;
 
   --accent: #22d3ee;
   --accent-strong: #67e8f9;
   --accent-weak: #0a2440;
-  --accent-ink: #8be9f8;
-  --accent-fill: #0b7cbf;
-  --accent-fill-strong: #0a8fd6;
-  --on-accent: #ffffff;
+  --accent-ink: #7fe6f7;
+  --accent-fill: #22d3ee;
+  --accent-fill-strong: #38bdf8;
+  --on-accent: #03141f;
 
   --vital: #2dd4bf;
   --vital-weak: #09283a;
   --vital-ink: #8cefe0;
+
+  --brand-1: #22d3ee;
+  --brand-2: #3b82f6;
+  --brand-3: #60a5fa;
+  --brand-4: #a78bfa;
+  --brand-glyph: linear-gradient(140deg, #22d3ee, #3b82f6);
 
   --status-good: #3ccf7a;
   --status-warning: #f4b740;
@@ -268,18 +283,6 @@
   --status-warning-weak: #2b2310;
   --status-critical-weak: #301716;
   --status-critical-fill: #c0352d;
-
-  --rail-bg: #071026;
-  --rail-bg-end: #050b1a;
-  --rail-text: #b4c3d2;
-  --rail-text-strong: #f1f5f9;
-  --rail-text-muted: #7b90a4;
-  --rail-hover: rgba(255, 255, 255, 0.05);
-  --rail-active: rgba(34, 211, 238, 0.13);
-  --rail-active-border: rgba(34, 211, 238, 0.3);
-  --rail-indicator: #22d3ee;
-  --rail-icon-active: #67e8f9;
-  --rail-border: #16234a;
 
   --cat-1: #3987e5;
   --cat-2: #d95926;
@@ -299,24 +302,27 @@
   --seq-600: #5598e7;
   --seq-700: #86b6ef;
 
-  --paper-rule: rgba(34, 211, 238, 0.018);
-  --paper-rule-major: rgba(34, 211, 238, 0.03);
-  --wash-1: rgba(34, 211, 238, 0.10);
-  --wash-2: rgba(139, 92, 246, 0.13);
+  --wash-1: rgba(34, 211, 238, 0.09);
+  --wash-2: rgba(139, 92, 246, 0.1);
 
-  --glass: rgba(6, 12, 30, 0.78);
-  --glass-border: rgba(120, 170, 255, 0.10);
+  --glass: rgba(5, 11, 26, 0.78);
+  --glass-border: rgba(120, 160, 255, 0.13);
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 20px 44px -12px rgba(0, 0, 0, 0.7);
-  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.35), 0 18px 36px -14px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(34, 211, 238, 0.06);
+  --shadow-2: 0 26px 56px -24px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 0 32px rgba(34, 211, 238, 0.12), 0 22px 44px -22px rgba(0, 0, 0, 0.85);
+  --glow: rgba(34, 211, 238, 0.3);
+  --spot: rgba(34, 211, 238, 0.09);
 
-  --brand-1: #22d3ee;
-  --brand-2: #60a5fa;
-  --brand-3: #3b82f6;
-  --brand-4: #a78bfa;
-  --glow: rgba(34, 211, 238, 0.28);
-  --btn-primary-bg: linear-gradient(110deg, #0891b2, #2563eb);
+  --btn-primary-bg: linear-gradient(100deg, #22d3ee, #3b9cf6);
+  --btn-primary-bg-hover: linear-gradient(100deg, #4fe0f4, #5aaefa);
+  --btn-primary-ink: #03141f;
+  --btn-primary-glow: rgba(34, 211, 238, 0.42);
+}
+/* Derived tokens must re-resolve on a forced-dark band: a custom property that
+   references others is computed where it is declared. */
+.pub-night {
+  --surface-0: var(--plane);
   --focus: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent);
 }
 
@@ -336,34 +342,26 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
-  /* Inter's recommended tracking at UI sizes: keeps dense tables on one line. */
-  letter-spacing: -0.011em;
+  letter-spacing: -0.006em;
   color: var(--text-primary);
-  /* Inter: disambiguated glyphs (cv05 = l with tail, cv08 = upper-case i with
-     serifs, ss02 open digits) so MRNs, doses and lab values never misread. */
-  font-feature-settings: "cv05" 1, "cv08" 1, "ss02" 1;
-  /* Chart paper: two hairline rules over the plane, with a soft clinical wash
-     in the top corners so the page reads as an instrument surface rather than
-     a flat grey. Fixed so the texture never scrolls with the content. */
+  /* A clean plane with two soft glows at the top edges, as on the public
+     pages. No grid: on a dense worklist a pattern competes with the data.
+     Fixed, so the glow never scrolls with the content. */
   background-color: var(--plane);
-  background-image: radial-gradient(1200px 620px at 12% -8%, var(--wash-1), transparent 62%),
-    radial-gradient(900px 520px at 92% -14%, var(--wash-2), transparent 60%),
-    linear-gradient(var(--paper-rule-major) 1px, transparent 1px),
-    linear-gradient(90deg, var(--paper-rule-major) 1px, transparent 1px),
-    linear-gradient(var(--paper-rule) 1px, transparent 1px),
-    linear-gradient(90deg, var(--paper-rule) 1px, transparent 1px);
-  /* ECG paper: minor 5 mm-style cells, a heavier rule every fifth cell. */
-  background-size: 100% 100%, 100% 100%, 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-image: radial-gradient(1100px 560px at 8% -12%, var(--wash-1), transparent 62%),
+    radial-gradient(900px 520px at 96% -14%, var(--wash-2), transparent 60%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
 }
 h1,
 h2,
 h3,
 h4 {
   margin: 0;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
 }

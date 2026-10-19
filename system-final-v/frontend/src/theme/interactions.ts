@@ -1,12 +1,12 @@
 /**
  * Cursor spotlight for interactive cards (see the "Cursor spotlight" block in
- * styles/vault.css). One passive, rAF-throttled listener for the whole app
+ * styles/console.css). One passive, rAF-throttled listener for the whole app
  * writes --mx / --my on whichever card is under the pointer — no per-card
  * listeners, no React re-renders.
  *
  * Decorative only, so it is skipped on touch / coarse pointers.
  */
-const SELECTOR = ".card-interactive, .stat-tile, .bed-card, .feature, .lp-step, .au-spot";
+const SELECTOR = ".card-interactive, .bed-card, .tenant-card, .feature, .au-spot";
 
 export function installPointerGlow(): () => void {
   if (typeof window === "undefined" || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {

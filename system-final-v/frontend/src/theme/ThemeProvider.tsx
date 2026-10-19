@@ -7,7 +7,8 @@ import type { ReactNode } from "react";
  * and under [data-theme="dark"], so an explicit choice always wins over the OS.
  *
  * "system" therefore means: remove the attribute entirely and let the media
- * query decide. It is the default for a fresh install.
+ * query decide. A fresh install starts in "dark"; a stored choice always wins.
+ * index.html applies the same default before first paint, so keep them in step.
  */
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -31,7 +32,7 @@ function readStored(): ThemeMode {
   } catch {
     /* private mode / blocked storage — fall through to the default */
   }
-  return "system";
+  return "dark";
 }
 
 function prefersDark(): boolean {

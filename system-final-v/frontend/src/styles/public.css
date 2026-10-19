@@ -1,6 +1,6 @@
 /* =========================================================================
    Public surfaces: sign-in, sign-up, the unlisted demo picker, and the
-   landing-page additions. Loaded after vault.css; every colour is a token.
+   landing-page additions. Loaded after console.css; every colour is a token.
    Motion rules follow .claude/skills (emil-design-eng / animate): ease-out
    entrances under ~300ms for repeated UI, longer only for one-off marketing
    reveals, nothing from scale(0), and reduced-motion gets the final state.
@@ -8,43 +8,14 @@
 
 
 /* =========================================================================
-   Public palette (additional-files/reference-files/ESAP_Clinical_AI_Landing_Page_1*.png)
-   Light: white / pale cool plane, dark-teal primary, teal→green headline.
-   Dark: deep navy with cyan / violet edge glows, bright cyan primary.
-
-   These are their own --pub-* tokens so the signed-in consoles are untouched.
-   The `.pub` root (landing, site pages, auth pages, offline screen) then
-   re-points the app's shared semantic tokens at them, which is what makes the
-   existing primitives (Button, Card, inputs, banners) follow the public look.
-   `.pub-night` forces the dark set on one band.
+   Marketing-only palette (additional-files/reference-files/ESAP_Clinical_AI_Landing_Page_1*.png).
+   The shared palette (surfaces, ink, accent, primary button, shadows) lives
+   in tokens.css and is the same on every surface. What stays here is only
+   what a marketing page uses and a clinical screen never should: headline
+   gradients, halos, the hero mock's slab, the demo gauges' identity hues.
    ========================================================================= */
 :root {
-  --pub-bg: #f6f9fb;
   --pub-bg-alt: #ffffff;
-  --pub-surface: #ffffff;
-  --pub-surface-2: #f3f7f9;
-  --pub-sunken: #e8eff3;
-  --pub-text: #0b1e2b;
-  --pub-text-2: #3a4d5c;
-  --pub-muted: #566877;
-  --pub-border: #dde7ec;
-  --pub-border-strong: #c5d4dc;
-  --pub-accent: #0d8f86;
-  --pub-accent-strong: #0a736c;
-  --pub-accent-weak: #e1f3f0;
-  --pub-accent-ink: #07665e;
-  --pub-fill: #0b3f3b;
-  --pub-fill-strong: #0f554f;
-  --pub-on-fill: #ffffff;
-  --pub-vital: #1f9e6a;
-  --pub-vital-weak: #e3f6ec;
-  --pub-vital-ink: #0b6f47;
-  --pub-brand-1: #0f9c93;
-  --pub-brand-2: #22b573;
-  --pub-brand-3: #2f80ed;
-  --pub-brand-4: #7c5cf6;
-  --pub-glyph: linear-gradient(140deg, #0f9c93, #1aa6a0 50%, #22b573);
-  --pub-glyph-ink: #ffffff;
   --pub-grad-text: linear-gradient(100deg, #0b8a80 0%, #13a16a 100%);
   --pub-title-grad: linear-gradient(120deg, #0b1e2b 0%, #0b5f58 60%, #0f7a50 100%);
   /* Categorical identity hues for the three demo gauges — never severity. */
@@ -56,53 +27,20 @@
   --pub-g3-weak: #efe9fd;
   --pub-glass: rgba(255, 255, 255, 0.8);
   --pub-glass-border: rgba(11, 30, 43, 0.08);
-  --pub-nav-bg: rgba(255, 255, 255, 0.82);
-  --pub-shadow-1: 0 1px 2px rgba(11, 30, 43, 0.05);
-  --pub-shadow-2: 0 24px 50px -22px rgba(11, 30, 43, 0.22), 0 2px 6px rgba(11, 30, 43, 0.05);
-  --pub-shadow-lift: 0 1px 2px rgba(11, 30, 43, 0.05), 0 22px 44px -22px rgba(13, 110, 104, 0.32);
   --pub-shadow-mock: 0 50px 90px -40px rgba(11, 45, 50, 0.38), 0 8px 20px -10px rgba(11, 30, 43, 0.12);
-  --pub-glow: rgba(13, 143, 134, 0.22);
-  --pub-spot: rgba(13, 143, 134, 0.07);
   --pub-halo-1: rgba(15, 156, 147, 0.1);
   --pub-halo-2: rgba(47, 128, 237, 0.07);
   --pub-halo-3: rgba(34, 181, 115, 0.08);
-  --pub-btn-bg: #0b3f3b;
-  --pub-btn-bg-hover: #0f554f;
-  --pub-btn-ink: #ffffff;
-  --pub-btn-glow: rgba(11, 63, 59, 0.32);
   /* The dashboard mock's back slab: deep teal glass in light, blue glass in dark. */
   --pub-slab: linear-gradient(160deg, #11423f, #0b2c33 60%, #0d3a3a);
   --pub-slab-line: rgba(140, 239, 224, 0.55);
+  /* The landing headline's passing highlight. */
+  --pub-shine: rgba(255, 255, 255, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --pub-bg: #050b1a;
     --pub-bg-alt: #081026;
-    --pub-surface: #0b1530;
-    --pub-surface-2: #0f1c3b;
-    --pub-sunken: #081128;
-    --pub-text: #eef3ff;
-    --pub-text-2: #b6c2df;
-    --pub-muted: #8e9bbd;
-    --pub-border: #19284f;
-    --pub-border-strong: #26386a;
-    --pub-accent: #22d3ee;
-    --pub-accent-strong: #67e8f9;
-    --pub-accent-weak: #0a2440;
-    --pub-accent-ink: #7fe6f7;
-    --pub-fill: #22d3ee;
-    --pub-fill-strong: #38bdf8;
-    --pub-on-fill: #03141f;
-    --pub-vital: #2dd4bf;
-    --pub-vital-weak: #09283a;
-    --pub-vital-ink: #8cefe0;
-    --pub-brand-1: #22d3ee;
-    --pub-brand-2: #3b82f6;
-    --pub-brand-3: #60a5fa;
-    --pub-brand-4: #a78bfa;
-    --pub-glyph: linear-gradient(140deg, #22d3ee, #3b82f6);
-    --pub-glyph-ink: #ffffff;
     --pub-grad-text: linear-gradient(100deg, #22d3ee 0%, #60a5fa 50%, #a78bfa 100%);
     --pub-title-grad: linear-gradient(120deg, #eef3ff 0%, #9be9f7 55%, #b9c6ff 100%);
     --pub-g1: #22d3ee;
@@ -113,53 +51,19 @@
     --pub-g3-weak: #1b1a48;
     --pub-glass: rgba(9, 18, 42, 0.72);
     --pub-glass-border: rgba(120, 160, 255, 0.13);
-    --pub-nav-bg: rgba(5, 11, 26, 0.78);
-    --pub-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --pub-shadow-2: 0 26px 56px -24px rgba(0, 0, 0, 0.8);
-    --pub-shadow-lift: 0 0 32px rgba(34, 211, 238, 0.12), 0 22px 44px -22px rgba(0, 0, 0, 0.85);
     --pub-shadow-mock: 0 50px 100px -40px rgba(0, 0, 0, 0.9), 0 0 60px -20px rgba(34, 211, 238, 0.25);
-    --pub-glow: rgba(34, 211, 238, 0.3);
-    --pub-spot: rgba(34, 211, 238, 0.09);
     --pub-halo-1: rgba(34, 211, 238, 0.16);
     --pub-halo-2: rgba(139, 92, 246, 0.2);
     --pub-halo-3: rgba(59, 130, 246, 0.14);
-    --pub-btn-bg: linear-gradient(100deg, #22d3ee, #3b9cf6);
-    --pub-btn-bg-hover: linear-gradient(100deg, #4fe0f4, #5aaefa);
-    --pub-btn-ink: #03141f;
-    --pub-btn-glow: rgba(34, 211, 238, 0.42);
     --pub-slab: linear-gradient(160deg, #10224a, #0a1736 60%, #141f52);
     --pub-slab-line: rgba(34, 211, 238, 0.6);
+    --pub-shine: rgba(236, 248, 255, 0.6);
   }
 }
 
 :root[data-theme="dark"],
 .pub-night {
-  --pub-bg: #050b1a;
   --pub-bg-alt: #081026;
-  --pub-surface: #0b1530;
-  --pub-surface-2: #0f1c3b;
-  --pub-sunken: #081128;
-  --pub-text: #eef3ff;
-  --pub-text-2: #b6c2df;
-  --pub-muted: #8e9bbd;
-  --pub-border: #19284f;
-  --pub-border-strong: #26386a;
-  --pub-accent: #22d3ee;
-  --pub-accent-strong: #67e8f9;
-  --pub-accent-weak: #0a2440;
-  --pub-accent-ink: #7fe6f7;
-  --pub-fill: #22d3ee;
-  --pub-fill-strong: #38bdf8;
-  --pub-on-fill: #03141f;
-  --pub-vital: #2dd4bf;
-  --pub-vital-weak: #09283a;
-  --pub-vital-ink: #8cefe0;
-  --pub-brand-1: #22d3ee;
-  --pub-brand-2: #3b82f6;
-  --pub-brand-3: #60a5fa;
-  --pub-brand-4: #a78bfa;
-  --pub-glyph: linear-gradient(140deg, #22d3ee, #3b82f6);
-  --pub-glyph-ink: #ffffff;
   --pub-grad-text: linear-gradient(100deg, #22d3ee 0%, #60a5fa 50%, #a78bfa 100%);
   --pub-title-grad: linear-gradient(120deg, #eef3ff 0%, #9be9f7 55%, #b9c6ff 100%);
   --pub-g1: #22d3ee;
@@ -170,94 +74,42 @@
   --pub-g3-weak: #1b1a48;
   --pub-glass: rgba(9, 18, 42, 0.72);
   --pub-glass-border: rgba(120, 160, 255, 0.13);
-  --pub-nav-bg: rgba(5, 11, 26, 0.78);
-  --pub-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --pub-shadow-2: 0 26px 56px -24px rgba(0, 0, 0, 0.8);
-  --pub-shadow-lift: 0 0 32px rgba(34, 211, 238, 0.12), 0 22px 44px -22px rgba(0, 0, 0, 0.85);
   --pub-shadow-mock: 0 50px 100px -40px rgba(0, 0, 0, 0.9), 0 0 60px -20px rgba(34, 211, 238, 0.25);
-  --pub-glow: rgba(34, 211, 238, 0.3);
-  --pub-spot: rgba(34, 211, 238, 0.09);
   --pub-halo-1: rgba(34, 211, 238, 0.16);
   --pub-halo-2: rgba(139, 92, 246, 0.2);
   --pub-halo-3: rgba(59, 130, 246, 0.14);
-  --pub-btn-bg: linear-gradient(100deg, #22d3ee, #3b9cf6);
-  --pub-btn-bg-hover: linear-gradient(100deg, #4fe0f4, #5aaefa);
-  --pub-btn-ink: #03141f;
-  --pub-btn-glow: rgba(34, 211, 238, 0.42);
   --pub-slab: linear-gradient(160deg, #10224a, #0a1736 60%, #141f52);
   --pub-slab-line: rgba(34, 211, 238, 0.6);
+  --pub-shine: rgba(236, 248, 255, 0.6);
 }
 
-/* Re-point the shared semantic tokens inside every public root. */
-.pub,
-.pub-night {
-  --plane: var(--pub-bg);
-  --surface-1: var(--pub-surface);
-  --surface-2: var(--pub-surface-2);
-  --surface-sunken: var(--pub-sunken);
-  --text-primary: var(--pub-text);
-  --text-secondary: var(--pub-text-2);
-  --text-muted: var(--pub-muted);
-  --border: var(--pub-border);
-  --border-strong: var(--pub-border-strong);
-  --grid: var(--pub-border);
-  --accent: var(--pub-accent);
-  --accent-strong: var(--pub-accent-strong);
-  --accent-weak: var(--pub-accent-weak);
-  --accent-ink: var(--pub-accent-ink);
-  --accent-fill: var(--pub-fill);
-  --accent-fill-strong: var(--pub-fill-strong);
-  --on-accent: var(--pub-on-fill);
-  --vital: var(--pub-vital);
-  --vital-weak: var(--pub-vital-weak);
-  --vital-ink: var(--pub-vital-ink);
-  --brand-1: var(--pub-brand-1);
-  --brand-2: var(--pub-brand-2);
-  --brand-3: var(--pub-brand-3);
-  --brand-4: var(--pub-brand-4);
-  --glass: var(--pub-glass);
-  --glass-border: var(--pub-glass-border);
-  --shadow-1: var(--pub-shadow-1);
-  --shadow-2: var(--pub-shadow-2);
-  --shadow-lift: var(--pub-shadow-lift);
-  --glow: var(--pub-glow);
-  --spot: var(--pub-spot);
+/* The semantic tokens are app-wide now (tokens.css), so a public root only
+   adds what is genuinely marketing: stronger edge halos behind the page.
+   `.pub-night` gets the full dark set from tokens.css. */
+.pub {
   --wash-1: var(--pub-halo-1);
   --wash-2: var(--pub-halo-2);
-  --btn-primary-bg: var(--pub-btn-bg);
-  --btn-primary-bg-hover: var(--pub-btn-bg-hover);
-  --btn-primary-ink: var(--pub-btn-ink);
-  --btn-primary-glow: var(--pub-btn-glow);
-  --title-gradient: var(--pub-title-grad);
-  --font-display: var(--font-sans);
-  --focus: 0 0 0 2px var(--pub-surface), 0 0 0 4px var(--pub-accent);
-  color: var(--pub-text);
+}
+.pub,
+.pub-night {
+  color: var(--text-primary);
 }
 .pub {
   min-height: 100vh;
-  background: var(--pub-bg);
+  background: var(--plane);
   overflow-x: clip;
 }
 /* Overscroll and short pages show the public plane, not the console grid. */
 :root:has(.pub) body {
-  background: var(--pub-bg);
+  background: var(--plane);
 }
 .pub .brand-glyph {
-  background: var(--pub-glyph);
-  box-shadow: 0 6px 16px -6px var(--pub-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.pub .brand-cross {
-  fill: var(--pub-glyph-ink);
-}
-.pub .brand-pulse {
-  stroke: var(--pub-brand-1);
+  background: var(--brand-glyph);
+  box-shadow: 0 6px 16px -6px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .pub .brand-words strong {
   font-weight: 800;
   letter-spacing: 0.02em;
-}
-.pub .brand-words span {
-  color: var(--pub-accent-ink);
 }
 .pub h1,
 .pub h2,
@@ -271,7 +123,7 @@
   display: none;
 }
 .pub :focus-visible {
-  outline: 2px solid var(--pub-accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -289,8 +141,9 @@
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
-  transition: transform var(--dur-press) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
-    background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  transition: transform var(--dur-press) var(--ease-out), translate var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out), background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 .pub-btn-sm {
   min-height: 40px;
@@ -299,14 +152,14 @@
   border-radius: 10px;
 }
 .pub-btn-primary {
-  background: var(--pub-btn-bg);
-  color: var(--pub-btn-ink);
-  box-shadow: 0 10px 24px -12px var(--pub-btn-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-ink);
+  box-shadow: 0 10px 24px -12px var(--btn-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 .pub-btn-outline {
-  border-color: var(--pub-border-strong);
-  background: var(--pub-surface);
-  color: var(--pub-text);
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-primary);
 }
 .pub-btn svg {
   flex: none;
@@ -320,13 +173,17 @@
   cursor: progress;
 }
 @media (hover: hover) and (pointer: fine) {
+  /* Lift on `translate`, so the press scale on `transform` still lands. */
+  .pub-btn:hover:not(:disabled) {
+    translate: 0 -1px;
+  }
   .pub-btn-primary:hover {
-    background: var(--pub-btn-bg-hover);
-    box-shadow: 0 16px 34px -14px var(--pub-btn-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    background: var(--btn-primary-bg-hover);
+    box-shadow: 0 16px 34px -14px var(--btn-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   }
   .pub-btn-outline:hover {
-    border-color: color-mix(in srgb, var(--pub-accent) 55%, var(--pub-border-strong));
-    background: color-mix(in srgb, var(--pub-accent) 6%, var(--pub-surface));
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface-1));
   }
   .pub-btn:hover .pub-arrow {
     transform: translateX(3px);
@@ -350,8 +207,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--pub-nav-bg);
-  border-bottom: 1px solid var(--pub-border);
+  background: var(--glass);
+  border-bottom: 1px solid var(--border);
   backdrop-filter: saturate(1.4) blur(16px);
   -webkit-backdrop-filter: saturate(1.4) blur(16px);
   transition: box-shadow var(--dur-base) ease;
@@ -383,7 +240,7 @@
   padding-inline: 0.85rem;
   font-size: 0.92rem;
   font-weight: 550;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color var(--dur-fast) ease;
 }
@@ -399,7 +256,7 @@
   transition: transform var(--dur-base) var(--ease-out);
 }
 .pub-link[aria-current="page"] {
-  color: var(--pub-text);
+  color: var(--text-primary);
   font-weight: 700;
 }
 .pub-link[aria-current="page"]::after {
@@ -407,7 +264,7 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .pub-link:hover {
-    color: var(--pub-text);
+    color: var(--text-primary);
   }
 }
 .pub-nav-actions {
@@ -418,13 +275,13 @@
 }
 .pub-nav .theme-toggle,
 .pub-mobile .theme-toggle {
-  background: var(--pub-surface-2);
-  border-color: var(--pub-border);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 .pub-nav .theme-opt.is-active,
 .pub-mobile .theme-opt.is-active {
-  background: var(--pub-surface);
-  color: var(--pub-accent-ink);
+  background: var(--surface-1);
+  color: var(--accent-ink);
 }
 .pub-menu-btn {
   display: none;
@@ -432,9 +289,9 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  border: 1px solid var(--pub-border-strong);
-  background: var(--pub-surface);
-  color: var(--pub-text);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-primary);
   cursor: pointer;
 }
 .pub-mobile {
@@ -442,8 +299,8 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem clamp(1rem, 4vw, 2rem) 1.25rem;
-  border-top: 1px solid var(--pub-border);
-  background: var(--pub-surface);
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
 }
 .pub-mobile a:not(.pub-btn) {
   display: flex;
@@ -452,12 +309,12 @@
   padding-inline: 0.75rem;
   border-radius: 10px;
   font-weight: 600;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
   text-decoration: none;
 }
 .pub-mobile a[aria-current="page"] {
-  color: var(--pub-accent-ink);
-  background: var(--pub-accent-weak);
+  color: var(--accent-ink);
+  background: var(--accent-weak);
 }
 .pub-mobile-row {
   display: flex;
@@ -494,8 +351,8 @@
 /* ---------- public footer (SiteFooter) ------------------------------------ */
 .pub-foot {
   padding-block: 3.5rem 2.5rem;
-  border-top: 1px solid var(--pub-border);
-  background: var(--pub-bg);
+  border-top: 1px solid var(--border);
+  background: var(--plane);
 }
 .pub-foot-inner {
   display: flex;
@@ -510,7 +367,7 @@
   margin: 0.8rem 0 0;
   font-size: 0.84rem;
   line-height: 1.6;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .pub-foot-cols {
   display: flex;
@@ -526,25 +383,25 @@
 .pub-foot-cols strong {
   margin-bottom: 0.35rem;
   font-size: 0.8rem;
-  color: var(--pub-text);
+  color: var(--text-primary);
 }
 .pub-foot-cols a {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color var(--dur-fast) ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .pub-foot-cols a:hover {
-    color: var(--pub-text);
+    color: var(--text-primary);
   }
 }
 .pub-foot .pub-foot-note {
   margin-top: 2rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--pub-border);
+  border-top: 1px solid var(--border);
   font-size: 0.78rem;
 }
 @media (max-width: 600px) {
@@ -554,11 +411,50 @@
 }
 
 /* ---------- site pages (/evidence, /security, /pricing) ------------------- */
+/* The page glows sit on their own layer so they can drift (below). It bleeds
+   3rem past the page with the gradient centres pulled back in to match, so
+   the drift never uncovers an edge; `.pub` clips it horizontally. */
 .pub.site {
+  position: relative;
+  isolation: isolate;
+  background: var(--plane);
+}
+.pub.site::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -3rem auto;
+  height: 64rem;
+  z-index: -1;
+  pointer-events: none;
   background:
-    radial-gradient(900px 520px at 0% 0%, var(--pub-halo-1), transparent 65%),
-    radial-gradient(800px 600px at 100% 10%, var(--pub-halo-2), transparent 60%),
-    var(--pub-bg);
+    radial-gradient(900px 520px at 3rem 3rem, var(--pub-halo-1), transparent 65%),
+    radial-gradient(800px 600px at calc(100% - 3rem) 15rem, var(--pub-halo-2), transparent 60%);
+}
+/* Calmer than the landing hero: one layer, a longer loop, less travel, and a
+   2px card lift. Mouse only; touch screens and reduced motion stay still. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .pub.site::before {
+    will-change: transform;
+    animation: pub-drift 28s ease-in-out infinite alternate;
+  }
+  .pub.site .card,
+  .pub.site .plan {
+    transition: translate var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
+      border-color var(--dur-fast) ease;
+  }
+  .pub.site .card:hover,
+  .pub.site .plan:hover {
+    translate: 0 -2px;
+    box-shadow: var(--shadow-lift);
+  }
+  .pub.site .plan.is-featured:hover {
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow-lift);
+  }
+}
+@keyframes pub-drift {
+  to {
+    transform: translate3d(1.5rem, 1rem, 0) scale(1.03);
+  }
 }
 .pub .site-main {
   max-width: 78rem;
@@ -575,23 +471,23 @@
   letter-spacing: -0.035em;
 }
 .pub .hero-eyebrow {
-  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, transparent);
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
 }
 .pub .card,
 .pub .plan {
   border-radius: 18px;
-  border-color: var(--pub-border);
-  background: var(--pub-surface);
-  box-shadow: var(--pub-shadow-1);
+  border-color: var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
 }
 .pub .plan.is-featured {
-  border-color: var(--pub-accent);
-  box-shadow: 0 0 0 1px var(--pub-accent), var(--pub-shadow-lift);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow-lift);
 }
 .pub .plan-features svg {
-  color: var(--pub-accent);
+  color: var(--accent);
 }
 .pub .btn {
   min-height: 44px;
@@ -603,9 +499,9 @@
 .pub-empty {
   margin: 0;
   padding: 2rem;
-  border: 1px dashed var(--pub-border-strong);
+  border: 1px dashed var(--border-strong);
   border-radius: 18px;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   text-align: center;
 }
 
@@ -617,7 +513,7 @@
   background:
     radial-gradient(700px 420px at 0% 0%, var(--pub-halo-1), transparent 65%),
     radial-gradient(700px 480px at 100% 100%, var(--pub-halo-2), transparent 60%),
-    var(--pub-bg);
+    var(--plane);
 }
 .pub-offline-card {
   width: 100%;
@@ -628,9 +524,9 @@
   gap: 1rem;
   padding: clamp(1.5rem, 4vw, 2.25rem);
   border-radius: 20px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface);
-  box-shadow: var(--pub-shadow-2);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
 }
 .pub-offline-icon {
   display: grid;
@@ -638,8 +534,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  color: var(--pub-accent-ink);
-  background: var(--pub-accent-weak);
+  color: var(--accent-ink);
+  background: var(--accent-weak);
 }
 .pub-offline h1 {
   margin: 0;
@@ -651,7 +547,7 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.65;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .pub-offline-actions {
   display: flex;
@@ -688,7 +584,7 @@
   color: var(--text-primary);
   background:
     radial-gradient(520px 380px at 25% 60%, var(--pub-halo-3), transparent 70%),
-    color-mix(in srgb, var(--pub-surface) 45%, transparent);
+    color-mix(in srgb, var(--surface-1) 45%, transparent);
   border-inline-end: 1px solid var(--border);
 }
 .auth-aside-inner {
@@ -714,7 +610,7 @@
   line-height: 1.08;
   letter-spacing: -0.035em;
   width: fit-content;
-  background: var(--title-gradient);
+  background: var(--pub-title-grad);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -733,69 +629,7 @@
   padding-top: 16px;
 }
 
-/* Heart monitor: a pulsing heart beside an ECG strip. Decorative only. The
-   trace takes --vital, which the .pub root maps to the public teal / cyan. */
-.auth-monitor {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.auth-pulse {
-  position: relative;
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-}
-.auth-pulse-core {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  color: var(--on-accent);
-  background: linear-gradient(140deg, var(--brand-1), var(--brand-3));
-  box-shadow: 0 10px 26px -10px var(--glow);
-}
-.auth-pulse-ring {
-  position: absolute;
-  inset: 4px;
-  border-radius: 20px;
-  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  opacity: 0;
-}
-.auth-ecg {
-  flex: 1;
-  min-width: 0;
-  height: 64px;
-  overflow: visible;
-}
-.auth-ecg path {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-.auth-ecg-base {
-  stroke: color-mix(in srgb, var(--accent) 22%, transparent);
-}
-.auth-ecg-trace {
-  stroke: var(--vital);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--vital) 55%, transparent));
-}
-/* Reduced motion: no sweep, so hide the bright segment rather than show a static full-length copy. */
-@media (prefers-reduced-motion: reduce) {
-  .auth-ecg-trace {
-    display: none;
-  }
-}
-[dir="rtl"] .auth-ecg {
-  scale: -1 1;
-}
+/* The heart monitor lives in styles/heart-monitor.css (shared with the landing page). */
 
 /* Illustrative preview: three demo estimates. Decorative (aria-hidden), and
    it says it is illustrative. Gauge hues are categorical, not severity. */
@@ -807,7 +641,7 @@
   margin-top: 8px;
   padding: 18px;
   border-radius: 20px;
-  border: 1px solid var(--pub-border);
+  border: 1px solid var(--border);
   background: var(--pub-glass);
   box-shadow: var(--pub-shadow-mock);
   backdrop-filter: blur(14px);
@@ -826,8 +660,8 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 650;
-  color: var(--pub-accent-ink);
-  background: var(--pub-accent-weak);
+  color: var(--accent-ink);
+  background: var(--accent-weak);
 }
 .auth-preview-row {
   --g: var(--pub-g1);
@@ -837,8 +671,8 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 14px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   font-size: 13.5px;
   font-weight: 600;
 }
@@ -903,21 +737,21 @@
 /* The form card in the public language. */
 .pub .auth-card {
   border-radius: 20px;
-  border-color: var(--pub-border);
-  background: var(--pub-surface);
-  box-shadow: var(--pub-shadow-2);
+  border-color: var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
 }
 .pub .input {
-  background: var(--pub-surface);
-  border-color: var(--pub-border-strong);
+  background: var(--surface-1);
+  border-color: var(--border-strong);
 }
 .pub .auth-path {
-  background: var(--pub-surface-2);
-  border-color: var(--pub-border);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 .pub .auth-topline .theme-toggle,
 .pub .auth-topline .lang-toggle {
-  background: var(--pub-surface-2);
+  background: var(--surface-2);
 }
 
 /* Form side */
@@ -1191,8 +1025,8 @@
 /* On public pages a disabled primary stays recognisably the primary, dimmed. */
 .pub .btn-primary:disabled,
 .pub .btn-primary:disabled:hover {
-  background: var(--pub-btn-bg);
-  color: var(--pub-btn-ink);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-ink);
   border-color: transparent;
   box-shadow: none;
   opacity: 0.5;
@@ -1501,18 +1335,6 @@
     animation: auth-rise 600ms var(--ease-out) both;
     animation-delay: calc(var(--i, 0) * 70ms + 80ms);
   }
-  /* Heart monitor: the bright trace sweeps the strip like a bedside monitor;
-     the heart does a lub-dub on each beat (4 beats / 3.2s = 75 bpm). */
-  .auth-ecg-trace {
-    stroke-dasharray: 110 890;
-    animation: auth-ecg-sweep 3.2s linear infinite;
-  }
-  .auth-pulse-core {
-    animation: auth-heartbeat 0.8s var(--ease-out) infinite;
-  }
-  .auth-pulse-ring {
-    animation: auth-pulse-ring 1.6s var(--ease-out) infinite;
-  }
   /* Preview bars fill once, after the panel has risen in. */
   .auth-preview-bar > span {
     animation: auth-bar 900ms var(--ease-out) both;
@@ -1557,40 +1379,6 @@
   to {
     opacity: 1;
     transform: none;
-  }
-}
-@keyframes auth-ecg-sweep {
-  from {
-    stroke-dashoffset: 1000;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes auth-heartbeat {
-  0%,
-  45%,
-  100% {
-    transform: none;
-  }
-  12% {
-    transform: scale(1.08);
-  }
-  26% {
-    transform: scale(0.98);
-  }
-  36% {
-    transform: scale(1.04);
-  }
-}
-@keyframes auth-pulse-ring {
-  from {
-    opacity: 0.9;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.45);
   }
 }
 @keyframes auth-bar {

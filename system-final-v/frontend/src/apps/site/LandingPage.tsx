@@ -13,11 +13,12 @@
  * under `.au` in styles/landing.css; the palette comes from the `.pub` tokens
  * in styles/public.css, shared with the other public pages.
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/landing.css";
 import { MODELS } from "@/mock/db";
 import { BrandMark } from "@/components/shell/AppShell";
+import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { SiteFooter, SiteHeader } from "./SiteLayout";
 import {
   ActivityIcon, ArrowRight, BedIcon, BookIcon, BuildingIcon, ChartIcon, CheckIcon, ChevronDown, ClockIcon,
@@ -193,6 +194,98 @@ function Glows() {
   );
 }
 
+const MOTION_OK = "(prefers-reduced-motion: no-preference)";
+/** Ambient, pointer-driven motion only where there is a mouse and motion is welcome. */
+const AMBIENT_OK = `(hover: hover) and (pointer: fine) and ${MOTION_OK}`;
+
+/**
+ * Counts up to `to` once the gauge scrolls into view, in step with the ring's
+ * arc (same 0.35s delay, 1.3s, strong ease-out). Writes textContent directly so
+ * React never re-renders per frame. Reduced motion just prints the value.
+ */
+function CountUp({ to }: { to: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.textContent = String(to);
+    if (typeof IntersectionObserver === "undefined" || !window.matchMedia?.(MOTION_OK).matches) return;
+    el.textContent = "0";
+    let raf = 0;
+    let timer = 0;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e?.isIntersecting) return;
+        io.disconnect();
+        timer = window.setTimeout(() => {
+          const start = performance.now();
+          const tick = (now: number) => {
+            const t = Math.min(1, (now - start) / 1300);
+            el.textContent = String(Math.round(to * (1 - Math.pow(1 - t, 4))));
+            if (t < 1) raf = requestAnimationFrame(tick);
+          };
+          raf = requestAnimationFrame(tick);
+        }, 350);
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      el.textContent = String(to);
+    };
+  }, [to]);
+  return <span ref={ref} />;
+}
+
+/**
+ * Slow tilt of the hero mock toward the cursor, on fine pointers only. One
+ * passive listener on the hero; a time-based ease toward the target written
+ * straight to the element's transform, and the loop stops once it settles.
+ */
+function useHeroTilt() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    const hero = el?.closest("section");
+    if (!el || !hero || !window.matchMedia?.(AMBIENT_OK).matches) return;
+    let tx = 0, ty = 0, x = 0, y = 0, raf = 0, last = 0;
+    const step = (now: number) => {
+      const k = 1 - Math.exp(-(now - (last || now - 16)) / 140);
+      last = now;
+      x += (tx - x) * k;
+      y += (ty - y) * k;
+      el.style.transform = `perspective(1600px) rotateX(${y.toFixed(3)}deg) rotateY(${x.toFixed(3)}deg)`;
+      if (Math.abs(tx - x) > 0.005 || Math.abs(ty - y) > 0.005) raf = requestAnimationFrame(step);
+      else raf = last = 0;
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const onMove = (e: PointerEvent) => {
+      const r = hero.getBoundingClientRect();
+      tx = ((e.clientX - r.left) / r.width - 0.5) * 5;
+      ty = -((e.clientY - r.top) / r.height - 0.5) * 4;
+      kick();
+    };
+    const onLeave = () => {
+      tx = ty = 0;
+      kick();
+    };
+    hero.addEventListener("pointermove", onMove, { passive: true });
+    hero.addEventListener("pointerleave", onLeave);
+    return () => {
+      hero.removeEventListener("pointermove", onMove);
+      hero.removeEventListener("pointerleave", onLeave);
+      cancelAnimationFrame(raf);
+      el.style.transform = "";
+    };
+  }, []);
+  return ref;
+}
+
 /** Ring gauge. Decorative: the number is printed inside it and beside it in text. */
 function Ring({ p, size = 116, label }: { p: number; size?: number; label?: string }) {
   const r = size / 2 - 7;
@@ -204,7 +297,10 @@ function Ring({ p, size = 116, label }: { p: number; size?: number; label?: stri
         <circle className="au-ring-arc" cx={size / 2} cy={size / 2} r={r} strokeDasharray={c} />
       </svg>
       <span className="au-ring-text">
-        <strong className="tnum">{Math.round(p * 100)}%</strong>
+        <strong className="tnum">
+          <span className="visually-hidden">{Math.round(p * 100)}%</span>
+          <span aria-hidden="true"><CountUp to={Math.round(p * 100)} />%</span>
+        </strong>
         {label && <small>{label}</small>}
       </span>
     </span>
@@ -220,51 +316,54 @@ const ECG = "M0 60 H70 L80 60 L88 46 L96 60 L108 60 L116 18 L126 100 L134 60 L15
  * window rather than over it, so it never covers data at any width.
  */
 function HeroDashboard() {
+  const tilt = useHeroTilt();
   return (
     <div className="au-visual" aria-hidden="true">
-      <div className="au-tilt">
-        <div className="au-slab">
-          <svg viewBox="0 0 240 120" preserveAspectRatio="none">
-            <path className="au-slab-ecg" d={ECG} pathLength={1000} />
-          </svg>
-        </div>
-        <div className="au-window">
-          <aside className="au-win-side">
-            <span className="au-win-brand">
-              <BrandMark size={22} withWordmark={false} />
-              <span><strong>ESAP</strong><small>Clinical AI</small></span>
-            </span>
-            <span className="au-win-item is-on"><UserIcon size={13} /> Overview</span>
-            <span className="au-win-item"><ChartIcon size={13} /> Predictions</span>
-            <span className="au-win-item"><FileIcon size={13} /> Evidence</span>
-            <span className="au-win-item"><BookIcon size={13} /> Notes</span>
-          </aside>
-          <div className="au-win-main">
-            <div className="au-win-head">
-              <div>
-                <strong>Patient #48293</strong>
-                <span>68 y/o · Male · Admitted 2h ago</span>
-              </div>
-              <span className="au-win-tag">Illustrative</span>
-            </div>
-            <p className="au-win-label">Key predictions</p>
-            <div className="au-tiles">
-              {DEMO.map((d, i) => (
-                <div key={d.id} className={`au-tile ${d.hue}`} style={{ "--i": i } as CSSProperties}>
-                  <span className="au-tile-icon">{d.icon}</span>
-                  <small>{d.title}</small>
-                  <strong className="tnum">{Math.round(d.p * 100)}%</strong>
-                  <span className="au-tile-sub">illustrative</span>
+      <div className="au-float" ref={tilt}>
+        <div className="au-tilt">
+          <div className="au-slab">
+            <svg viewBox="0 0 240 120" preserveAspectRatio="none">
+              <path className="au-slab-ecg" d={ECG} pathLength={1000} />
+            </svg>
+          </div>
+          <div className="au-window">
+            <aside className="au-win-side">
+              <span className="au-win-brand">
+                <BrandMark size={22} withWordmark={false} />
+                <span><strong>ESAP</strong><small>Clinical AI</small></span>
+              </span>
+              <span className="au-win-item is-on"><UserIcon size={13} /> Overview</span>
+              <span className="au-win-item"><ChartIcon size={13} /> Predictions</span>
+              <span className="au-win-item"><FileIcon size={13} /> Evidence</span>
+              <span className="au-win-item"><BookIcon size={13} /> Notes</span>
+            </aside>
+            <div className="au-win-main">
+              <div className="au-win-head">
+                <div>
+                  <strong>Patient #48293</strong>
+                  <span>68 y/o · Male · Admitted 2h ago</span>
                 </div>
-              ))}
-            </div>
-            <div className="au-why">
-              <div className="au-why-top">
-                <span>Why this prediction?</span>
-                <span className="au-why-link">View reasoning <ArrowRight size={11} /></span>
+                <span className="au-win-tag">Illustrative</span>
               </div>
-              <div className="au-why-chips">
-                {WHY_CHIPS.map((c, i) => <span key={c} style={{ "--i": i } as CSSProperties}>{c}</span>)}
+              <p className="au-win-label">Key predictions</p>
+              <div className="au-tiles">
+                {DEMO.map((d, i) => (
+                  <div key={d.id} className={`au-tile ${d.hue}`} style={{ "--i": i } as CSSProperties}>
+                    <span className="au-tile-icon">{d.icon}</span>
+                    <small>{d.title}</small>
+                    <strong className="tnum">{Math.round(d.p * 100)}%</strong>
+                    <span className="au-tile-sub">illustrative</span>
+                  </div>
+                ))}
+              </div>
+              <div className="au-why">
+                <div className="au-why-top">
+                  <span>Why this prediction?</span>
+                  <span className="au-why-link">View reasoning <ArrowRight size={11} /></span>
+                </div>
+                <div className="au-why-chips">
+                  {WHY_CHIPS.map((c, i) => <span key={c} style={{ "--i": i } as CSSProperties}>{c}</span>)}
+                </div>
               </div>
             </div>
           </div>
@@ -395,18 +494,19 @@ export function LandingPage() {
         <Glows />
         <div className="au-wrap au-hero-inner">
           <div className="au-hero-copy">
-            <span className="au-badge au-rise" style={{ "--i": 0 } as CSSProperties}>
-              <ActivityIcon size={14} /> Intake-time clinical decision support
-            </span>
-            <h1 className="au-title au-rise" style={{ "--i": 1 } as CSSProperties}>
-              Five questions answered <span className="au-grad">the hour a patient is admitted.</span>
+            {/* The heartbeat is the hero: the sign-in page's monitor at full size,
+                with plain, single-colour text beneath it. */}
+            <div className="au-rise" style={{ "--i": 0 } as CSSProperties}>
+              <HeartMonitor size="lg" className="au-hero-monitor" />
+            </div>
+            <h1 className="au-title">
+              <span className="au-title-line au-rise" style={{ "--i": 1 } as CSSProperties}>Five questions answered</span>{" "}
+              <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>the hour a patient is admitted.</span>
             </h1>
-            <p className="au-lede au-rise" style={{ "--i": 2 } as CSSProperties}>
-              ESAP reads what is known at admission and estimates what is likely already present, how the stay is
-              likely to go, and how long it is likely to last — with the reasoning attached, the calibration
-              stated, and the limits printed on the same card as the number.
+            <p className="au-lede au-rise" style={{ "--i": 3 } as CSSProperties}>
+              Calibrated estimates from what is known at admission, with the reasoning and the limits on the same card.
             </p>
-            <div className="au-cta-row au-rise" style={{ "--i": 3 } as CSSProperties}>
+            <div className="au-cta-row au-rise" style={{ "--i": 4 } as CSSProperties}>
               <Link to="/signup" className="pub-btn pub-btn-primary">
                 <ArrowRight size={16} className="pub-arrow" /> Try it on your own cases
               </Link>
@@ -415,7 +515,7 @@ export function LandingPage() {
               </Link>
               <Link to="/signup" className="pub-btn pub-btn-outline au-btn-quiet">Join the waitlist</Link>
             </div>
-            <p className="au-note au-rise" style={{ "--i": 4 } as CSSProperties}>
+            <p className="au-note au-rise" style={{ "--i": 5 } as CSSProperties}>
               <LockIcon size={13} /> Free tier, no card. Nothing you enter is retained on the free tier.
             </p>
           </div>
@@ -436,7 +536,7 @@ export function LandingPage() {
           </div>
           <div className="au-impact-grid">
             {DEMO.map((d, i) => (
-              <article key={d.id} className={`au-gauge-card au-spot ${d.hue}`} data-au-reveal style={{ "--i": i } as CSSProperties}>
+              <article key={d.id} className={`au-gauge-card au-spot au-lift ${d.hue}`} data-au-reveal style={{ "--i": i } as CSSProperties}>
                 <div className="au-gauge-top">
                   <span className="au-gauge-icon">{d.icon}</span>
                   <div>
@@ -451,7 +551,7 @@ export function LandingPage() {
                 </p>
               </article>
             ))}
-            <article className="au-gauge-card au-explain au-spot" data-au-reveal style={{ "--i": 3 } as CSSProperties}>
+            <article className="au-gauge-card au-explain au-spot au-lift" data-au-reveal style={{ "--i": 3 } as CSSProperties}>
               <span className="au-gauge-icon"><ShieldIcon size={18} /></span>
               <h3>Transparent &amp; explainable</h3>
               <p>
@@ -646,6 +746,7 @@ export function LandingPage() {
       <section className="pub-night au-band au-final">
         <Glows />
         <div className="au-wrap au-final-inner" data-au-reveal>
+          <HeartMonitor className="au-final-monitor" />
           <Eyebrow>Get started</Eyebrow>
           <h2 className="au-h2 au-final-title">Start where it <em>costs nothing.</em></h2>
           <p className="au-lede">Run it on your own cases today. Bring it to the ward when the evidence convinces you.</p>

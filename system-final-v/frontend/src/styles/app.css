@@ -30,7 +30,6 @@
   padding: 10px 20px;
   border-bottom: 1px solid var(--border);
   min-height: 58px;
-  box-shadow: 0 1px 2px rgba(16, 32, 52, 0.04);
 }
 
 .topbar-left,
@@ -67,17 +66,17 @@
   display: grid;
   place-items: center;
   border-radius: var(--radius-sm);
-  background: linear-gradient(140deg, var(--accent-fill), var(--vital));
-  color: var(--on-accent);
-  box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--accent-fill) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: var(--brand-glyph);
+  color: var(--brand-glyph-ink);
+  box-shadow: 0 4px 12px -5px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   flex: none;
 }
 
 .brand-glyph svg { display: block; }
-.brand-cross { fill: var(--on-accent); }
+.brand-cross { fill: var(--brand-glyph-ink); }
 .brand-pulse {
   fill: none;
-  stroke: var(--accent-fill);
+  stroke: var(--brand-1);
   stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -89,8 +88,8 @@
   gap: 4px;
   line-height: 1;
 }
-.brand-words strong { font-size: 16px; font-weight: 750; letter-spacing: 0.03em; color: var(--text-primary); }
-.brand-words span { font-size: 9.5px; color: var(--vital-ink); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.brand-words strong { font-size: 16px; font-weight: 800; letter-spacing: 0.02em; color: var(--text-primary); }
+.brand-words span { font-size: 9.5px; color: var(--accent-ink); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
 
 .shell-body {
   display: grid;
@@ -320,9 +319,9 @@
 .btn-danger {
   background: var(--status-critical-fill);
   border-color: var(--status-critical-fill);
-  color: var(--on-accent);
+  color: var(--on-status);
 }
-.btn-danger:hover { filter: brightness(1.08); background: var(--status-critical-fill); border-color: var(--status-critical-fill); color: var(--on-accent); }
+.btn-danger:hover { filter: brightness(1.08); background: var(--status-critical-fill); border-color: var(--status-critical-fill); color: var(--on-status); }
 
 .icon-btn {
   display: grid;
@@ -1432,13 +1431,6 @@
   .identity-btn { padding: 3px; }
 }
 
-.avatar {
-  background: var(--accent-fill);
-  color: var(--on-accent);
-  border: none;
-  letter-spacing: 0.02em;
-}
-.identity-btn { box-shadow: var(--shadow-1); }
 
 /* ---- navigation rail: section titles carry a hairline ---- */
 .rail-title { display: flex; align-items: center; gap: 8px; margin-inline-end: 6px; }
@@ -1447,137 +1439,12 @@
 .rail-item:hover .rail-icon { color: var(--rail-text-strong); }
 .rail-item.is-active .rail-icon { color: var(--rail-icon-active); }
 
-/* Patient portal: a light rail. Patients are not working a clinical system,
-   so the navy chrome gives way to the same calm white as the cards. */
-.shell-patient {
-  --rail-bg: var(--surface-1);
-  --rail-bg-end: var(--surface-1);
-  --rail-text: var(--text-secondary);
-  --rail-text-strong: var(--text-primary);
-  --rail-text-muted: var(--text-muted);
-  --rail-hover: var(--surface-2);
-  --rail-active: var(--accent-weak);
-  --rail-active-border: color-mix(in srgb, var(--accent) 22%, transparent);
-  --rail-indicator: var(--accent);
-  --rail-icon-active: var(--accent);
-  --rail-border: var(--border);
-}
-.shell-patient .rail-item.is-active { color: var(--accent-ink); }
-
-/* ---- page header: chart-style header with a medical-cross eyebrow ---- */
-.page-head {
-  position: relative;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border);
-}
-.page-head::after {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  bottom: -1px;
-  width: 48px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-.page-eyebrow { display: inline-flex; align-items: center; gap: 7px; }
-.page-eyebrow::before {
-  content: "";
-  flex: none;
-  width: 9px;
-  height: 9px;
-  background:
-    linear-gradient(var(--vital), var(--vital)) center / 100% 3px no-repeat,
-    linear-gradient(var(--vital), var(--vital)) center / 3px 100% no-repeat;
-}
-.page-title { font-size: 24px; letter-spacing: -0.02em; }
-
-/* ---- cards & section titles ---- */
-.card-title { letter-spacing: -0.012em; }
-.section-title { display: inline-flex; align-items: center; gap: 9px; }
-.section-title::before {
-  content: "";
-  flex: none;
-  width: 3px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-.card-footnote { border-top-style: dashed; }
-
-/* ---- stat tiles: instrument readouts with tinted icon wells ---- */
-.stat-tile {
-  position: relative;
-  gap: 6px;
-  transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
-}
-.stat-tile:hover {
-  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
-  box-shadow: var(--shadow-lift);
-}
-.stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.stat-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-weak);
-  color: var(--accent-ink);
-}
-.stat-value { font-size: 28px; font-variant-numeric: tabular-nums; }
-.stat-tile.tone-good .stat-icon { background: var(--status-good-weak); color: var(--status-good); }
-.stat-tile.tone-warning .stat-icon { background: var(--status-warning-weak); color: var(--status-warning); }
-.stat-tile.tone-critical .stat-icon { background: var(--status-critical-weak); color: var(--status-critical); }
-
-/* ---- form controls: clearer focus ring, soft inset like a paper form ---- */
-.input,
-.select,
-textarea.input {
-  box-shadow: inset 0 1px 2px rgba(12, 40, 66, 0.04);
-}
-.input:focus-visible,
-.select:focus-visible,
-textarea.input:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-}
-.input[aria-invalid="true"]:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-critical) 22%, transparent);
-}
-
-/* ---- tables: EMR-style banded rows, tinted header ---- */
-.data-table th { color: var(--text-muted); font-size: 10.5px; font-weight: 650; letter-spacing: 0.07em; }
-.data-table tbody tr:nth-child(even):not(.is-selected):not(:hover) {
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-}
-.data-table tbody tr.is-clickable:hover {
-  background: color-mix(in srgb, var(--accent-weak) 75%, var(--surface-1));
-}
-.data-table tbody tr.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-
 /* ---- alerts: a leading severity bar, the clinical alert convention ---- */
 .banner-good { border-inline-start: 3px solid var(--status-good); }
 .banner-warning { border-inline-start: 3px solid var(--status-warning); }
 .banner-critical { border-inline-start: 3px solid var(--status-critical); }
 .banner-accent { border-inline-start: 3px solid var(--accent); }
 .inline-warn { border-inline-start: 3px solid var(--status-warning); }
-
-/* ---- empty states, modals, cards in grids ---- */
-.empty-state { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
-.empty-icon {
-  background: var(--accent-weak);
-  color: var(--accent-ink);
-  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
-}
-.modal { overflow: hidden; }
-.modal-head { background: linear-gradient(180deg, var(--surface-2), var(--surface-1)); }
-.bed-card:hover,
-.tenant-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
-.risk-row { background: linear-gradient(180deg, var(--surface-1), color-mix(in srgb, var(--surface-2) 60%, var(--surface-1))); }
 
 /* ---- public site ---- */
 .site { background: transparent; }
@@ -1672,67 +1539,8 @@ html[lang="ar"] .brand-words span { letter-spacing: 0; text-transform: none; }
 }
 
 /* =========================================================================
-   Reference refresh layer (additional-files/reference-files, light + dark).
-   Presentation only — no component contract changes. Teal/green brand in
-   light, cyan/violet glow in dark; every value resolves to a token. All
-   motion degrades to the correct final state under prefers-reduced-motion.
+   Legacy public-site rules (pre-.pub). Console styling lives in console.css.
    ========================================================================= */
-
-/* ---- brand mark: brand gradient glyph, soft glow in dark ---- */
-.brand-glyph {
-  border-radius: 9px;
-  background: linear-gradient(140deg, var(--brand-1), var(--brand-2) 55%, var(--brand-3));
-  box-shadow: 0 4px 14px -4px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.brand-pulse { stroke: var(--brand-1); }
-.brand-words span { color: var(--accent); }
-
-/* ---- primary action: solid deep green (light) / cyan→blue gradient (dark) ---- */
-.btn { border-radius: var(--radius); }
-.btn-primary,
-.btn-primary:hover {
-  background: var(--btn-primary-bg);
-  border-color: transparent;
-}
-.btn-primary {
-  box-shadow: 0 6px 18px -8px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-.btn-primary:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 10px 26px -8px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .btn-primary:hover:not(:disabled),
-  .btn:hover:not(:disabled) { transform: translateY(-1px); }
-  .btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
-}
-.avatar { background: linear-gradient(140deg, var(--brand-1), var(--brand-3)); }
-
-/* ---- cards: softer radius, faint depth gradient in dark ---- */
-:root[data-theme="dark"] .card {
-  background: linear-gradient(180deg, var(--surface-1), color-mix(in srgb, var(--surface-1) 85%, var(--plane)));
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .card {
-    background: linear-gradient(180deg, var(--surface-1), color-mix(in srgb, var(--surface-1) 85%, var(--plane)));
-  }
-}
-.page-head::after { width: 56px; background: linear-gradient(90deg, var(--brand-1), var(--brand-2)); }
-.section-title::before { background: linear-gradient(180deg, var(--brand-1), var(--brand-2)); }
-
-/* ---- page-enter motion for every app screen (replays on route change) ---- */
-@media (prefers-reduced-motion: no-preference) {
-  .main > * { animation: reveal 0.45s var(--ease) both; }
-  .main > *:nth-child(2) { animation-delay: 50ms; }
-  .main > *:nth-child(3) { animation-delay: 100ms; }
-  .main > *:nth-child(n + 4) { animation-delay: 140ms; }
-  .modal, .menu { animation: pop-in 0.22s var(--ease) both; }
-  .stat-tile:hover, .feature:hover { transform: translateY(-3px); }
-}
-@keyframes pop-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
 
 /* ---- public site nav: glass bar, sliding underline like the reference ---- */
 .site-nav { padding: 14px 32px; border-bottom-color: var(--glass-border); }
@@ -2146,349 +1954,3 @@ html[lang="ar"] .brand-words span { letter-spacing: 0; text-transform: none; }
 
 /* ---- sign-in: brand gradient top edge ---- */
 .auth-card::before { background: linear-gradient(90deg, var(--brand-1), var(--brand-2), var(--brand-4)); }
-
-/* =========================================================================
-   Clinical component layer — every signed-in surface.
-   The reference's medical read carried into the product: a clean white
-   (light) / deep-navy glass (dark) chrome, monitor-style tiles with tinted
-   instrument wells, an ECG signature on page headers, heartbeat live dots.
-   Presentation only. Risk encodings (--seq-*, meters, RiskGauge) and status
-   colours are deliberately untouched.
-   ========================================================================= */
-
-/* ---- app plane: the same aurora as the site, chart paper kept faint ---- */
-.shell {
-  background:
-    radial-gradient(1000px 520px at 18% -10%, var(--wash-1), transparent 62%),
-    radial-gradient(900px 560px at 100% 0%, var(--wash-2), transparent 60%),
-    var(--plane);
-  background-attachment: fixed;
-}
-
-/* ---- top bar: glass with a monitor-trace hairline ---- */
-.topbar {
-  background: var(--glass);
-  backdrop-filter: saturate(1.5) blur(16px);
-  -webkit-backdrop-filter: saturate(1.5) blur(16px);
-  border-bottom-color: var(--glass-border);
-  box-shadow: none;
-}
-.topbar::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--brand-1) 20%, var(--brand-2) 50%, var(--brand-4) 80%, transparent);
-  opacity: 0.55;
-  pointer-events: none;
-}
-.surface-tag::before { animation: heartbeat 1.6s ease-in-out infinite; }
-.tenant-btn,
-.tenant-static,
-.identity-btn,
-.role-badge { border-radius: 999px; }
-.identity-btn { padding: 3px 10px 3px 3px; background: var(--surface-1); }
-.avatar { box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3.5px color-mix(in srgb, var(--accent) 45%, transparent); }
-
-/* ---- navigation rail: clean white in light (like the reference window),
-        deep navy glass in dark ---- */
-:root {
-  --rail-bg: color-mix(in srgb, var(--surface-1) 88%, transparent);
-  --rail-bg-end: color-mix(in srgb, var(--surface-1) 88%, transparent);
-  --rail-text: var(--text-secondary);
-  --rail-text-strong: var(--text-primary);
-  --rail-text-muted: var(--text-muted);
-  --rail-hover: var(--surface-2);
-  --rail-active: var(--accent-weak);
-  --rail-active-border: color-mix(in srgb, var(--accent) 24%, transparent);
-  --rail-indicator: var(--accent);
-  --rail-icon-active: var(--accent);
-  --rail-border: var(--border);
-}
-:root[data-theme="dark"] {
-  --rail-bg: color-mix(in srgb, #071026 88%, transparent);
-  --rail-bg-end: color-mix(in srgb, #050b1a 92%, transparent);
-  --rail-text: #b3c0d8;
-  --rail-text-strong: #f1f5fb;
-  --rail-text-muted: #7d8bab;
-  --rail-hover: rgba(255, 255, 255, 0.04);
-  --rail-active: rgba(34, 211, 238, 0.12);
-  --rail-active-border: rgba(34, 211, 238, 0.3);
-  --rail-indicator: #22d3ee;
-  --rail-icon-active: #67e8f9;
-  --rail-border: #16234a;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --rail-bg: color-mix(in srgb, #071026 88%, transparent);
-    --rail-bg-end: color-mix(in srgb, #050b1a 92%, transparent);
-    --rail-text: #b3c0d8;
-    --rail-text-strong: #f1f5fb;
-    --rail-text-muted: #7d8bab;
-    --rail-hover: rgba(255, 255, 255, 0.04);
-    --rail-active: rgba(34, 211, 238, 0.12);
-    --rail-active-border: rgba(34, 211, 238, 0.3);
-    --rail-indicator: #22d3ee;
-    --rail-icon-active: #67e8f9;
-    --rail-border: #16234a;
-  }
-}
-.rail {
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-inline-end: 1px solid var(--rail-border);
-}
-.rail-item {
-  border-radius: 10px;
-  font-weight: 550;
-  transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease);
-}
-.rail-item.is-active {
-  font-weight: 650;
-  color: var(--accent-ink);
-  box-shadow: inset 0 0 0 1px var(--rail-active-border), 0 6px 16px -10px var(--glow);
-}
-.rail-item.is-active::before { box-shadow: 0 0 10px var(--rail-indicator); }
-@media (prefers-reduced-motion: no-preference) {
-  .rail-item:hover:not(.is-active) { transform: translateX(2px); }
-}
-.rail .assistive-line {
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--vital) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--vital) 22%, transparent);
-}
-
-/* ---- page header: medical eyebrow pill + an ECG signature on the right ---- */
-.page-head { border-bottom-color: var(--border); }
-.page-head::before {
-  content: "";
-  position: absolute;
-  inset-inline-end: 0;
-  bottom: 12px;
-  width: min(260px, 26%);
-  height: 40px;
-  background: linear-gradient(90deg, transparent, var(--brand-1) 35%, var(--brand-2) 65%, transparent);
-  background-size: 200% 100%;
-  -webkit-mask: var(--ecg-mask) no-repeat center / 100% 100%;
-  mask: var(--ecg-mask) no-repeat center / 100% 100%;
-  opacity: 0.22;
-  pointer-events: none;
-}
-.page-head > * { position: relative; z-index: 1; }
-@media (max-width: 1000px) { .page-head::before { display: none; } }
-.page-eyebrow {
-  padding: 3px 10px 3px 8px;
-  border-radius: 999px;
-  background: var(--vital-weak);
-  border: 1px solid color-mix(in srgb, var(--vital) 24%, transparent);
-  color: var(--vital-ink);
-}
-.page-title { font-size: 26px; font-weight: 750; letter-spacing: -0.025em; }
-
-/* ---- cards ---- */
-.card-head { gap: 12px; }
-.card-title { font-weight: 720; }
-.card-interactive:hover { border-color: color-mix(in srgb, var(--accent) 34%, var(--border)); }
-
-/* ---- stat tiles: monitor readouts with tinted instrument wells,
-        rotating teal / blue / violet / green like the reference tiles ---- */
-.stat-tile {
-  --tone-tile: var(--brand-1);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(220px 120px at 100% 0%, color-mix(in srgb, var(--tone-tile) 10%, transparent), transparent 70%),
-    var(--surface-1);
-}
-.stat-tile:nth-child(4n + 2) { --tone-tile: var(--brand-3); }
-.stat-tile:nth-child(4n + 3) { --tone-tile: var(--brand-4); }
-.stat-tile:nth-child(4n + 4) { --tone-tile: var(--vital); }
-.stat-tile:not([class*="tone-"]) .stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  color: var(--tone-tile);
-  background: color-mix(in srgb, var(--tone-tile) 13%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tone-tile) 22%, transparent);
-}
-.stat-value { font-size: 30px; font-weight: 780; letter-spacing: -0.03em; }
-.stat-tile:hover { border-color: color-mix(in srgb, var(--tone-tile) 40%, var(--border)); }
-.stat-tile::after {
-  content: "";
-  position: absolute;
-  inset-inline-end: 12px;
-  bottom: 10px;
-  width: 72px;
-  height: 18px;
-  background: var(--tone-tile);
-  -webkit-mask: var(--ecg-mask) no-repeat center / 100% 100%;
-  mask: var(--ecg-mask) no-repeat center / 100% 100%;
-  opacity: 0.18;
-  pointer-events: none;
-}
-
-/* ---- buttons, inputs, selects: rounder, roomier, teal focus glow ---- */
-.input,
-.select,
-textarea.input {
-  border-radius: var(--radius);
-  padding: 9px 12px;
-  border-color: var(--border-strong);
-  background: var(--surface-1);
-}
-.input:focus-visible,
-.select:focus-visible,
-textarea.input:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent), 0 0 18px -6px var(--glow);
-}
-.search-wrap .search-input { padding-inline-start: 34px; }
-.btn { padding: 9px 16px; }
-
-/* ---- bed cards (charge-nurse roster): bedside-monitor read ---- */
-.bed-card {
-  border-radius: var(--radius-lg);
-  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
-}
-.bed-card:hover { box-shadow: var(--shadow-lift); }
-@media (prefers-reduced-motion: no-preference) {
-  .bed-card:hover { transform: translateY(-3px); }
-}
-.btn-sm { padding: 6px 12px; border-radius: 8px; }
-.icon-btn { border-radius: 8px; }
-.switch.is-on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px -3px var(--glow); }
-
-/* ---- segmented controls & tabs: pill track ---- */
-.segmented { border-radius: 999px; padding: 3px; }
-.segment { border-radius: 999px; }
-.segment.is-active { color: var(--accent-ink); box-shadow: var(--shadow-1), inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
-.tab { transition: color 0.18s var(--ease), border-color 0.25s var(--ease); }
-.tab.is-active { border-bottom-color: transparent; background-image: linear-gradient(90deg, var(--brand-1), var(--brand-2)); background-size: 100% 2px; background-position: bottom; background-repeat: no-repeat; }
-
-/* ---- tables: rounded clinical list, tinted header, teal hover bar ---- */
-.data-table {
-  border-collapse: separate;
-  border-spacing: 0;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-.data-table th {
-  background: color-mix(in srgb, var(--accent-weak) 55%, var(--surface-2));
-  color: var(--accent-ink);
-  border-bottom: 1px solid var(--border);
-}
-.data-table td { border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
-.data-table tbody tr { transition: background 0.16s var(--ease); }
-.data-table tbody tr.is-clickable:hover td:first-child,
-.data-table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
-.data-table tbody tr:nth-child(even):not(.is-selected):not(:hover) { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
-
-/* ---- pills, badges, chips: soft clinical tags ---- */
-.pill, .badge, .cal-badge, .fusion-pill, .grade, .mode-tag, .scope-chip { border-radius: 999px; }
-.pill-good, .pill-warning, .pill-critical { font-weight: 650; }
-.level-required { background: linear-gradient(110deg, var(--brand-1), var(--brand-3)); color: #fff; }
-
-/* ---- banners & assistive lines: rounded, cross-marked ---- */
-.banner { border-radius: 12px; }
-.assistive-line { border-radius: 12px; }
-
-/* ---- intake sections: instrument icon wells ---- */
-.intake-section { border-radius: var(--radius-lg); }
-.intake-icon {
-  border-radius: 10px;
-  background: linear-gradient(140deg, color-mix(in srgb, var(--brand-1) 16%, transparent), color-mix(in srgb, var(--brand-3) 14%, transparent));
-  color: var(--accent-ink);
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
-}
-.sample-loader {
-  border-radius: var(--radius-lg);
-  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
-  background: color-mix(in srgb, var(--accent-weak) 45%, transparent);
-}
-
-/* ---- empty states: a pulsing monitor blip ---- */
-.empty-state { border-radius: var(--radius-lg); }
-.empty-icon { position: relative; border-radius: 50%; }
-.empty-icon::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  animation: pulse-ring 2.4s var(--ease) infinite;
-}
-
-/* ---- overlays: glass backdrop, rounded sheets ---- */
-.overlay {
-  background: color-mix(in srgb, var(--plane) 55%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.modal { border-radius: 18px; box-shadow: var(--shadow-2), 0 30px 80px -30px var(--glow); }
-.menu { border-radius: 14px; box-shadow: var(--shadow-2); }
-.toast { border-radius: 12px; }
-
-/* ---- assistant launcher: gradient pill with a heartbeat ring ---- */
-.chat-fab {
-  background: var(--btn-primary-bg);
-  box-shadow: 0 10px 28px -8px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-.chat-fab:hover { background: var(--btn-primary-bg); filter: brightness(1.08); }
-.chat-fab::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  animation: pulse-ring 2.6s var(--ease) infinite;
-  pointer-events: none;
-}
-.chat-dock { border-radius: 18px; box-shadow: var(--shadow-2), 0 30px 80px -30px var(--glow); }
-.chat-dock-head { background: linear-gradient(110deg, color-mix(in srgb, var(--brand-1) 14%, var(--surface-1)), var(--surface-1)); }
-
-/* ---- timeline & steps: teal markers ---- */
-.timeline li::before { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
-.step { border-radius: 999px; }
-
-/* ---- patient portal hero: softer, warmer card ---- */
-.patient-hero {
-  background:
-    radial-gradient(400px 200px at 100% 0%, var(--wash-1), transparent 70%),
-    var(--surface-1);
-}
-
-/* ---- motion ---- */
-@keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  14% { transform: scale(1.35); }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.25); }
-  70% { transform: scale(1); }
-}
-@keyframes trace-scan {
-  from { background-position: 100% 0; }
-  to { background-position: -100% 0; }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .page-head::before { animation: trace-scan 4.5s linear infinite; }
-  .live-dot { animation: live-pulse 1.8s ease-in-out infinite, heartbeat 1.8s ease-in-out infinite; }
-  .data-table tbody tr { animation: reveal 0.4s var(--ease) both; }
-  .data-table tbody tr:nth-child(2) { animation-delay: 40ms; }
-  .data-table tbody tr:nth-child(3) { animation-delay: 80ms; }
-  .data-table tbody tr:nth-child(4) { animation-delay: 120ms; }
-  .data-table tbody tr:nth-child(5) { animation-delay: 160ms; }
-  .data-table tbody tr:nth-child(n + 6) { animation-delay: 200ms; }
-  .grid > .stat-tile { animation: reveal 0.5s var(--ease) both; }
-  .grid > .stat-tile:nth-child(2) { animation-delay: 60ms; }
-  .grid > .stat-tile:nth-child(3) { animation-delay: 120ms; }
-  .grid > .stat-tile:nth-child(n + 4) { animation-delay: 180ms; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .surface-tag::before,
-  .empty-icon::after,
-  .chat-fab::before { animation: none; }
-  .empty-icon::after,
-  .chat-fab::before { display: none; }
-}

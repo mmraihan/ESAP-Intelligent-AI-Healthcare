@@ -10,10 +10,13 @@
     <meta name="theme-color" content="#0a0e27" media="(prefers-color-scheme: dark)" />
     <script>
       // Set the theme before first paint so a dark-mode user never sees a white flash.
+      // A first visit defaults to dark (keep in step with ThemeProvider's readStored).
+      document.documentElement.setAttribute("data-theme", "dark");
       (function () {
         try {
-          var m = localStorage.getItem("esap.theme") || "system";
-          if (m !== "system") document.documentElement.setAttribute("data-theme", m);
+          var m = localStorage.getItem("esap.theme") || "dark";
+          if (m === "system") document.documentElement.removeAttribute("data-theme");
+          else document.documentElement.setAttribute("data-theme", m);
           // Arabic applies only on the patient-facing routes (see src/i18n).
           var localised = /^\/(patient|welcome|login|signup|invite)(\/|$)/.test(location.pathname);
           if (localised && localStorage.getItem("esap.lang") === "ar") {

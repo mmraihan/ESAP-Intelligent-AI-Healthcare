@@ -46,7 +46,7 @@ export function AdminFairness() {
         </Banner>
         <Banner tone="accent" icon={<LockIcon size={16} />} title="Why these fields exist at all">
           You cannot demonstrate that a model treats groups evenly without recording which group each
-          person was in. So ESAP captures race, insurance and marital status, stores them <em>beside</em>
+          person was in. So ESAP captures race, insurance and marital status, stores them <em>beside</em>{" "}
           the feature matrix rather than inside it, and surfaces them only here.
         </Banner>
       </>
@@ -75,7 +75,7 @@ export function AdminFairness() {
 
       <Banner tone="accent" icon={<LockIcon size={16} />} title="Why these fields exist at all">
         You cannot demonstrate that a model treats groups evenly without recording which group each
-        person was in. So ESAP captures race, insurance and marital status, stores them <em>beside</em>
+        person was in. So ESAP captures race, insurance and marital status, stores them <em>beside</em>{" "}
         the feature matrix rather than inside it, and surfaces them only here. If one of them ever
         appears on a clinical screen, that is a defect.
       </Banner>

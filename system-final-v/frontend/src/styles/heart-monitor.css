@@ -1,0 +1,174 @@
+/* =========================================================================
+   Heart monitor (components/ui/HeartMonitor.tsx) — shared by the auth brand
+   panel and the landing page. Decorative only. The trace takes --vital, the
+   heart the brand gradient, so both follow the theme (and a `.pub-night`
+   band). The heart is the one continuous motion allowed on touch screens;
+   reduced motion stills it and hides the moving trace.
+   ========================================================================= */
+.heart-monitor {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.hm-pulse {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+}
+.hm-pulse-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  color: var(--on-accent);
+  background: linear-gradient(140deg, var(--brand-1), var(--brand-3));
+  box-shadow: 0 10px 26px -10px var(--glow);
+}
+.hm-pulse-ring {
+  position: absolute;
+  inset: 4px;
+  border-radius: 20px;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  opacity: 0;
+}
+.hm-ecg {
+  flex: 1;
+  min-width: 0;
+  height: 64px;
+  overflow: visible;
+}
+.hm-ecg path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.hm-ecg-base {
+  stroke: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.hm-ecg-trace {
+  stroke: var(--vital);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--vital) 55%, transparent));
+}
+[dir="rtl"] .hm-ecg {
+  scale: -1 1;
+}
+
+/* Compact variant (landing hero): a 44px heart, a shorter strip, and room
+   for a label between them. The strip drops to its own line rather than
+   shrink below a readable length. */
+.heart-monitor-sm {
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+}
+.heart-monitor-sm .hm-pulse {
+  width: 48px;
+  height: 48px;
+}
+.heart-monitor-sm .hm-pulse-core {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+}
+.heart-monitor-sm .hm-pulse-ring {
+  inset: 3px;
+  border-radius: 15px;
+}
+.heart-monitor-sm .hm-ecg {
+  flex: 1 1 9rem;
+  height: 44px;
+}
+
+/* Large variant (landing hero centrepiece): a bigger heart and a taller,
+   bolder strip that runs the full width of its column. */
+.heart-monitor-lg {
+  gap: clamp(1rem, 3cqi, 1.75rem);
+}
+.heart-monitor-lg .hm-pulse {
+  width: 88px;
+  height: 88px;
+}
+.heart-monitor-lg .hm-pulse-core {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  box-shadow: 0 16px 40px -14px var(--glow);
+}
+.heart-monitor-lg .hm-pulse-ring {
+  inset: 6px;
+  border-radius: 26px;
+  border-width: 2px;
+}
+.heart-monitor-lg .hm-ecg {
+  height: 120px;
+}
+.heart-monitor-lg .hm-ecg-base {
+  stroke-width: 2.25;
+}
+.heart-monitor-lg .hm-ecg-trace {
+  stroke-width: 3.25;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--vital) 60%, transparent));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The bright trace sweeps the strip like a bedside monitor; the heart does
+     a lub-dub on each beat (4 beats / 3.2s = 75 bpm). */
+  .hm-ecg-trace {
+    stroke-dasharray: 110 890;
+    animation: hm-ecg-sweep 3.2s linear infinite;
+  }
+  .hm-pulse-core {
+    animation: hm-heartbeat 0.8s var(--ease-out) infinite;
+  }
+  .hm-pulse-ring {
+    animation: hm-pulse-ring 1.6s var(--ease-out) infinite;
+  }
+}
+/* Reduced motion: no sweep, so hide the bright segment rather than show a static full-length copy. */
+@media (prefers-reduced-motion: reduce) {
+  .hm-ecg-trace {
+    display: none;
+  }
+}
+
+@keyframes hm-ecg-sweep {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes hm-heartbeat {
+  0%,
+  45%,
+  100% {
+    transform: none;
+  }
+  12% {
+    transform: scale(1.08);
+  }
+  26% {
+    transform: scale(0.98);
+  }
+  36% {
+    transform: scale(1.04);
+  }
+}
+@keyframes hm-pulse-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}

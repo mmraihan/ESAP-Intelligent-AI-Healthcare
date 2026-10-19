@@ -13,8 +13,8 @@
   --au-gutter: clamp(1rem, 4vw, 2rem);
   --au-hdr: 4.25rem;
   font-family: var(--font-sans);
-  color: var(--pub-text);
-  background: var(--pub-bg);
+  color: var(--text-primary);
+  background: var(--plane);
   -webkit-font-smoothing: antialiased;
 }
 /* Resets carry zero specificity (:where) so component classes always win. */
@@ -51,9 +51,9 @@
   gap: 0.5rem;
   padding: 0.4rem 0.85rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--pub-accent) 30%, transparent);
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   font-size: 0.82rem;
   font-weight: 650;
 }
@@ -66,13 +66,13 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1;
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
 }
 .au-eyebrow-n {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-eyebrow-n::after {
   content: "";
@@ -89,7 +89,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-kicker::before,
 .au-kicker::after {
@@ -104,15 +104,27 @@
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-title {
   margin-top: 1.25rem;
-  font-size: clamp(2.4rem, 1.9rem + 2.3vw, 3.55rem);
-  font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.04em;
+  /* Sized to the copy column (a container), so "Five questions answered"
+     always fits its one line beside the mock: the clause is ~11.8em wide. */
+  font-size: clamp(1.45rem, 4.6cqi, 2.05rem);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+}
+/* Each clause is its own block so it can rise on its own beat; the plain
+   clause never breaks on a wide screen, the gradient clause wraps balanced. */
+.au-title-line {
+  display: block;
   text-wrap: balance;
+}
+@media (min-width: 1181px) {
+  .au-title-line:first-child {
+    white-space: nowrap;
+  }
 }
 /* The second half of a headline: teal→green in light, cyan→blue→violet in dark. */
 .au-grad,
@@ -139,7 +151,7 @@
   margin-top: 1.25rem;
   font-size: 1.06rem;
   line-height: 1.68;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
   text-wrap: pretty;
 }
 .au-note {
@@ -148,7 +160,7 @@
   gap: 0.45rem;
   margin-top: 1.1rem;
   font-size: 0.84rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-note svg {
   flex: none;
@@ -160,7 +172,7 @@
   min-height: 44px;
   margin-top: 1rem;
   font-weight: 650;
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
 }
 @media (hover: hover) and (pointer: fine) {
   .au-link:hover .pub-arrow {
@@ -184,15 +196,32 @@
 }
 
 /* ---------- glows (no stars) ---------------------------------------------- */
+/* Two layers so they can drift apart (see Motion). Each bleeds --au-bleed past
+   the band on every side, with its gradient centres pulled back in by the same
+   amount, so at rest it paints exactly the band's own glow and the drift never
+   uncovers an edge. The band's overflow: clip keeps the bleed off the page. */
 .au-glows {
+  --au-bleed: 3rem;
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+}
+.au-glows::before,
+.au-glows::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--au-bleed) * -1);
+}
+.au-glows::before {
   background:
-    radial-gradient(44rem 34rem at 0% 0%, var(--pub-halo-1), transparent 68%),
-    radial-gradient(40rem 40rem at 100% 40%, var(--pub-halo-2), transparent 66%),
-    radial-gradient(36rem 22rem at 35% 100%, var(--pub-halo-3), transparent 70%);
+    radial-gradient(44rem 34rem at var(--au-bleed) var(--au-bleed), var(--pub-halo-1), transparent 68%),
+    radial-gradient(36rem 22rem at calc(var(--au-bleed) + (100% - 2 * var(--au-bleed)) * 0.35) calc(100% - var(--au-bleed)),
+      var(--pub-halo-3), transparent 70%);
+}
+.au-glows::after {
+  background: radial-gradient(40rem 40rem at calc(100% - var(--au-bleed)) calc(var(--au-bleed) + (100% - 2 * var(--au-bleed)) * 0.4),
+    var(--pub-halo-2), transparent 66%);
 }
 
 /* ---------- rail ---------------------------------------------------------- */
@@ -212,19 +241,19 @@
   justify-content: flex-end;
   gap: 0.6rem;
   height: 1.5rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-rail-label {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  background: var(--pub-surface);
-  border: 1px solid var(--pub-border);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
   font-size: 0.68rem;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
   opacity: 0;
   translate: 6px 0;
   transition: opacity 200ms ease, translate 200ms var(--ease-out);
@@ -240,7 +269,7 @@
 .au-rail-btn[aria-current] .au-rail-dot {
   opacity: 1;
   transform: scale(1.5);
-  background: var(--pub-accent);
+  background: var(--accent);
 }
 .au-rail-btn[aria-current] .au-rail-label,
 .au-rail-btn:focus-visible .au-rail-label {
@@ -266,8 +295,8 @@
   position: relative;
   isolation: isolate;
   overflow: clip;
-  border-bottom: 1px solid var(--pub-border);
-  background: var(--pub-bg);
+  border-bottom: 1px solid var(--border);
+  background: var(--plane);
 }
 .au-hero-inner {
   display: grid;
@@ -279,6 +308,30 @@
 }
 .au-hero-copy {
   min-width: 0;
+  container-type: inline-size;
+}
+/* The hero's centrepiece: the full-width heart monitor above the headline. */
+.au-hero-monitor {
+  margin-block-end: 0.25rem;
+}
+/* Narrow columns: a slightly smaller heart so the strip keeps readable beats. */
+@container (max-width: 26rem) {
+  .au-hero-monitor .hm-pulse {
+    width: 68px;
+    height: 68px;
+  }
+  .au-hero-monitor .hm-pulse-core {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+  }
+  .au-hero-monitor .hm-pulse-ring {
+    inset: 5px;
+    border-radius: 20px;
+  }
+  .au-hero-monitor .hm-ecg {
+    height: 72px;
+  }
 }
 
 /* Product dashboard mock. Decorative (aria-hidden), all values illustrative. */
@@ -289,11 +342,17 @@
   gap: 1rem;
   min-width: 0;
 }
+/* Carries the ambient float (translate) and the cursor tilt (transform, set
+   by useHeroTilt) so neither fights the mock's own perspective. */
+.au-float {
+  min-width: 0;
+}
 .au-tilt {
   position: relative;
   min-width: 0;
   padding-block: 1.25rem;
-  padding-inline-start: 1.75rem;
+  /* Wide enough that the back slab and its ECG read as a layer, not a stub. */
+  padding-inline-start: 3.25rem;
   transform: perspective(1800px) rotateY(-11deg) rotateX(4deg);
   transform-origin: center;
 }
@@ -330,8 +389,8 @@
   display: grid;
   grid-template-columns: 8.25rem minmax(0, 1fr);
   border-radius: 18px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   box-shadow: var(--pub-shadow-mock);
   overflow: hidden;
   font-size: 0.8rem;
@@ -341,8 +400,8 @@
   flex-direction: column;
   gap: 0.2rem;
   padding: 0.9rem 0.6rem;
-  background: var(--pub-surface-2);
-  border-inline-end: 1px solid var(--pub-border);
+  background: var(--surface-2);
+  border-inline-end: 1px solid var(--border);
 }
 .au-win-brand {
   display: flex;
@@ -361,7 +420,7 @@
   display: block;
   margin-top: 0.15rem;
   font-size: 0.6rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-win-item {
   display: flex;
@@ -370,11 +429,11 @@
   padding: 0.45rem 0.5rem;
   border-radius: 8px;
   font-size: 0.72rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-win-item.is-on {
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   font-weight: 650;
 }
 .au-win-main {
@@ -397,14 +456,14 @@
 }
 .au-win-head span {
   font-size: 0.68rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-win-tag {
   flex: none;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink) !important;
+  background: var(--accent-weak);
+  color: var(--accent-ink) !important;
   font-weight: 650;
 }
 .au-win-label {
@@ -436,8 +495,8 @@
   min-width: 0;
   padding: 0.65rem;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--g) 18%, var(--pub-border));
-  background: color-mix(in srgb, var(--g-weak) 70%, var(--pub-surface));
+  border: 1px solid color-mix(in srgb, var(--g) 18%, var(--border));
+  background: color-mix(in srgb, var(--g-weak) 70%, var(--surface-1));
 }
 .au-tile-icon {
   display: grid;
@@ -447,7 +506,7 @@
   margin-bottom: 0.3rem;
   border-radius: 8px;
   color: var(--g);
-  background: var(--pub-surface);
+  background: var(--surface-1);
 }
 .au-tile-icon svg {
   width: 15px;
@@ -456,7 +515,7 @@
 .au-tile small {
   font-size: 0.64rem;
   line-height: 1.25;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-tile strong {
   font-size: 1.35rem;
@@ -466,7 +525,7 @@
 }
 .au-tile-sub {
   font-size: 0.6rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-why {
   display: flex;
@@ -474,8 +533,8 @@
   gap: 0.5rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface-2);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
 .au-why-top {
   display: flex;
@@ -491,10 +550,10 @@
   gap: 0.25rem;
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid var(--pub-border);
+  border: 1px solid var(--border);
   font-size: 0.62rem;
   font-weight: 600;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .au-why-chips {
@@ -505,11 +564,11 @@
 .au-why-chips span {
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   font-size: 0.64rem;
   font-weight: 600;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-checklist {
   display: flex;
@@ -518,9 +577,9 @@
   margin-top: 4.5rem;
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  border: 1px solid var(--pub-border);
+  border: 1px solid var(--border);
   background: var(--pub-glass);
-  box-shadow: var(--pub-shadow-2);
+  box-shadow: var(--shadow-2);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   font-size: 0.8rem;
@@ -537,8 +596,8 @@
   padding: 3px;
   box-sizing: content-box;
   border-radius: 50%;
-  color: var(--pub-on-fill);
-  background: var(--pub-accent);
+  color: var(--on-accent);
+  background: var(--accent);
 }
 
 /* ---------- sections ------------------------------------------------------ */
@@ -547,7 +606,7 @@
 }
 .au-sec-alt {
   background: var(--pub-bg-alt);
-  border-block: 1px solid var(--pub-border);
+  border-block: 1px solid var(--border);
 }
 .au-sec-head {
   display: flex;
@@ -590,7 +649,7 @@
   margin: 1.75rem 0 0;
   padding: 0;
   font-size: 0.97rem;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-checks li {
   display: flex;
@@ -601,8 +660,8 @@
   flex: none;
   padding: 3px;
   border-radius: 50%;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   box-sizing: content-box;
 }
 
@@ -612,9 +671,9 @@
 .au-gauge-card,
 .au-stage-panel,
 .au-aud {
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface);
-  box-shadow: var(--pub-shadow-1);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
 }
 /* --mx / --my are written by theme/interactions.ts. */
 .au-spot {
@@ -628,7 +687,7 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(26rem circle at var(--mx, 50%) var(--my, 0%), var(--pub-spot), transparent 45%);
+  background: radial-gradient(26rem circle at var(--mx, 50%) var(--my, 0%), var(--spot), transparent 45%);
   transition: opacity 0.35s ease;
 }
 .au-spot > * {
@@ -639,7 +698,7 @@
     opacity: 1;
   }
   .au-spot:hover {
-    border-color: color-mix(in srgb, var(--pub-accent) 40%, var(--pub-border));
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
   }
 }
 
@@ -682,7 +741,7 @@
   margin-top: 0.3rem;
   font-size: 0.86rem;
   line-height: 1.5;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-gauge-card .au-ring {
   align-self: center;
@@ -692,23 +751,23 @@
   gap: 0.5rem;
   margin-top: auto;
   padding-top: 0.9rem;
-  border-top: 1px solid var(--pub-border);
+  border-top: 1px solid var(--border);
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-gauge-note svg {
   flex: none;
   margin-top: 1px;
 }
 .au-explain {
-  --g: var(--pub-accent);
-  --g-weak: var(--pub-accent-weak);
+  --g: var(--accent);
+  --g-weak: var(--accent-weak);
   justify-content: center;
   gap: 0.6rem;
 }
 .au-explain strong {
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
   font-weight: 650;
 }
 .au-explain .au-link {
@@ -757,7 +816,7 @@
   margin-top: 0.3rem;
   font-size: 0.66rem;
   font-weight: 600;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 
 /* ---------- intake panel -------------------------------------------------- */
@@ -766,7 +825,7 @@
   gap: 0.6rem;
   padding: 1.5rem;
   border-radius: 20px;
-  box-shadow: var(--pub-shadow-2);
+  box-shadow: var(--shadow-2);
 }
 .au-panel-top {
   display: flex;
@@ -777,10 +836,10 @@
 }
 .au-stat-mini {
   font-size: 0.8rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-stat-mini strong {
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
 }
 .au-doc {
   display: flex;
@@ -788,13 +847,13 @@
   gap: 0.75rem;
   padding: 0.75rem 0.9rem;
   border-radius: 12px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface-2);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   font-size: 0.88rem;
 }
 .au-doc svg {
   flex: none;
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
 }
 .au-doc > span:nth-of-type(1) {
   min-width: 0;
@@ -803,7 +862,7 @@
   margin-inline-start: auto;
   font-size: 0.74rem;
   font-weight: 650;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .au-dots {
@@ -815,10 +874,10 @@
 .au-dots span {
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1px dashed var(--pub-border-strong);
+  border: 1px dashed var(--border-strong);
 }
 .au-dots span[data-on] {
-  background: var(--pub-accent);
+  background: var(--accent);
   border-color: transparent;
 }
 .au-panel-foot {
@@ -827,7 +886,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.76rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-key-on,
 .au-key-off {
@@ -836,10 +895,10 @@
   border-radius: 50%;
 }
 .au-key-on {
-  background: var(--pub-accent);
+  background: var(--accent);
 }
 .au-key-off {
-  border: 1px dashed var(--pub-border-strong);
+  border: 1px dashed var(--border-strong);
   margin-inline-start: 0.6rem;
 }
 
@@ -863,25 +922,25 @@
   min-height: 44px;
   padding: 1rem 1.2rem 1.1rem;
   border-radius: 14px;
-  border: 1px solid var(--pub-border);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   text-align: start;
   font: inherit;
   cursor: pointer;
   transition: background-color 240ms ease, color 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
 }
 .au-step[aria-selected="true"] {
-  color: var(--pub-text);
-  background: var(--pub-surface);
-  border-color: color-mix(in srgb, var(--pub-accent) 40%, var(--pub-border));
-  box-shadow: var(--pub-shadow-2);
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: var(--shadow-2);
 }
 .au-step-num {
   padding-top: 0.2rem;
   font-size: 0.74rem;
   font-weight: 700;
-  color: var(--pub-accent-ink);
+  color: var(--accent-ink);
 }
 .au-step-title {
   display: block;
@@ -899,7 +958,7 @@
   padding-top: 0.35rem;
   font-size: 0.92rem;
   line-height: 1.55;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-step[aria-selected="true"] .au-step-body {
   grid-template-rows: 1fr;
@@ -918,8 +977,8 @@
 }
 @media (hover: hover) and (pointer: fine) {
   .au-step:hover {
-    color: var(--pub-text);
-    border-color: var(--pub-border-strong);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
   }
 }
 
@@ -929,11 +988,11 @@
   min-height: 27rem;
   padding: 1.5rem;
   border-radius: 24px;
-  border: 1px solid var(--pub-border);
+  border: 1px solid var(--border);
   background:
     radial-gradient(60% 60% at 75% 25%, var(--pub-halo-1), transparent 70%),
     radial-gradient(50% 50% at 15% 90%, var(--pub-halo-2), transparent 70%),
-    var(--pub-bg);
+    var(--plane);
 }
 .au-stage-panel {
   width: 100%;
@@ -942,7 +1001,7 @@
   gap: 0.7rem;
   padding: 1.4rem;
   border-radius: 18px;
-  box-shadow: var(--pub-shadow-2);
+  box-shadow: var(--shadow-2);
 }
 .au-stage-head {
   display: flex;
@@ -961,8 +1020,8 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 12px;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
 }
 .au-stage-val {
   margin-inline-start: auto;
@@ -978,7 +1037,7 @@
 }
 .au-stage-val small {
   font-size: 0.7rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-stage-label {
   margin-top: 0.4rem;
@@ -986,8 +1045,8 @@
 .au-src {
   padding: 0.85rem 1rem;
   border-radius: 12px;
-  border: 1px solid var(--pub-border);
-  background: var(--pub-surface-2);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -997,14 +1056,14 @@
   gap: 0.4rem;
   margin-bottom: 0.3rem;
   font-size: 0.74rem;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-src mark {
   color: inherit;
   padding: 0 0.15rem;
   border-radius: 3px;
-  background: linear-gradient(var(--pub-accent-weak), var(--pub-accent-weak)) no-repeat 0 0 / 100% 100%;
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--pub-accent) 55%, transparent);
+  background: linear-gradient(var(--accent-weak), var(--accent-weak)) no-repeat 0 0 / 100% 100%;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent) 55%, transparent);
 }
 [dir="rtl"] .au-src mark {
   background-position: 100% 0;
@@ -1017,21 +1076,21 @@
   min-height: 1.75rem;
   padding-inline: 0.7rem;
   border-radius: 999px;
-  border: 1px solid var(--pub-border-strong);
+  border: 1px solid var(--border-strong);
   font-size: 0.76rem;
 }
 .au-chip-ok {
-  color: var(--pub-accent-ink);
-  border-color: color-mix(in srgb, var(--pub-accent) 45%, transparent);
-  background: var(--pub-accent-weak);
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-weak);
 }
 
 /* ---------- review -------------------------------------------------------- */
 .au-ticket {
   padding: 1.1rem 1.2rem;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--pub-accent) 40%, var(--pub-border));
-  background: var(--pub-surface-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: var(--surface-2);
   margin-bottom: 0.6rem;
 }
 .au-ticket-top {
@@ -1057,8 +1116,8 @@
   height: 1.6rem;
   padding-inline: 0.6rem;
   border-radius: 999px;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   font-size: 0.74rem;
   font-weight: 650;
   white-space: nowrap;
@@ -1068,7 +1127,7 @@
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
-  background: var(--pub-accent);
+  background: var(--accent);
 }
 .au-guards {
   display: flex;
@@ -1081,14 +1140,14 @@
   min-height: 1.9rem;
   padding-inline: 0.75rem;
   border-radius: 999px;
-  border: 1px solid var(--pub-border-strong);
+  border: 1px solid var(--border-strong);
   font-size: 0.78rem;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-guard[data-hit] {
-  background: var(--pub-fill);
+  background: var(--accent-fill);
   border-color: transparent;
-  color: var(--pub-on-fill);
+  color: var(--on-accent);
 }
 
 /* ---------- night bands: principle + final CTA ---------------------------- */
@@ -1096,8 +1155,8 @@
   position: relative;
   isolation: isolate;
   overflow: clip;
-  background: var(--pub-bg);
-  color: var(--pub-text);
+  background: var(--plane);
+  color: var(--text-primary);
 }
 .au-principle-inner,
 .au-final-inner {
@@ -1135,6 +1194,10 @@
 .au-final-inner {
   padding-block: clamp(5rem, 10vw, 8rem);
 }
+.au-final-monitor {
+  width: min(100%, 26rem);
+  margin-bottom: 1.75rem;
+}
 .au-final-title {
   font-size: clamp(2.2rem, 1.6rem + 2.6vw, 3.4rem);
 }
@@ -1162,7 +1225,7 @@
   margin-top: 0.5rem;
   font-size: 0.93rem;
   line-height: 1.6;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-card-icon {
   display: grid;
@@ -1170,8 +1233,8 @@
   width: 2.6rem;
   height: 2.6rem;
   border-radius: 12px;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
   transition: transform 300ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1181,7 +1244,7 @@
   }
   .au-lift:hover {
     translate: 0 -4px;
-    box-shadow: var(--pub-shadow-lift);
+    box-shadow: var(--shadow-lift);
   }
   .au-card:hover .au-card-icon {
     transform: scale(1.06) rotate(-4deg);
@@ -1191,7 +1254,7 @@
 /* ---------- stats & marquee ---------------------------------------------- */
 .au-stats {
   padding-block: 4rem;
-  border-block: 1px solid var(--pub-border);
+  border-block: 1px solid var(--border);
   background: var(--pub-bg-alt);
 }
 .au-stats-title {
@@ -1226,7 +1289,7 @@
   margin: 0.7rem auto 0;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 
 .au-marquee-sec {
@@ -1262,7 +1325,7 @@
   margin-top: 0.2rem;
   font-size: 0.8rem;
   line-height: 1.45;
-  color: var(--pub-muted);
+  color: var(--text-muted);
 }
 .au-aud-icon {
   display: grid;
@@ -1271,16 +1334,16 @@
   width: 2.3rem;
   height: 2.3rem;
   border-radius: 50%;
-  background: var(--pub-accent-weak);
-  color: var(--pub-accent-ink);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
 }
 
 /* ---------- FAQ ----------------------------------------------------------- */
 .au-faq {
-  border-top: 1px solid var(--pub-border);
+  border-top: 1px solid var(--border);
 }
 .au-faq-item {
-  border-bottom: 1px solid var(--pub-border);
+  border-bottom: 1px solid var(--border);
 }
 .au-faq-q {
   display: flex;
@@ -1292,7 +1355,7 @@
   padding: 1.25rem 0;
   border: 0;
   background: none;
-  color: var(--pub-text);
+  color: var(--text-primary);
   text-align: start;
   font: 700 1.08rem/1.35 var(--font-sans);
   letter-spacing: -0.01em;
@@ -1300,7 +1363,7 @@
 }
 .au-faq-q svg {
   flex: none;
-  color: var(--pub-muted);
+  color: var(--text-muted);
   transition: transform 240ms var(--ease-out);
 }
 .au-faq-item[data-open] .au-faq-q svg {
@@ -1315,7 +1378,7 @@
   overflow: hidden;
   font-size: 0.97rem;
   line-height: 1.65;
-  color: var(--pub-text-2);
+  color: var(--text-secondary);
 }
 .au-faq-item[data-open] .au-faq-a {
   grid-template-rows: 1fr;
@@ -1330,7 +1393,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 1080px) {
+/* Below ~1180px the tilted mock has no room beside the copy: stack them. */
+@media (max-width: 1180px) {
   .au-hero-inner {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1504,13 +1568,13 @@
   /* Review: the refused-action chip lights up once revealed. */
   .au-guard[data-hit] {
     background: transparent;
-    color: var(--pub-text-2);
-    border-color: var(--pub-border-strong);
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
     transition: background-color 0.4s ease 0.8s, color 0.4s ease 0.8s, border-color 0.4s ease 0.8s;
   }
   [data-shown] .au-guard[data-hit] {
-    background: var(--pub-fill);
-    color: var(--pub-on-fill);
+    background: var(--accent-fill);
+    color: var(--on-accent);
     border-color: transparent;
   }
 
@@ -1525,6 +1589,66 @@
   }
   .pub-mobile {
     animation: au-rise 200ms var(--ease-out) both;
+  }
+}
+
+/* ---------- ambient motion -------------------------------------------------
+   Continuous, slow and decorative, so it runs only with a mouse and only when
+   motion is welcome: touch screens keep the page still apart from the heart
+   monitor, and reduced motion sees every final state. Transform / translate /
+   scale only, with one exception noted at the headline. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  /* Glows drift on slow, out-of-phase loops (22s / 18s, there and back). */
+  .au-glows::before,
+  .au-glows::after {
+    will-change: transform;
+    animation: au-drift-a 22s ease-in-out infinite alternate;
+  }
+  .au-glows::after {
+    animation-name: au-drift-b;
+    animation-duration: 18s;
+  }
+
+  /* Hero mock floats (6s); the checklist follows a beat behind with less
+     travel, so the two read as separate layers. */
+  .au-float {
+    animation: au-float 6s ease-in-out infinite;
+  }
+  .au-checklist {
+    animation: au-float-sm 6s ease-in-out -1.8s infinite;
+  }
+
+  /* Headline: a soft highlight crosses the gradient clause once every 8s
+     (1.4s of travel, then rest). It moves background-position, the one
+     non-transform property here: a highlight clipped to the glyphs has no
+     transform equivalent, and the repaint is one short text block. */
+  .au-title .au-grad {
+    background-image:
+      linear-gradient(105deg, transparent 44%, var(--pub-shine) 50%, transparent 56%),
+      var(--pub-grad-text);
+    background-size: 250% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 0, 0 0;
+    animation:
+      au-rise 0.8s var(--ease-out) calc(var(--i, 0) * 80ms + 60ms) both,
+      au-shine 8s ease-in-out 2.4s infinite;
+  }
+  [dir="rtl"] .au-title .au-grad {
+    animation-direction: normal, reverse;
+  }
+
+  /* Gauges: once drawn, each ring breathes very gently, staggered by card. */
+  [data-shown] .au-ring svg {
+    animation: au-breathe 5s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.45s + 1.8s);
+  }
+
+  /* Revealed cards keep their slow entrance but lift on hover at UI speed. */
+  [data-au-reveal].au-lift {
+    transition-property: opacity, transform, translate, box-shadow, border-color;
+    transition-duration: 0.7s, 0.7s, 0.3s, 0.3s, 0.3s;
+    transition-timing-function: var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 80ms), calc(var(--i, 0) * 80ms), 0s, 0s, 0s;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1586,5 +1710,51 @@
 @keyframes au-marquee {
   to {
     transform: translateX(-50%);
+  }
+}
+@keyframes au-drift-a {
+  to {
+    transform: translate3d(2.25rem, 1.25rem, 0) scale(1.05);
+  }
+}
+@keyframes au-drift-b {
+  to {
+    transform: translate3d(-2rem, 1.5rem, 0) scale(1.04);
+  }
+}
+@keyframes au-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8px;
+  }
+}
+@keyframes au-float-sm {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
+}
+@keyframes au-shine {
+  0% {
+    background-position: 100% 0, 0 0;
+  }
+  18%,
+  100% {
+    background-position: 0% 0, 0 0;
+  }
+}
+@keyframes au-breathe {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.035;
   }
 }
