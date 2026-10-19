@@ -47,7 +47,7 @@ export function DemoAccessPage() {
   }
 
   return (
-    <div className="auth-page">
+    <div className="pub auth-page">
       <div className="auth-shell is-wide">
         <div className="auth-topline">
           <BrandMark />

@@ -56,6 +56,8 @@ export function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Continue" stays a live primary; pressing it with nothing chosen says why.
+  const [needChoice, setNeedChoice] = useState(false);
 
   const emailBad = touched.email && form.email.trim() !== "" && !EMAIL.test(form.email.trim());
   const valid = form.name.trim() && EMAIL.test(form.email.trim()) && form.password.length >= MIN_PASSWORD;
@@ -159,7 +161,14 @@ export function SignupPage() {
             </p>
           </details>
 
-          <button type="button" className="btn btn-primary auth-submit" disabled={!capacity} onClick={() => go(1)}>
+          {needChoice && !capacity && (
+            <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("Choose one of the two options to continue.")}</span>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary auth-submit"
+            onClick={() => (capacity ? go(1) : setNeedChoice(true))}
+          >
             {t("Continue")} <ArrowRight size={15} />
           </button>
           <p className="auth-switch">

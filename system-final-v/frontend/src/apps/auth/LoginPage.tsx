@@ -28,6 +28,10 @@ export function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [capsLock, setCapsLock] = useState(false);
   const [resetNote, setResetNote] = useState<string | null>(null);
+  // Set when "Sign in" is pressed with a field empty. The button stays a live
+  // primary (a disabled-looking main action reads as broken); the form says
+  // what is missing instead.
+  const [missing, setMissing] = useState(false);
   // Bumped on every failed attempt so the error banner re-runs its shake.
   const [attempt, setAttempt] = useState(0);
 
@@ -52,7 +56,12 @@ export function LoginPage() {
   /** Real credentials against the API. The role comes back in the session. */
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (pending || !email.trim() || !password) return;
+    if (pending) return;
+    if (!email.trim() || !password) {
+      setMissing(true);
+      return;
+    }
+    setMissing(false);
     try {
       await signInWithPassword(email.trim(), password);
       // A second factor may be required; if so, wait on the code step rather
@@ -169,9 +178,12 @@ export function LoginPage() {
             </span>
             {capsLock && <span className="auth-hint is-warn" role="status"><AlertIcon size={13} /> {t("Caps Lock is on")}</span>}
             {resetNote && <span className="auth-hint" role="status">{resetNote}</span>}
+            {missing && (!email.trim() || !password) && (
+              <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("Enter your work email and password to sign in.")}</span>
+            )}
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit" disabled={pending || !email.trim() || !password}>
+          <button type="submit" className="btn btn-primary auth-submit" disabled={pending}>
             {pending ? <><span className="esap-spinner" /> {t("Signing in…")}</> : <>{t("Sign in")} <ArrowRight size={15} /></>}
           </button>
 

@@ -15,12 +15,10 @@ import { AlertIcon, CheckIcon, FlaskIcon, ScaleIcon, XIcon } from "@/components/
 export function ModelEvidencePage() {
   const m01 = MODELS.find((m) => m.id === "M-01");
   const m02 = MODELS.find((m) => m.id === "M-02");
-  const m04 = MODELS.find((m) => m.id === "M-04");
   const m01Recall = Number(m01?.headline[0]?.value) || 0;
-  const m04Cold = m04?.strata.find((x) => /cold/i.test(x.label));
   const cold = m01?.strata.find((x) => /cold/i.test(x.label));
   const coldShare = m01 && cold ? cold.n / Math.max(1, m01.strata.reduce((a, x) => a + x.n, 0)) : null;
-  if (!m01 || !m04) {
+  if (!m01) {
     return (
       <SiteLayout>
         <section className="hero"><h1>Evidence</h1><p className="hero-lede">The model evaluation is not available from this server.</p></section>
@@ -38,14 +36,6 @@ export function ModelEvidencePage() {
           will find it in the pilot anyway and it is better that you hear it now.
         </p>
       </section>
-
-      <Banner tone="warning" icon={<AlertIcon size={18} />} title="M-04 readmission is not good enough yet, and we ship it labelled as such">
-        On patients with no prior admission its AUROC is <strong>{m04Cold ? m04Cold.value.toFixed(3) : "—"}</strong> —
-        close to chance. It is genuinely useful for ranking patients who <em>do</em> have an admission
-        history, and it is close to useless for the rest. Rather than pull it or quote only the pooled
-        figure of {m04.headline[0].value}, it serves with a degraded badge on every screen it appears
-        on, and the results page tells the clinician which stratum their patient falls into.
-      </Banner>
 
       <section className="grid grid-2">
         <Card
@@ -185,7 +175,7 @@ export function ModelEvidencePage() {
                       </td>
                       <td><Badge tone={m.status === "live" ? "good" : "warning"}>{m.status}</Badge></td>
                       <td style={{ textAlign: "right" }} className="tnum">
-                        {m.headline[0].value} <span className="muted">{m.headline[0].label}</span>
+                        {m.headline[0]?.value ?? "—"} <span className="muted">{m.headline[0]?.label ?? ""}</span>
                       </td>
                       <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" ? "—" : m.ece.toFixed(3)}</td>
                       <td>

@@ -72,7 +72,13 @@ export function PricingPage() {
         />
       </section>
 
-      <section className="plan-grid">
+      {shown.length === 0 && (
+        <p className="pub-empty">
+          Plan details are not available from this server right now. Every tier keeps calibration, the Why
+          panel and the evidence pages free — see below, or try again in a moment.
+        </p>
+      )}
+      <section className="plan-grid" hidden={shown.length === 0}>
         {shown.map((p) => (
           <div key={p.tier} className={cx("plan", p.highlighted && "is-featured")}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>

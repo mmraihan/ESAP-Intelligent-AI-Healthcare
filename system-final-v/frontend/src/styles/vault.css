@@ -3,9 +3,10 @@
    without touching individual screens.
 
    Palette: the uupm.cc fintech-crypto reference (deep navy #0a0e27, electric
-   blue #0080ff, neon green #39ff14, DM Sans + Space Grotesk). Dark mode is the
-   reference verbatim; light mode keeps the same hues but deepens them so text
-   still clears WCAG AA on white.
+   blue #0080ff, DM Sans + Space Grotesk). Its neon green (#39ff14) is replaced
+   by the public site's cyan / teal / violet (styles/public.css) so the whole
+   product reads as one palette; light mode keeps the same hues but deepens
+   them so text still clears WCAG AA on white.
 
    Motion follows the emil-design-eng / animate skills (.claude/skills):
    strong ease-out curves, UI motion under ~300ms, press feedback at
@@ -77,7 +78,7 @@
   --paper-rule-major: rgba(0, 0, 0, 0);
   --grid-line: rgba(10, 14, 39, 0.045);
   --wash-1: rgba(0, 128, 255, 0.09);
-  --wash-2: rgba(57, 255, 20, 0.07);
+  --wash-2: rgba(31, 158, 106, 0.07);
 
   --glass: rgba(255, 255, 255, 0.78);
   --glass-border: rgba(10, 14, 39, 0.07);
@@ -126,9 +127,9 @@
     --accent-fill-strong: #0080ff;
     --on-accent: #ffffff;
 
-    --vital: #39ff14;
-    --vital-weak: #10301c;
-    --vital-ink: #7dff5c;
+    --vital: #2dd4bf;
+    --vital-weak: #09283a;
+    --vital-ink: #8cefe0;
 
     --rail-bg: color-mix(in srgb, #0a0e27 82%, transparent);
     --rail-bg-end: color-mix(in srgb, #0a0e27 90%, transparent);
@@ -138,13 +139,13 @@
     --rail-hover: rgba(255, 255, 255, 0.045);
     --rail-active: rgba(0, 128, 255, 0.14);
     --rail-active-border: rgba(0, 128, 255, 0.34);
-    --rail-indicator: #39ff14;
+    --rail-indicator: #22d3ee;
     --rail-icon-active: #66b3ff;
     --rail-border: #1e2650;
 
     --grid-line: rgba(30, 38, 80, 0.3);
     --wash-1: rgba(0, 128, 255, 0.16);
-    --wash-2: rgba(57, 255, 20, 0.07);
+    --wash-2: rgba(34, 211, 238, 0.08);
 
     --glass: rgba(10, 14, 39, 0.8);
     --glass-border: rgba(30, 38, 80, 0.6);
@@ -154,18 +155,18 @@
     --shadow-lift: 0 0 30px rgba(0, 128, 255, 0.15), 0 18px 36px -16px rgba(0, 0, 0, 0.75);
 
     --brand-1: #0080ff;
-    --brand-2: #39ff14;
+    --brand-2: #2dd4bf;
     --brand-3: #00c2ff;
     --brand-4: #a78bfa;
     --glow: rgba(0, 128, 255, 0.3);
     --spot: rgba(0, 128, 255, 0.1);
 
-    --btn-primary-bg: #39ff14;
-    --btn-primary-bg-hover: #5dff40;
-    --btn-primary-ink: #0a0e27;
-    --btn-primary-glow: rgba(57, 255, 20, 0.4);
+    --btn-primary-bg: #22d3ee;
+    --btn-primary-bg-hover: #67e8f9;
+    --btn-primary-ink: #03141f;
+    --btn-primary-glow: rgba(34, 211, 238, 0.4);
 
-    --title-gradient: linear-gradient(120deg, #f5f7ff 0%, #66b3ff 50%, #39ff14 100%);
+    --title-gradient: linear-gradient(120deg, #f5f7ff 0%, #66b3ff 50%, #a78bfa 100%);
   }
 }
 
@@ -192,9 +193,9 @@
   --accent-fill-strong: #0080ff;
   --on-accent: #ffffff;
 
-  --vital: #39ff14;
-  --vital-weak: #10301c;
-  --vital-ink: #7dff5c;
+  --vital: #2dd4bf;
+  --vital-weak: #09283a;
+  --vital-ink: #8cefe0;
 
   --rail-bg: color-mix(in srgb, #0a0e27 82%, transparent);
   --rail-bg-end: color-mix(in srgb, #0a0e27 90%, transparent);
@@ -204,13 +205,13 @@
   --rail-hover: rgba(255, 255, 255, 0.045);
   --rail-active: rgba(0, 128, 255, 0.14);
   --rail-active-border: rgba(0, 128, 255, 0.34);
-  --rail-indicator: #39ff14;
+  --rail-indicator: #22d3ee;
   --rail-icon-active: #66b3ff;
   --rail-border: #1e2650;
 
   --grid-line: rgba(30, 38, 80, 0.3);
   --wash-1: rgba(0, 128, 255, 0.16);
-  --wash-2: rgba(57, 255, 20, 0.07);
+  --wash-2: rgba(34, 211, 238, 0.08);
 
   --glass: rgba(10, 14, 39, 0.8);
   --glass-border: rgba(30, 38, 80, 0.6);
@@ -220,18 +221,18 @@
   --shadow-lift: 0 0 30px rgba(0, 128, 255, 0.15), 0 18px 36px -16px rgba(0, 0, 0, 0.75);
 
   --brand-1: #0080ff;
-  --brand-2: #39ff14;
+  --brand-2: #2dd4bf;
   --brand-3: #00c2ff;
   --brand-4: #a78bfa;
   --glow: rgba(0, 128, 255, 0.3);
   --spot: rgba(0, 128, 255, 0.1);
 
-  --btn-primary-bg: #39ff14;
-  --btn-primary-bg-hover: #5dff40;
-  --btn-primary-ink: #0a0e27;
-  --btn-primary-glow: rgba(57, 255, 20, 0.4);
+  --btn-primary-bg: #22d3ee;
+  --btn-primary-bg-hover: #67e8f9;
+  --btn-primary-ink: #03141f;
+  --btn-primary-glow: rgba(34, 211, 238, 0.4);
 
-  --title-gradient: linear-gradient(120deg, #f5f7ff 0%, #66b3ff 50%, #39ff14 100%);
+  --title-gradient: linear-gradient(120deg, #f5f7ff 0%, #66b3ff 50%, #a78bfa 100%);
 }
 
 /* ---------- type ---------------------------------------------------------- */

@@ -6,7 +6,7 @@
  *
  * Decorative only, so it is skipped on touch / coarse pointers.
  */
-const SELECTOR = ".card-interactive, .stat-tile, .bed-card, .feature, .lp-step";
+const SELECTOR = ".card-interactive, .stat-tile, .bed-card, .feature, .lp-step, .au-spot";
 
 export function installPointerGlow(): () => void {
   if (typeof window === "undefined" || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {

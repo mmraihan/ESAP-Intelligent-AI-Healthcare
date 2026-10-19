@@ -84,7 +84,7 @@ export function InviteAcceptPage() {
   const unusable = loadError ?? (view && !view.valid ? (view.reason ?? t("This invitation can no longer be used.")) : null);
 
   return (
-    <div className="auth-page">
+    <div className="pub auth-page">
       <div className="stack" style={{ gap: 18, width: "100%", maxWidth: 560, alignItems: "center" }}>
         <div className="row" style={{ justifyContent: "space-between", width: "100%", gap: 10 }}>
           <BrandMark />

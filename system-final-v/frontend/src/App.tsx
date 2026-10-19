@@ -11,10 +11,11 @@
  *   /patient                         → patient portal / individual tier
  */
 import { lazy, Suspense, useState, type ComponentType } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { can, ROLES, type RoleCode } from "@/lib/rbac";
-import { AppShell } from "@/components/shell/AppShell";
+import { AppShell, BrandMark } from "@/components/shell/AppShell";
+import { RefreshIcon, ServerIcon } from "@/components/ui/icons";
 import {
   ADMIN_NAV, DESIGN_NAV, DOCTOR_NAV, NURSE_NAV, OPS_NAV, PATIENT_NAV, type NavGroup,
 } from "@/components/shell/nav";
@@ -59,16 +60,24 @@ function OfflineScreen() {
     if (result.session) adoptSession(result.session);
     setTrying(false);
   }
+  // Public palette (styles/public.css), so it matches the site it sits beside.
   return (
-    <div className="main" style={{ margin: "0 auto", maxWidth: 560, paddingTop: 80 }}>
-      <h1 className="page-title">Cannot reach the ESAP server</h1>
-      <p className="page-lede">
-        {reason} Everything in this application comes from the server, so nothing can be shown or saved
-        until it is back. Check that the backend is running, then try again.
-      </p>
-      <button type="button" className="btn btn-primary" disabled={trying} onClick={() => void retry()}>
-        {trying ? "Connecting…" : "Try again"}
-      </button>
+    <div className="pub pub-offline">
+      <main className="pub-offline-card">
+        <BrandMark />
+        <span className="pub-offline-icon"><ServerIcon size={20} /></span>
+        <h1>Cannot reach the ESAP server</h1>
+        <p>
+          {reason && <>{reason} </>}Everything behind sign-in comes from the server, so nothing can be shown
+          or saved until it is back. Check that the backend is running, then try again.
+        </p>
+        <div className="pub-offline-actions">
+          <button type="button" className="pub-btn pub-btn-primary" disabled={trying} onClick={() => void retry()}>
+            <RefreshIcon size={16} /> {trying ? "Connecting…" : "Try again"}
+          </button>
+          <Link to="/product" className="pub-btn pub-btn-outline">Go to the product page</Link>
+        </div>
+      </main>
     </div>
   );
 }
@@ -252,7 +261,21 @@ export function App() {
   // makes a saved change show up without a manual refresh.
   const version = useDataVersion();
 
-  if (SOURCE.current.kind === "offline") return <OfflineScreen key={version} />;
+  // Offline, the static marketing pages still render (they carry no live data
+  // and fall back gracefully on an empty store); everything else — sign-in and
+  // every signed-in surface — needs the server, so it gets the offline screen.
+  if (SOURCE.current.kind === "offline") {
+    return (
+      <Routes key={version}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/product" element={<LandingPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/evidence" element={<ModelEvidencePage />} />
+        <Route path="*" element={<OfflineScreen />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes key={version}>
