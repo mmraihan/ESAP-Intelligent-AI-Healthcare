@@ -69,6 +69,17 @@ SEVERITY = {
     "user.password_reset_request": "notice",
     "request.status": "info",
     "patient.submission_seen": "info",
+    "waitlist.join": "info",
+    "waitlist.update": "info",
+    "waitlist.delete": "notice",
+    "waitlist.export": "notice",
+    "support.open": "info",
+    "support.reply": "info",
+    "support.status": "info",
+    "announcement.publish": "notice",
+    "announcement.edit": "notice",
+    "announcement.delete": "notice",
+    "platform.super_admin_create": "critical",
 }
 
 

@@ -339,6 +339,9 @@ def test_no_v1_route_is_unauthenticated(client):
     exempt |= {"/api/v1/auth/password/forgot"}
     # The public website's model evidence and plans: no patient, tenant or usage data.
     exempt |= {"/api/v1/public/evidence", "/api/v1/public/demo-accounts"}
+    # The early-access form: someone joining the waitlist has no account. It
+    # stores contact details only and is rate-limited (test_waitlist_support.py).
+    exempt |= {"/api/v1/public/waitlist"}
 
     unguarded = []
     for route in app.routes:

@@ -15,9 +15,10 @@ import { initials } from "@/lib/format";
 import { AssistiveLine, RoleBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
-  BellIcon, ChevronDown, LogoutIcon, MenuIcon, UnlockIcon, XIcon,
+  BellIcon, ChevronDown, LogoutIcon, MailIcon, MenuIcon, UnlockIcon, XIcon,
 } from "@/components/ui/icons";
 import { ThemeToggle } from "./ThemeToggle";
+import { AnnouncementBar } from "./AnnouncementBar";
 import { ChatAssistant } from "./ChatAssistant";
 import { LanguageToggle, t } from "@/i18n";
 import type { NavGroup } from "./nav";
@@ -205,6 +206,7 @@ export function AppShell({
       </header>
 
       <ElevationBanner />
+      <AnnouncementBar />
 
       <div className={cx("shell-body", mobileOpen && "nav-open")}>
         <nav className="rail" aria-label={t("{surface} navigation", { surface: surfaceLabel })}>
@@ -232,6 +234,13 @@ export function AppShell({
             );
           })}
           <div className="rail-foot">
+            {/* Platform staff work the other side of support from their own nav. */}
+            {surface !== "ops" && (
+              <NavLink to="/support" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
+                <span className="rail-icon"><MailIcon size={17} /></span>
+                <span className="rail-label">{t("Help & support")}</span>
+              </NavLink>
+            )}
             <NavLink to="/design" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
               <span className="rail-icon"><BellIcon size={17} /></span>
               <span className="rail-label">{t("Design system")}</span>

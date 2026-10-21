@@ -785,3 +785,127 @@ textarea.input:focus-visible {
     display: none;
   }
 }
+
+/* ---------- platform announcements (AnnouncementBar) ---------------------- */
+.announce-stack {
+  display: flex;
+  flex-direction: column;
+}
+.announce {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px clamp(16px, 2vw, 24px);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--accent-weak);
+  border-bottom: 1px solid var(--border);
+}
+.announce > svg {
+  flex: none;
+  color: var(--accent-ink);
+}
+.announce.is-attention {
+  background: var(--status-warning-weak);
+}
+.announce.is-attention > svg {
+  color: var(--status-warning);
+}
+.announce-text {
+  flex: 1;
+  min-width: 0;
+}
+.announce-text strong {
+  margin-inline-end: 4px;
+}
+
+/* ---------- support ticket thread ----------------------------------------- */
+.ticket-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ticket-msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+}
+.ticket-msg.is-staff {
+  align-self: flex-end;
+  background: var(--accent-weak);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.ticket-msg-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.ticket-msg-head strong {
+  color: var(--text-primary);
+}
+.ticket-msg p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- waitlist lead drawer ------------------------------------------ */
+.wl-quote {
+  margin: 0;
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.wl-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wl-log li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.wl-log li > .row {
+  align-self: stretch;
+}
+.wl-log p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* An <a> styled as a button (mailto:, tel:, external links) is not body text. */
+a.btn,
+a.btn:hover {
+  text-decoration: none;
+}
+/* A switch in a card header (Announcements) sits inline, without the settings-list divider. */
+.card-actions .toggle-row {
+  padding: 0;
+  border: 0;
+}

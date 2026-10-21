@@ -25,6 +25,7 @@ import { LandingPage } from "@/apps/site/LandingPage";
 import { PricingPage } from "@/apps/site/PricingPage";
 import { SecurityPage } from "@/apps/site/SecurityPage";
 import { ModelEvidencePage } from "@/apps/site/ModelEvidencePage";
+import { WaitlistPage } from "@/apps/site/WaitlistPage";
 import { LoginPage } from "@/apps/auth/LoginPage";
 import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
@@ -146,6 +147,13 @@ const OpsBreakGlass = lazyNamed(() => import("@/apps/ops/OpsBreakGlass"), "OpsBr
 const OpsAudit = lazyNamed(() => import("@/apps/ops/OpsAudit"), "OpsAudit");
 const OpsIncidents = lazyNamed(() => import("@/apps/ops/OpsIncidents"), "OpsIncidents");
 const OpsPlans = lazyNamed(() => import("@/apps/ops/OpsPlans"), "OpsPlans");
+const OpsWaitlist = lazyNamed(() => import("@/apps/ops/OpsWaitlist"), "OpsWaitlist");
+const OpsUsers = lazyNamed(() => import("@/apps/ops/OpsUsers"), "OpsUsers");
+const OpsSupport = lazyNamed(() => import("@/apps/ops/OpsSupport"), "OpsSupport");
+const OpsAnnouncements = lazyNamed(() => import("@/apps/ops/OpsAnnouncements"), "OpsAnnouncements");
+
+// Help & support (every signed-in surface)
+const SupportPage = lazyNamed(() => import("@/apps/support/SupportPage"), "SupportPage");
 
 // Patient portal
 const PatientWelcome = lazyNamed(() => import("@/apps/patient/PatientWelcome"), "PatientWelcome");
@@ -238,6 +246,23 @@ function Design({ children }: { children: JSX.Element }) {
   return <AppShell surface={ROLES[role].surface} nav={DESIGN_NAV}><Page>{children}</Page></AppShell>;
 }
 
+/**
+ * /support renders inside whichever shell the signed-in person already has,
+ * with that surface's own nav — it is one page shared by every role. Platform
+ * staff are sent to the queue, which is their side of the same tickets.
+ */
+function Support({ children }: { children: JSX.Element }) {
+  const { authenticated, role } = useSession();
+  const { pathname } = useLocation();
+  if (!authenticated) return <Navigate to={`/login?next=${encodeURIComponent(pathname)}`} replace />;
+  const surface = ROLES[role].surface;
+  if (surface === "ops") return <Navigate to="/ops/support" replace />;
+  const nav = surface === "admin" ? ADMIN_NAV
+    : surface === "patient" ? PATIENT_NAV
+    : role === "charge_nurse" || role === "staff_nurse" ? NURSE_NAV : DOCTOR_NAV;
+  return <AppShell surface={surface} nav={nav}><Page>{children}</Page></AppShell>;
+}
+
 function NotFound() {
   const { pathname } = useLocation();
   const { role, authenticated } = useSession();
@@ -272,6 +297,7 @@ export function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/evidence" element={<ModelEvidencePage />} />
+        <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="*" element={<OfflineScreen />} />
       </Routes>
     );
@@ -285,6 +311,7 @@ export function App() {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/security" element={<SecurityPage />} />
       <Route path="/evidence" element={<ModelEvidencePage />} />
+      <Route path="/waitlist" element={<WaitlistPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       {/* Unlisted demo role picker — exists only when VITE_DEMO_ACCESS_PATH is set. */}
@@ -341,6 +368,13 @@ export function App() {
       <Route path="/ops/audit" element={<Ops><OpsAudit /></Ops>} />
       <Route path="/ops/incidents" element={<Ops><OpsIncidents /></Ops>} />
       <Route path="/ops/plans" element={<Ops><OpsPlans /></Ops>} />
+      <Route path="/ops/waitlist" element={<Ops><OpsWaitlist /></Ops>} />
+      <Route path="/ops/users" element={<Ops><OpsUsers /></Ops>} />
+      <Route path="/ops/support" element={<Ops><OpsSupport /></Ops>} />
+      <Route path="/ops/announcements" element={<Ops><OpsAnnouncements /></Ops>} />
+
+      {/* Help & support — every signed-in surface */}
+      <Route path="/support" element={<Support><SupportPage /></Support>} />
 
       {/* Patient portal & individual tier */}
       <Route path="/patient/home" element={<Patient><PatientHome /></Patient>} />

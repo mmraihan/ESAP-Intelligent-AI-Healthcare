@@ -165,6 +165,32 @@ CREATE TABLE IF NOT EXISTS handoffs (
 );
 CREATE INDEX IF NOT EXISTS ix_handoffs_unit ON handoffs(tenant_id, unit_id, created_at DESC);
 
+-- Early-access waitlist from the public site. Leads, not users: nobody here has
+-- an account, and nothing here is patient data. Sales works the queue from the
+-- ops console (status, owner, contact log in `doc`).
+CREATE TABLE IF NOT EXISTS waitlist (
+  id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
+  organization TEXT, status TEXT NOT NULL, created_at TEXT NOT NULL, doc TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_waitlist_created ON waitlist(created_at);
+
+-- Technical support: one ticket per conversation between a signed-in user and
+-- platform staff. The message thread lives in `doc.messages`.
+CREATE TABLE IF NOT EXISTS support_tickets (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, requester TEXT NOT NULL,
+  status TEXT NOT NULL, priority TEXT NOT NULL, created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL, doc TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_support_requester ON support_tickets(requester, updated_at DESC);
+CREATE INDEX IF NOT EXISTS ix_support_status ON support_tickets(status, updated_at DESC);
+
+-- Platform-wide announcements shown in every signed-in shell (maintenance
+-- windows, releases, outages), targeted by surface.
+CREATE TABLE IF NOT EXISTS announcements (
+  id TEXT PRIMARY KEY, audience TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL, expires_at TEXT, doc TEXT NOT NULL
+);
+
 -- Reference data with no query surface: models, plans, drift, rollouts,
 -- fairness, adoption, rbac, demo identities. One row per collection.
 CREATE TABLE IF NOT EXISTS documents (

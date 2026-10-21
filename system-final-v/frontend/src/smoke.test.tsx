@@ -27,6 +27,7 @@ const CASES: Case[] = [
   { path: "/pricing", role: "guest" },
   { path: "/security", role: "guest" },
   { path: "/evidence", role: "guest" },
+  { path: "/waitlist", role: "guest" },
   { path: "/login", role: "guest" },
   { path: "/signup", role: "guest" },
   { path: "/invite/inv_demo_token", role: "guest" },
@@ -87,6 +88,16 @@ const CASES: Case[] = [
   { path: "/ops/audit", role: "super_admin" },
   { path: "/ops/incidents", role: "super_admin" },
   { path: "/ops/plans", role: "super_admin" },
+  { path: "/ops/waitlist", role: "super_admin" },
+  { path: "/ops/users", role: "super_admin" },
+  { path: "/ops/support", role: "super_admin" },
+  { path: "/ops/announcements", role: "super_admin" },
+
+  // Help & support, inside each surface's own shell
+  { path: "/support", role: "physician" },
+  { path: "/support", role: "staff_nurse" },
+  { path: "/support", role: "tenant_owner" },
+  { path: "/support", role: "patient" },
 
   // Patient portal
   { path: "/patient/home", role: "patient" },

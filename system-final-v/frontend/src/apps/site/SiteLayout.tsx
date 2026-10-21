@@ -17,6 +17,7 @@ const LINKS = [
   { to: "/evidence", label: "Evidence" },
   { to: "/security", label: "Security" },
   { to: "/pricing", label: "Pricing" },
+  { to: "/waitlist", label: "Waitlist" },
 ];
 
 /** "/" shows the product page to a signed-out visitor, so "Product" is current there too. */

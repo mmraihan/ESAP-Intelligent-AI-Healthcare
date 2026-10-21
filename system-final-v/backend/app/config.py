@@ -95,6 +95,18 @@ class Settings:
         raw = os.environ.get("ESAP_CORS_ORIGINS", "http://localhost:5175,http://127.0.0.1:5175")
         return [o.strip() for o in raw.split(",") if o.strip()]
 
+    @property
+    def trusted_proxies(self) -> frozenset[str]:
+        """Addresses of the reverse proxies in front of the API.
+
+        Only a request arriving from one of these may name its real client in
+        X-Forwarded-For; from anyone else the header is ignored, because a
+        client can write whatever it likes there. Empty (the default) means the
+        API faces clients directly.
+        """
+        raw = os.environ.get("ESAP_TRUSTED_PROXIES", "")
+        return frozenset(p.strip() for p in raw.split(",") if p.strip())
+
 
 @lru_cache(maxsize=1)
 def settings() -> Settings:

@@ -22,8 +22,8 @@ from .deps import Actor, current_actor
 from .config import settings
 from .routers import (
     admin, admin_config, auth, bootstrap, catalog, chat, clinical, clinical_ops,
-    exports, ops, ops_incidents, patient, patient_ops, requests, settings as settings_router,
-    workspace,
+    exports, ops, ops_incidents, ops_people, patient, patient_ops, requests, settings as settings_router,
+    support, waitlist, workspace,
 )
 from .seed import ensure_seeded
 
@@ -67,7 +67,8 @@ API = "/api/v1"
 for router in (auth.router, bootstrap.router, clinical.router, clinical_ops.router,
                catalog.router, chat.router, admin.router, admin_config.router, ops.router,
                ops_incidents.router, patient.router, patient_ops.router,
-               exports.router, settings_router.router, requests.router, workspace.router):
+               exports.router, settings_router.router, requests.router, workspace.router,
+               ops_people.router, support.router, waitlist.router):
     app.include_router(router, prefix=API)
 
 

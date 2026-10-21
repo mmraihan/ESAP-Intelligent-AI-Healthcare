@@ -2,7 +2,7 @@
 import type { ReactNode } from "react";
 import {
   ActivityIcon, BedIcon, BellIcon, BookIcon, BuildingIcon, ChartIcon, ClipboardIcon, CreditCardIcon,
-  FileIcon, FlaskIcon, GlobeIcon, GridIcon, HandoffIcon, HeartPulseIcon, KeyIcon, LinkIcon, ListIcon,
+  FileIcon, FlaskIcon, GlobeIcon, GridIcon, HandoffIcon, HeartPulseIcon, KeyIcon, LinkIcon, ListIcon, MailIcon,
   PaletteIcon, ScaleIcon, ServerIcon, SettingsIcon, ShieldIcon, StethoscopeIcon, UnlockIcon, UserIcon,
   UsersIcon,
 } from "@/components/ui/icons";
@@ -118,6 +118,15 @@ export const OPS_NAV: NavGroup[] = [
       { to: "/ops/rollout", label: "Model rollout", icon: <FlaskIcon size={S} />, ref: "11.5.4" },
       { to: "/ops/config", label: "Global config", icon: <ServerIcon size={S} />, ref: "11.5.5" },
       { to: "/ops/plans", label: "Plan catalog", icon: <CreditCardIcon size={S} />, ref: "11.5.9" },
+    ],
+  },
+  {
+    title: "Growth & support",
+    items: [
+      { to: "/ops/waitlist", label: "Waitlist", icon: <ClipboardIcon size={S} /> },
+      { to: "/ops/users", label: "All users", icon: <UsersIcon size={S} /> },
+      { to: "/ops/support", label: "Support tickets", icon: <MailIcon size={S} /> },
+      { to: "/ops/announcements", label: "Announcements", icon: <BellIcon size={S} /> },
     ],
   },
   {
