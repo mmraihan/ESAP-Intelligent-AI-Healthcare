@@ -62,6 +62,8 @@ MED_LEXICON = [
 
 _AGE = re.compile(r"\b(\d{1,3})\s*(?:yo\b|y/o|y\.o\.|year[s]?[-\s]?old|yr[s]?\b|-year-old)", re.I)
 _AGE2 = re.compile(r"\bage[d]?\s*(?:is\s*)?(\d{1,3})\b", re.I)
+# Patient voice: "I'm 54", "I am 54". Not when a unit follows ("I'm 80 kg").
+_AGE3 = re.compile(r"\bi(?:'|’| a)m\s+(\d{1,3})\b(?!\s*(?:kg|kilo|lb|cm|mm|%|/))", re.I)
 _BP = re.compile(r"\b(\d{2,3})\s*/\s*(\d{2,3})\b")
 _WEIGHT = re.compile(r"\b(\d{2,3}(?:\.\d)?)\s*(?:kg|kilograms?)\b", re.I)
 _HEIGHT = re.compile(r"\b(\d{2,3})\s*(?:cm|centimet)", re.I)
@@ -69,7 +71,7 @@ _BMI = re.compile(r"\bbmi\s*(?:of|is|=|:)?\s*(\d{2}(?:\.\d)?)\b", re.I)
 
 
 def _find_age(text: str) -> int | None:
-    for rx in (_AGE, _AGE2):
+    for rx in (_AGE, _AGE2, _AGE3):
         m = rx.search(text)
         if m:
             v = int(m.group(1))
@@ -79,10 +81,12 @@ def _find_age(text: str) -> int | None:
 
 
 def _find_sex(text: str) -> int | None:
-    t = f" {text.lower()} "
-    if re.search(r"\b(female|woman|lady|she|her|f)\b", t) and not re.search(r"\b(male|man|he|his)\b", t):
+    # A lone "m"/"f" only counts when it is not the tail of a contraction:
+    # "I'm" used to read as male because the apostrophe is a word boundary.
+    t = f" {text.lower().replace('’', chr(39))} "
+    if re.search(r"\b(female|woman|lady|she|her|(?<!')f)\b", t) and not re.search(r"\b(male|man|he|his)\b", t):
         return 1
-    if re.search(r"\b(male|man|gentleman|he|his|m)\b", t) and not re.search(r"\b(female|woman|she|her)\b", t):
+    if re.search(r"\b(male|man|gentleman|he|his|(?<!')m)\b", t) and not re.search(r"\b(female|woman|she|her)\b", t):
         return 0
     return None
 

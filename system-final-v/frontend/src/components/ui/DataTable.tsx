@@ -95,7 +95,7 @@ export function DataTable<T>({
         />
       ) : (
         <div className="scroll-x">
-          <table className={cx("data-table", dense && "is-dense")}>
+          <table className={cx("data-table", "is-stackable", dense && "is-dense")}>
             {caption && <caption className="visually-hidden">{caption}</caption>}
             <thead>
               <tr>
@@ -134,6 +134,8 @@ export function DataTable<T>({
                       key={c.key}
                       style={{ textAlign: c.align ?? "left" }}
                       className={cx(c.secondary && "col-secondary")}
+                      // Read by the phone layout, which stacks each row into a labelled card.
+                      data-label={typeof c.header === "string" ? c.header : undefined}
                     >
                       {c.render(row)}
                     </td>

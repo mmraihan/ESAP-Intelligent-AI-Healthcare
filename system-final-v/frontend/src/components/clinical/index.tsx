@@ -16,6 +16,7 @@ import { OFFLINE_NOTICE, isLive } from "@/api/actions";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { familyColorVar } from "@/lib/ccsrFamilies";
+import { BodySystemTile } from "@/components/ui/bodySystems";
 import { ago, dateTimeLabel, pct, percentilePhrase, seqToken } from "@/lib/format";
 import type { Encounter } from "@/mock/types";
 import { BarRows, RiskGauge } from "@/components/ui/charts";
@@ -106,7 +107,7 @@ export function RiskRow({ slots, onExplain }: { slots: RiskSlot[]; onExplain?: (
             flag={s.flag}
           />
           {onExplain && s.probability !== null && (
-            <Button size="sm" variant="ghost" onClick={() => onExplain(s.modelId)}>Why?</Button>
+            <Button size="sm" className="gauge-why" icon={<SparkIcon size={13} />} onClick={() => onExplain(s.modelId)}>Why this estimate?</Button>
           )}
         </div>
       ))}
@@ -211,6 +212,7 @@ export function DifferentialCard({
           ),
           value: it.probability,
           swatch: familyColorVar(it.family),
+          icon: <BodySystemTile family={it.family} size={34} />,
           meta: (
             <span className="row" style={{ gap: 10, flexWrap: "wrap" }}>
               <span>{it.family}</span>

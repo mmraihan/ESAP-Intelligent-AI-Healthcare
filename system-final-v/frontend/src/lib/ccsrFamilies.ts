@@ -25,22 +25,46 @@ export const CATEGORICAL_SLOTS: { light: string; dark: string }[] = [
   { light: "#e34948", dark: "#e66767" }, // 8 red
 ];
 
-// Fixed family -> slot index. Ordered by prevalence in an adult intake cohort so
-// the common families get the leading (most-separable) slots.
-const FAMILY_SLOT: Record<string, number> = {
-  Circulatory: 0,
-  "Endocrine/metabolic": 1,
-  Respiratory: 2,
-  Genitourinary: 3,
-  "Mental/behavioral": 4,
-  Digestive: 5,
-  "Nervous system": 6,
-  Infectious: 7,
+/**
+ * The body systems a CCSR family can name. The API spells families several
+ * ways ("Endocrine" / "Endocrine/metabolic", "Mental/Behavioural" /
+ * "Mental/behavioral", "Nervous" / "Nervous system"), so a family is resolved by
+ * its leading word rather than by exact string — an exact-match table silently
+ * turned most families grey.
+ */
+export type BodySystem =
+  | "circulatory" | "endocrine" | "respiratory" | "genitourinary" | "mental" | "digestive"
+  | "nervous" | "infectious" | "blood" | "musculoskeletal" | "injury" | "neoplasm" | "other";
+
+const SYSTEM_PREFIX: [string, BodySystem][] = [
+  ["circ", "circulatory"], ["endo", "endocrine"], ["resp", "respiratory"], ["genito", "genitourinary"],
+  ["mental", "mental"], ["digest", "digestive"], ["nerv", "nervous"], ["infect", "infectious"],
+  ["blood", "blood"], ["musc", "musculoskeletal"], ["injur", "injury"], ["neoplas", "neoplasm"],
+];
+
+export function bodySystem(family: string): BodySystem {
+  const f = (family || "").trim().toLowerCase();
+  return SYSTEM_PREFIX.find(([p]) => f.startsWith(p))?.[1] ?? "other";
+}
+
+// Fixed system -> slot index. Ordered by prevalence in an adult intake cohort so
+// the common families get the leading (most-separable) slots. Blood,
+// musculoskeletal, injury and neoplasms fold to the neutral "Other" swatch: a 9th
+// hue would break the validated 8-slot palette. Their icon still tells them apart.
+const SYSTEM_SLOT: Partial<Record<BodySystem, number>> = {
+  circulatory: 0,
+  endocrine: 1,
+  respiratory: 2,
+  genitourinary: 3,
+  mental: 4,
+  digestive: 5,
+  nervous: 6,
+  infectious: 7,
 };
 
 /** Returns a CSS custom-property-driven color pair, or null for the neutral "Other". */
 export function familySlot(family: string): number | null {
-  return family in FAMILY_SLOT ? FAMILY_SLOT[family] : null;
+  return SYSTEM_SLOT[bodySystem(family)] ?? null;
 }
 
 /**

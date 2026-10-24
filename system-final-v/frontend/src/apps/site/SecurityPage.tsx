@@ -8,6 +8,7 @@
  */
 import { Badge, Banner, Card } from "@/components/ui/primitives";
 import { SiteLayout } from "./SiteLayout";
+import { SecurityArt } from "./SiteArt";
 import { GradeLegend } from "@/components/ui/domain";
 import {
   AlertIcon, CheckIcon, GlobeIcon, KeyIcon, LockIcon, ScaleIcon, ServerIcon, ShieldIcon, XIcon,
@@ -58,7 +59,8 @@ const CONTROLS = [
 export function SecurityPage() {
   return (
     <SiteLayout>
-      <section className="hero" style={{ paddingBottom: 0 }}>
+      <section className="hero hero-split" style={{ paddingBottom: 0 }}>
+        <div className="hero-copy">
         <span className="hero-eyebrow"><ShieldIcon size={14} /> Security & compliance</span>
         <h1>Written for the person who has to sign this off.</h1>
         <p className="hero-lede">
@@ -72,6 +74,8 @@ export function SecurityPage() {
           <Badge tone="warning" icon={<AlertIcon size={11} />}>HITRUST — planned</Badge>
           <Badge tone="good" icon={<CheckIcon size={11} />}>GDPR, EU residency available</Badge>
         </div>
+        </div>
+        <SecurityArt />
       </section>
 
       <Banner tone="accent" icon={<ScaleIcon size={18} />} title="Regulatory posture: non-device clinical decision support">

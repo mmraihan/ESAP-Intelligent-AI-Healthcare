@@ -110,7 +110,7 @@ export function WorklistPage() {
       render: (e) => (
         <div className="cell-stack">
           <span className={cx("state-tag", `state-${e.state}`)}>{STATE_LABEL[e.state]}</span>
-          <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} />
+          <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} estimated={e.risks.mortality !== null} />
         </div>
       ),
     },

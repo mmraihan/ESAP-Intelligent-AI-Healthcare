@@ -10,6 +10,7 @@ import { num } from "@/lib/format";
 import { BarRows } from "@/components/ui/charts";
 import { Badge, Banner, Card } from "@/components/ui/primitives";
 import { SiteLayout } from "./SiteLayout";
+import { EvidenceArt } from "./SiteArt";
 import { AlertIcon, CheckIcon, FlaskIcon, ScaleIcon, XIcon } from "@/components/ui/icons";
 
 export function ModelEvidencePage() {
@@ -28,13 +29,16 @@ export function ModelEvidencePage() {
 
   return (
     <SiteLayout>
-      <section className="hero" style={{ paddingBottom: 0 }}>
-        <span className="hero-eyebrow"><FlaskIcon size={14} /> Evidence</span>
-        <h1>The weakest number first.</h1>
-        <p className="hero-lede">
-          Every vendor leads with their best metric. Here is ours going the other way, because you
-          will find it in the pilot anyway and it is better that you hear it now.
-        </p>
+      <section className="hero hero-split" style={{ paddingBottom: 0 }}>
+        <div className="hero-copy">
+          <span className="hero-eyebrow"><FlaskIcon size={14} /> Evidence</span>
+          <h1>The weakest number first.</h1>
+          <p className="hero-lede">
+            Every vendor leads with their best metric. Here is ours going the other way, because you
+            will find it in the pilot anyway and it is better that you hear it now.
+          </p>
+        </div>
+        <EvidenceArt />
       </section>
 
       <section className="grid grid-2">

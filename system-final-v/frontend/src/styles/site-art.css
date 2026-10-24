@@ -1,0 +1,342 @@
+/* =========================================================================
+   Public sub-page heroes + section reveal (apps/site/SiteArt.tsx, SiteLayout).
+
+   Tokens only (--accent*, --pub-g*, --surface-*, --border*), so light, dark
+   and "system" all follow. Motion is transform/opacity (plus one stroke draw),
+   under ~1s, and switched off under prefers-reduced-motion — the art then
+   renders in its final state. Decorative art never covers copy or controls:
+   it sits in its own grid column and drops away on narrow screens.
+   ========================================================================= */
+
+/* ---------- split hero ----------------------------------------------------- */
+.pub .hero-split .hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  align-items: flex-start;
+  min-width: 0;
+}
+@media (min-width: 1000px) {
+  .pub .hero-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    column-gap: clamp(2rem, 4vw, 4rem);
+  }
+}
+@media (max-width: 999px) {
+  /* Decorative heroes step aside on narrow screens; the evidence panel is
+     data, so it stays (below the copy). */
+  .pub .hero-split > .art-security,
+  .pub .hero-split > .art-pricing { display: none; }
+}
+
+.site-art { margin: 0; min-width: 0; }
+.site-art svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Entrance for every art piece: a soft rise on page load. */
+@keyframes art-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes art-pop { from { opacity: 0; transform: scale(0.94); } }
+@keyframes art-in { from { opacity: 0; } }
+.site-art { animation: art-rise 700ms var(--ease-out) both; }
+
+/* ---------- security: concentric boundaries -------------------------------- */
+.art-security { max-width: 26rem; justify-self: center; width: 100%; }
+.art-orbit {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 35%, transparent);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+}
+.art-ring { stroke-width: 1.5; }
+.art-ring-0 { fill: color-mix(in srgb, var(--pub-g2-weak) 55%, transparent); stroke: color-mix(in srgb, var(--pub-g2) 30%, transparent); }
+.art-ring-1 { fill: color-mix(in srgb, var(--pub-g1-weak) 75%, transparent); stroke: color-mix(in srgb, var(--pub-g1) 35%, transparent); }
+.art-ring-2 { fill: var(--surface-1); stroke: color-mix(in srgb, var(--accent) 45%, transparent); }
+.art-ring-label {
+  font: 600 10.5px var(--font-sans);
+  letter-spacing: 0.02em;
+  fill: var(--text-secondary);
+}
+.art-layer {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-pop 650ms var(--ease-out) both;
+  animation-delay: calc(150ms + var(--i) * 140ms);
+}
+.art-core { animation: art-pop 600ms var(--ease-out) both; animation-delay: 620ms; transform-box: fill-box; transform-origin: center; }
+.art-shield { fill: var(--accent-fill); }
+.art-lock { fill: var(--surface-1); }
+.art-lock-arc { fill: none; stroke: var(--surface-1); stroke-width: 3; stroke-linecap: round; }
+.art-orbiter { animation: art-spin 14s linear infinite; }
+.art-orbit-dot {
+  fill: var(--accent);
+  stroke: var(--surface-1);
+  stroke-width: 2.5;
+}
+@keyframes art-spin { to { transform: rotate(360deg); } }
+.art-link {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 55%, var(--border));
+  stroke-width: 2;
+  animation: art-in 400ms ease-out both;
+  animation-delay: calc(900ms + var(--i) * 110ms);
+}
+
+/* ---------- evidence: the real strata against the ceiling ------------------ */
+.art-evidence { width: 100%; }
+.art-panel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-1);
+  box-shadow: var(--pub-shadow-mock, var(--shadow-2));
+  padding: 20px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.art-panel-head { margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.art-panel-head strong { font-size: 14px; }
+.art-panel-head span { font-size: 12px; color: var(--text-muted); }
+.art-bars {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr) 3.4rem;
+  align-items: center;
+  gap: 14px 12px;
+  padding-top: 22px; /* room for the ceiling label */
+}
+.art-bar-row { display: contents; }
+.art-bar-label { grid-column: 1; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.art-bar-track {
+  grid-column: 2;
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--seq-track);
+  overflow: hidden;
+}
+.art-bar-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--seq-500);
+  transform-origin: left center;
+  animation: art-grow 1100ms var(--ease-out) both;
+  animation-delay: calc(300ms + var(--i) * 160ms);
+}
+[dir="rtl"] .art-bar-fill { transform-origin: right center; }
+.art-bar-fill.is-weak { background: var(--seq-400); }
+@keyframes art-grow { from { transform: scaleX(0); } }
+.art-bar-value { grid-column: 3; font-size: 13px; font-weight: 700; text-align: end; }
+.art-ceiling { grid-column: 2; position: relative; align-self: stretch; pointer-events: none; }
+.art-ceiling-line {
+  position: absolute;
+  top: -22px;
+  bottom: -4px;
+  border-inline-start: 1.5px dashed var(--text-muted);
+  animation: art-in 500ms ease-out both;
+  animation-delay: 900ms;
+}
+.art-ceiling-line > span {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 6px;
+  white-space: nowrap;
+  font: 600 10.5px var(--font-mono);
+  color: var(--text-muted);
+}
+.art-panel-foot { margin: 0; font-size: 12px; line-height: 1.55; color: var(--text-muted); }
+@media (max-width: 520px) {
+  .art-bars { grid-template-columns: 6.6rem minmax(0, 1fr) 3rem; }
+}
+
+/* ---------- pricing: a ward priced per bed --------------------------------- */
+.art-pricing { max-width: 26rem; justify-self: center; width: 100%; }
+.art-building { fill: var(--surface-1); stroke: var(--border-strong); stroke-width: 1.5; }
+.art-cross rect { fill: var(--accent); }
+.art-bed-frame {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-width: 1.2;
+  transition: fill var(--dur-base) ease;
+}
+.art-bed-glyph { fill: none; stroke: var(--text-muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* Beds "come online" in sequence: the window takes the accent tint. */
+.art-bed .art-bed-frame { animation: art-bed-on 600ms ease-out both; animation-delay: calc(250ms + var(--i) * 70ms); }
+.art-bed .art-bed-glyph { animation: art-bed-glyph 600ms ease-out both; animation-delay: calc(250ms + var(--i) * 70ms); }
+@keyframes art-bed-on {
+  from { fill: var(--surface-2); }
+  to { fill: color-mix(in srgb, var(--accent-weak) 85%, var(--surface-1)); }
+}
+@keyframes art-bed-glyph { from { stroke: var(--text-muted); } to { stroke: var(--accent); } }
+.art-bed .art-bed-frame { fill: color-mix(in srgb, var(--accent-weak) 85%, var(--surface-1)); }
+.art-bed .art-bed-glyph { stroke: var(--accent); }
+.art-bed-pillow { fill: var(--accent); opacity: 0.55; }
+.art-door { fill: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); stroke: var(--border-strong); stroke-width: 1.2; }
+.art-ecg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: art-draw 1600ms var(--ease-out) both;
+  animation-delay: 500ms;
+}
+@keyframes art-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.art-caption {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ---------- waitlist: from a place on the list to a pilot ------------------ */
+.art-path {
+  position: relative;
+  margin-top: 8px;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-1) 85%, transparent);
+  width: 100%;
+}
+.art-path ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  position: relative;
+}
+/* The rail behind the numbered dots. */
+.art-path ol::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  inset-inline: 12%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 25%, var(--border)));
+}
+[dir="rtl"] .art-path ol::before { background: linear-gradient(270deg, var(--accent), color-mix(in srgb, var(--accent) 25%, var(--border))); }
+.art-path li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  animation: art-rise 550ms var(--ease-out) both;
+  animation-delay: calc(250ms + var(--i) * 120ms);
+}
+.art-path-dot {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+  background: var(--surface-1);
+  border: 2px solid var(--accent);
+  color: var(--accent-ink);
+  font: 700 13px var(--font-sans);
+}
+.art-path li:first-child .art-path-dot { background: var(--accent-fill); border-color: var(--accent-fill); color: var(--on-accent); }
+.art-path li strong { font-size: 13px; }
+.art-path li > span:last-child { font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
+/* A soft pulse walking the rail. The track spans the rail; its inner strip is
+   rail-wide with the dot at its far end, so translateX(-100%) → 0 moves the dot
+   from the first step to the last using transform alone. */
+.art-path-pulse {
+  position: absolute;
+  top: 29px;
+  inset-inline: calc(12% + 18px);
+  height: 10px;
+  pointer-events: none;
+}
+.art-path-pulse > i {
+  position: absolute;
+  inset: 0;
+  animation: art-walk 4.8s var(--ease-in-out) infinite;
+  animation-delay: 1.2s;
+  opacity: 0;
+}
+.art-path-pulse > i::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: -5px;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+@keyframes art-walk {
+  0% { opacity: 0; transform: translateX(-100%); }
+  8% { opacity: 1; }
+  70% { opacity: 1; transform: translateX(0); }
+  80%, 100% { opacity: 0; transform: translateX(0); }
+}
+[dir="rtl"] .art-path-pulse > i { animation-name: art-walk-rtl; }
+@keyframes art-walk-rtl {
+  0% { opacity: 0; transform: translateX(100%); }
+  8% { opacity: 1; }
+  70% { opacity: 1; transform: translateX(0); }
+  80%, 100% { opacity: 0; transform: translateX(0); }
+}
+@media (max-width: 560px) {
+  .art-path ol { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .art-path ol::before { top: 16px; bottom: 16px; inset-inline-start: 15px; inset-inline-end: auto; width: 2px; height: auto; }
+  .art-path li { flex-direction: row; flex-wrap: wrap; text-align: start; gap: 2px 12px; align-items: center; }
+  .art-path li > span:last-child { flex-basis: 100%; padding-inline-start: 44px; }
+  .art-path-dot { margin-bottom: 0; }
+  .art-path-pulse { display: none; }
+}
+
+/* ---------- section reveal (SiteLayout) ------------------------------------ */
+.pub .site-main > [data-site-reveal] {
+  transition: opacity 650ms var(--ease-out), transform 650ms var(--ease-out);
+}
+.pub .site-main > [data-site-reveal]:not([data-shown]) {
+  opacity: 0;
+  transform: translateY(18px);
+}
+/* Cards inside a revealed grid arrive in a short stagger. */
+.pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > * {
+  transition: opacity 550ms var(--ease-out), transform 550ms var(--ease-out);
+}
+.pub .site-main > [data-site-reveal]:not([data-shown]) :is(.plan-grid, .grid) > *,
+.pub .site-main > [data-site-reveal]:is(.plan-grid, .grid):not([data-shown]) > * {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.pub .site-main > [data-site-reveal]:is(.plan-grid, .grid) > * {
+  transition: opacity 550ms var(--ease-out), transform 550ms var(--ease-out);
+}
+.pub .site-main > [data-site-reveal] > :nth-child(2),
+.pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > :nth-child(2) { transition-delay: 80ms; }
+.pub .site-main > [data-site-reveal] > :nth-child(3),
+.pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > :nth-child(3) { transition-delay: 160ms; }
+.pub .site-main > [data-site-reveal] > :nth-child(4),
+.pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > :nth-child(4) { transition-delay: 240ms; }
+
+/* ---------- reduced motion: final state, no movement ----------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .site-art,
+  .site-art *,
+  .site-art *::before {
+    animation: none !important;
+  }
+  .art-path-pulse { display: none; }
+  .pub .site-main > [data-site-reveal],
+  .pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > *,
+  .pub .site-main > [data-site-reveal]:is(.plan-grid, .grid) > * {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

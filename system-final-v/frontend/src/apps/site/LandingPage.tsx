@@ -20,6 +20,8 @@ import { MODELS } from "@/mock/db";
 import { BrandMark } from "@/components/shell/AppShell";
 import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { SiteFooter, SiteHeader } from "./SiteLayout";
+import { CareStory } from "./CareStory";
+import { ProductExplode } from "./ProductExplode";
 import {
   ActivityIcon, ArrowRight, BedIcon, BookIcon, BuildingIcon, ChartIcon, CheckIcon, ChevronDown, ClockIcon,
   FileIcon, FlaskIcon, GlobeIcon, HeartPulseIcon, InfoIcon, LockIcon, PillIcon, RefreshIcon, ScaleIcon,
@@ -28,6 +30,8 @@ import {
 
 const SECTIONS = [
   { id: "admission", label: "Admission" },
+  { id: "story", label: "Story" },
+  { id: "inside", label: "Inside" },
   { id: "impact", label: "Impact" },
   { id: "intake", label: "Intake" },
   { id: "estimate", label: "Estimate" },
@@ -286,6 +290,36 @@ function useHeroTilt() {
   return ref;
 }
 
+/**
+ * Primary CTA leans a few pixels toward the cursor while it is over it, and
+ * springs back on leave (the CSS transition does the easing). Fine pointers
+ * with motion welcome only; everyone else gets the plain button.
+ */
+function Magnetic({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !window.matchMedia?.(AMBIENT_OK).matches) return;
+    const clamp = (v: number) => Math.max(-6, Math.min(6, v));
+    const onMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mg-x", `${clamp((e.clientX - r.left - r.width / 2) * 0.2).toFixed(1)}px`);
+      el.style.setProperty("--mg-y", `${clamp((e.clientY - r.top - r.height / 2) * 0.3).toFixed(1)}px`);
+    };
+    const onLeave = () => {
+      el.style.removeProperty("--mg-x");
+      el.style.removeProperty("--mg-y");
+    };
+    el.addEventListener("pointermove", onMove, { passive: true });
+    el.addEventListener("pointerleave", onLeave);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerleave", onLeave);
+    };
+  }, []);
+  return <span ref={ref} className="au-magnet">{children}</span>;
+}
+
 /** Ring gauge. Decorative: the number is printed inside it and beside it in text. */
 function Ring({ p, size = 116, label }: { p: number; size?: number; label?: string }) {
   const r = size / 2 - 7;
@@ -479,6 +513,7 @@ export function LandingPage() {
   return (
     <div ref={rootRef} className="pub au">
       <SiteHeader />
+      <div className="au-progress" aria-hidden="true" />
 
       <nav className="au-rail" aria-label="Page sections">
         {SECTIONS.map((s, i) => (
@@ -494,26 +529,34 @@ export function LandingPage() {
         <Glows />
         <div className="au-wrap au-hero-inner">
           <div className="au-hero-copy">
-            {/* The heartbeat is the hero: the sign-in page's monitor at full size,
-                with plain, single-colour text beneath it. */}
-            <div className="au-rise" style={{ "--i": 0 } as CSSProperties}>
-              <HeartMonitor size="lg" className="au-hero-monitor" />
-            </div>
+            {/* Reference layout: pill, a large headline whose last word carries
+                the gradient, then the lede and CTAs. */}
+            <span className="au-badge au-hero-badge au-rise" style={{ "--i": 0 } as CSSProperties}>
+              <span className="au-badge-pulse" aria-hidden="true" />
+              AI-powered clinical decision support
+            </span>
             <h1 className="au-title">
               <span className="au-title-line au-rise" style={{ "--i": 1 } as CSSProperties}>Five questions answered</span>{" "}
-              <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>the hour a patient is admitted.</span>
+              <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>the hour a patient is</span>{" "}
+              <span className="au-title-line">
+                <span className="au-grad" style={{ "--i": 3 } as CSSProperties}>admitted.</span>
+              </span>
             </h1>
             <p className="au-lede au-rise" style={{ "--i": 3 } as CSSProperties}>
-              Calibrated estimates from what is known at admission, with the reasoning and the limits on the same card.
+              ESAP reads what is known at admission and estimates what is likely already present, how the stay is
+              likely to go and how long it is likely to last — with the reasoning attached, the calibration stated
+              and the limits printed on the same card as the number.
             </p>
             <div className="au-cta-row au-rise" style={{ "--i": 4 } as CSSProperties}>
-              <Link to="/signup" className="pub-btn pub-btn-primary">
-                <ArrowRight size={16} className="pub-arrow" /> Try it on your own cases
-              </Link>
+              <Magnetic>
+                <Link to="/signup" className="pub-btn pub-btn-primary">
+                  <ArrowRight size={16} className="pub-arrow" /> Try it on your own cases
+                </Link>
+              </Magnetic>
               <Link to="/evidence" className="pub-btn pub-btn-outline">
                 See the evidence <ArrowRight size={15} className="pub-arrow" />
               </Link>
-              <Link to="/signup" className="pub-btn pub-btn-outline au-btn-quiet">Join the waitlist</Link>
+              <Link to="/waitlist" className="pub-btn pub-btn-outline au-btn-quiet">Join the waitlist</Link>
             </div>
             <p className="au-note au-rise" style={{ "--i": 5 } as CSSProperties}>
               <LockIcon size={13} /> Free tier, no card. Nothing you enter is retained on the free tier.
@@ -522,6 +565,26 @@ export function LandingPage() {
           <HeroDashboard />
         </div>
       </section>
+
+      {/* 01 · Story: one admission, start to finish, as a 3D diorama */}
+      <section id="story" className="au-sec au-story">
+        <div className="au-wrap">
+          <div className="au-center-head" data-au-reveal>
+            <Eyebrow n="01">The story</Eyebrow>
+            <h2 className="au-h2">One admission, <em>start to finish.</em></h2>
+            <p className="au-lede">
+              Follow one patient from the door to the summary they read later — and see exactly where the
+              software stops and the clinician decides.
+            </p>
+          </div>
+          <div data-au-reveal>
+            <CareStory />
+          </div>
+        </div>
+      </section>
+
+      {/* Inside · scroll-driven exploded view of one estimate */}
+      <ProductExplode />
 
       {/* 01 · Impact */}
       <section id="impact" className="au-sec au-impact">
@@ -564,11 +627,11 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* 02 · Intake */}
+      {/* 03 · Intake */}
       <section id="intake" className="au-sec au-sec-alt">
         <div className="au-wrap au-split">
           <div data-au-reveal>
-            <Eyebrow n="02">Intake</Eyebrow>
+            <Eyebrow n="04">Intake</Eyebrow>
             <h2 className="au-h2">Only what is known <em>at admission.</em></h2>
             <p className="au-lede">
               Every input is cut at t₀, the moment the encounter opens. Nothing charted during or after the stay
@@ -605,7 +668,7 @@ export function LandingPage() {
         <div className="au-wrap">
           <div className="au-sec-head" data-au-reveal>
             <div>
-              <Eyebrow n="03">Estimate</Eyebrow>
+              <Eyebrow n="05">Estimate</Eyebrow>
               <h2 className="au-h2">Five models. <em>Every number</em> carries its reasoning.</h2>
             </div>
             <p className="au-lede">
@@ -640,7 +703,7 @@ export function LandingPage() {
             </div>
           </div>
           <div data-au-reveal style={{ "--i": 1 } as CSSProperties}>
-            <Eyebrow n="04">Review</Eyebrow>
+            <Eyebrow n="06">Review</Eyebrow>
             <h2 className="au-h2">A clinician <em>makes the call.</em></h2>
             <p className="au-lede">
               ESAP is decision support, not diagnosis. The number, its drivers and its limits sit on one card; the
@@ -656,7 +719,7 @@ export function LandingPage() {
       <section id="principle" className="pub-night au-band au-principle">
         <Glows />
         <div className="au-wrap au-principle-inner" data-au-reveal>
-          <Eyebrow n="05">The principle</Eyebrow>
+          <Eyebrow n="07">The principle</Eyebrow>
           <p className="au-giant" aria-label="One in twelve">1 in 12</p>
           <blockquote className="au-quote">
             men has the colour-vision difference a red/amber/green gauge depends on. So our gauges use{" "}
@@ -674,7 +737,7 @@ export function LandingPage() {
         <div className="au-wrap">
           <div className="au-sec-head" data-au-reveal>
             <div>
-              <Eyebrow n="06">Platform</Eyebrow>
+              <Eyebrow n="08">Platform</Eyebrow>
               <h2 className="au-h2">Built for the <em>whole ward,</em> and the people who sign it off.</h2>
             </div>
             <p className="au-lede">Everything a hospital needs to run it, audit it and trust it — in the same product.</p>
@@ -729,7 +792,7 @@ export function LandingPage() {
       <section id="faq" className="au-sec au-sec-alt">
         <div className="au-wrap au-split au-split-top">
           <div data-au-reveal>
-            <Eyebrow n="07">FAQ</Eyebrow>
+            <Eyebrow n="09">FAQ</Eyebrow>
             <h2 className="au-h2">Questions people <em>actually</em> ask.</h2>
             <p className="au-lede">Anything else, the evidence and security pages go into detail.</p>
             <div className="au-cta-row">

@@ -5,12 +5,13 @@
  * page has one nav and one footer. Styles live in styles/public.css; the `pub`
  * root gives the public palette (reference: additional-files/reference-files).
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { cx } from "@/components/ui/primitives";
 import { MenuIcon, XIcon } from "@/components/ui/icons";
+import "@/styles/site-art.css";
 
 const LINKS = [
   { to: "/product", label: "Product" },
@@ -131,11 +132,42 @@ export function SiteFooter() {
   );
 }
 
+/**
+ * Sections below the hero rise in the first time they scroll into view.
+ *
+ * Only elements present at mount are marked, so anything rendered later (a
+ * form's success state, an error banner) is never left hidden. No observer, or
+ * reduced motion: nothing is marked and everything is simply shown.
+ */
+function useSectionReveal() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    if (!window.matchMedia?.("(prefers-reduced-motion: no-preference)").matches) return;
+    const items = Array.from(root.children).slice(1) as HTMLElement[]; // the hero shows at once
+    const below = items.filter((el) => el.getBoundingClientRect().top > window.innerHeight * 0.9);
+    below.forEach((el) => el.setAttribute("data-site-reveal", ""));
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.setAttribute("data-shown", "");
+        io.unobserve(e.target);
+      }),
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+    );
+    below.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
+
 export function SiteLayout({ children }: { children: ReactNode }) {
+  const mainRef = useSectionReveal();
   return (
     <div className="pub site">
       <SiteHeader />
-      <main className="site-main">{children}</main>
+      <main className="site-main" ref={mainRef}>{children}</main>
       <SiteFooter />
     </div>
   );

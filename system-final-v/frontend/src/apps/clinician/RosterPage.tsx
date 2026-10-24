@@ -137,7 +137,7 @@ export function RosterPage() {
                 </div>
                 <span className="bed-phrase">{percentilePhrase(e.risks.icu)}</span>
                 <div className="bed-foot">
-                  <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} />
+                  <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} estimated={e.risks.mortality !== null} />
                   <span className="muted" style={{ fontSize: 11 }}>{e.nurse}</span>
                 </div>
               </button>

@@ -580,58 +580,6 @@ textarea.input:focus-visible {
   border-radius: 12px;
 }
 
-/* ---------- assistant launcher + dock -------------------------------------- */
-.chat-fab,
-.chat-fab:hover {
-  min-height: 44px;
-  padding: 10px 18px;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-ink);
-  font-weight: 650;
-  box-shadow: 0 12px 28px -12px var(--btn-primary-glow), var(--shadow-1);
-  touch-action: manipulation;
-}
-.chat-fab {
-  /* Logical, so the launcher sits at the reading end in Arabic too. */
-  right: auto;
-  inset-inline-end: 20px;
-  transition: transform var(--dur-press) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
-}
-.chat-fab:hover {
-  background: var(--btn-primary-bg-hover);
-}
-.chat-fab:active {
-  transform: scale(0.97);
-}
-/* Phone: the launcher shrinks to a 48px round icon so it covers as little of
-   the page as possible (its aria-label still names it). */
-@media (max-width: 640px) {
-  .chat-fab {
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    justify-content: center;
-    inset-inline-end: 16px;
-    bottom: max(16px, env(safe-area-inset-bottom, 0px));
-  }
-  .chat-fab > span:not(.chat-glyph) {
-    display: none;
-  }
-}
-.chat-dock {
-  right: auto;
-  inset-inline-end: 20px;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-2);
-}
-.chat-dock-head {
-  background: var(--surface-1);
-}
-.chat-user {
-  background: var(--accent-fill);
-  color: var(--on-accent);
-}
-
 /* ---------- small markers -------------------------------------------------- */
 .timeline li::before {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -719,9 +667,11 @@ textarea.input:focus-visible {
     /* The toast is centred with translateX(-50%); the keyframes keep it. */
     animation: console-toast 260ms var(--ease-drawer) both;
   }
-  .chat-dock {
-    animation: console-rise 260ms var(--ease-drawer) both;
-    transform-origin: bottom right;
+  .assist-dock {
+    animation: console-slide 260ms var(--ease-drawer) both;
+  }
+  [dir="rtl"] .assist-dock {
+    animation-name: console-slide-start;
   }
 }
 @keyframes console-enter {
@@ -768,12 +718,12 @@ textarea.input:focus-visible {
   .toast,
   .overlay,
   .drawer,
-  .chat-dock,
+  .assist-dock,
   .live-dot {
     animation: none;
   }
   .btn:active:not(:disabled),
-  .chat-fab:active {
+  .assist-launch:active {
     transform: none;
   }
 }

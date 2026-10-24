@@ -9,6 +9,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { SiteLayout } from "./SiteLayout";
+import { WaitlistPath } from "./SiteArt";
 import { ApiError, NetworkError } from "@/api/client";
 import { joinWaitlist } from "@/api/desk";
 import { Select } from "@/components/ui/primitives";
@@ -101,6 +102,7 @@ export function WaitlistPage() {
               Decision support, not diagnosis. Want to try it on your own cases now?{" "}
               <Link to="/signup" className="auth-link is-inline">Create a free individual seat</Link>.
             </p>
+            <WaitlistPath />
           </div>
 
           <div className="card wl-card">

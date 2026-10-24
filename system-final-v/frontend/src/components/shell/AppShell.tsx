@@ -15,11 +15,11 @@ import { initials } from "@/lib/format";
 import { AssistiveLine, RoleBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
-  BellIcon, ChevronDown, LogoutIcon, MailIcon, MenuIcon, UnlockIcon, XIcon,
+  ChevronDown, LogoutIcon, MailIcon, MenuIcon, PaletteIcon, UnlockIcon, XIcon,
 } from "@/components/ui/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { AnnouncementBar } from "./AnnouncementBar";
-import { ChatAssistant } from "./ChatAssistant";
+import { AssistantLauncher, ChatAssistant } from "./ChatAssistant";
 import { LanguageToggle, t } from "@/i18n";
 import type { NavGroup } from "./nav";
 
@@ -198,6 +198,7 @@ export function AppShell({
           <TenantSwitcher />
         </div>
         <div className="topbar-right">
+          <AssistantLauncher />
           <RoleBadge role={role} />
           {surface === "patient" && <LanguageToggle compact />}
           <ThemeToggle compact />
@@ -242,7 +243,7 @@ export function AppShell({
               </NavLink>
             )}
             <NavLink to="/design" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
-              <span className="rail-icon"><BellIcon size={17} /></span>
+              <span className="rail-icon"><PaletteIcon size={17} /></span>
               <span className="rail-label">{t("Design system")}</span>
             </NavLink>
             <AssistiveLine compact />

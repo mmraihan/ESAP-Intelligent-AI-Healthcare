@@ -13,6 +13,8 @@ import "./styles/app.css";
 // Console component layer; must load after app.css so it wins at equal specificity.
 import "./styles/console.css";
 import "./styles/public.css";
+// Product layer (assistant, glyphs, gauges, journey, phone tables); loads last.
+import "./styles/premium.css";
 
 installPointerGlow();
 

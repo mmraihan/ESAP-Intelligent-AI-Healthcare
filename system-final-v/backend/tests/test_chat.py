@@ -19,6 +19,18 @@ def test_extractor_pulls_the_common_fields():
     assert "prior_history.prior_ccsr" in r["needs_confirmation"]
 
 
+def test_contraction_is_not_read_as_a_sex_marker():
+    # "I'm" ends in a lone "m" after an apostrophe; it used to record the patient as male.
+    r = chat_extract.extract("I'm 54 and I've had chest pain since yesterday")
+    demo = r["delta"].get("features", {}).get("demographics", {})
+    assert "is_female" not in demo
+    assert demo["admission_age"] == 54
+    # A genuine shorthand marker still counts, and a weight is not an age.
+    assert chat_extract.extract("pt is m, 70 years old")["delta"]["features"]["demographics"]["is_female"] == 0
+    weight_only = chat_extract.extract("I'm 80 kg")["delta"].get("features", {}).get("demographics", {})
+    assert "admission_age" not in weight_only
+
+
 def test_extractor_never_invents_a_code_for_a_plain_symptom():
     r = chat_extract.extract("she has a bad cough and feels short of breath")
     feats = r["delta"].get("features", {})

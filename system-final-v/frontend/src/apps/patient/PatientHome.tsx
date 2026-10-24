@@ -13,9 +13,42 @@ import { t, tr } from "@/i18n";
 import { Badge, Banner, Button, Card, PageHeader } from "@/components/ui/primitives";
 import { CaringForCard } from "./CaringForCard";
 import {
-  ArrowRight, BookIcon, CheckIcon, ClipboardIcon, FileIcon, HeartPulseIcon, ShieldIcon,
+  ArrowRight, BedIcon, BookIcon, CheckIcon, ClipboardIcon, FileIcon, HeartPulseIcon, ShieldIcon,
   StethoscopeIcon, UsersIcon,
 } from "@/components/ui/icons";
+import type { ReactNode } from "react";
+
+type StepState = "done" | "current" | "todo";
+
+/**
+ * Where the patient's care is up to, drawn from what the record actually says:
+ * admitted (a care team exists) and reviewed + shared (a clinician released a
+ * summary). It never shows a score or a model — only the people-led steps.
+ */
+function CareJourney({ released }: { released: boolean }) {
+  const steps: { label: string; icon: ReactNode; state: StepState }[] = [
+    { label: t("Admitted"), icon: <BedIcon size={16} />, state: "done" },
+    { label: t("Details recorded"), icon: <ClipboardIcon size={16} />, state: released ? "done" : "current" },
+    { label: t("Reviewed by your doctor"), icon: <StethoscopeIcon size={16} />, state: released ? "done" : "todo" },
+    { label: t("Shared with you"), icon: <HeartPulseIcon size={16} />, state: released ? "done" : "todo" },
+  ];
+  const stateLabel = { done: t("Done"), current: t("In progress"), todo: t("Not yet") };
+  return (
+    <Card title={t("Your care journey")} subtitle={t("Where your care is up to — each step is done by a person, not the computer tool.")}>
+      <ol className="journey" aria-label={t("Your care journey")}>
+        {steps.map((s) => (
+          <li key={s.label} className={`journey-step is-${s.state}`}>
+            <span className="journey-dot" aria-hidden="true">{s.state === "done" ? <CheckIcon size={15} /> : s.icon}</span>
+            <span className="journey-text">
+              <strong>{s.label}</strong>
+              <span>{stateLabel[s.state]}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
 
 export function PatientHome() {
   const nav = useNavigate();
@@ -64,6 +97,8 @@ export function PatientHome() {
         </div>
       </div>
       )}
+
+      {inCare && <CareJourney released={Boolean(latest)} />}
 
       {latest && (
         <Card

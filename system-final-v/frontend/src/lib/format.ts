@@ -5,6 +5,10 @@ import { currentLang } from "@/i18n";
 
 export function pct(p: number | null | undefined, digits = 0): string {
   if (p === null || p === undefined || Number.isNaN(p)) return "—";
+  // A small non-zero probability must not print as "0%": a clinician reads 0% as
+  // "cannot happen". Say "<1%" (or "<0.1%") instead of rounding it away.
+  const floor = 0.5 * 10 ** -digits;
+  if (p > 0 && p * 100 < floor) return `<${(2 * floor).toFixed(digits)}%`;
   return `${(p * 100).toFixed(digits)}%`;
 }
 

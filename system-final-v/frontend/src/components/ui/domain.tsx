@@ -82,7 +82,15 @@ export function GradeLegend() {
  * Calibration is a first-class visual state. "Uncalibrated" is deliberately not
  * a warning color — it is expected in early deployment, not a fault (§14.3.3).
  */
-export function CalibratedBadge({ calibrated, validity }: { calibrated: boolean; validity?: "full" | "reduced" }) {
+export function CalibratedBadge({ calibrated, validity, estimated = true }: {
+  calibrated: boolean;
+  validity?: "full" | "reduced";
+  /** False when no estimate exists yet — a calibration claim about nothing is suppressed, not shown. */
+  estimated?: boolean;
+}) {
+  if (!estimated) {
+    return <span className="cal-badge" title="No estimate has been produced yet, so there is no calibration to report.">no estimate yet</span>;
+  }
   if (validity === "reduced") {
     return (
       <span className="cal-badge" title="Calibration is reduced because required inputs were imputed.">

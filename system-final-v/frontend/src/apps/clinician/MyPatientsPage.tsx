@@ -219,7 +219,7 @@ export function MyPatientsPage() {
               </form>
 
               <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} />
+                <CalibratedBadge calibrated={e.calibrated} validity={e.calibrationValidity} estimated={e.risks.mortality !== null} />
                 <div className="row" style={{ gap: 8 }}>
                   <Button size="sm" variant="ghost" onClick={() => void act(() => api.post(`/api/v1/encounters/${e.id}/escalate`, { to: "Attending on call", reason: "Escalated from the bedside patient list", urgency: "urgent" }), () => `Escalated ${e.patient.name} to the attending on call`).then(setToast)}>Escalate</Button>
                   <Button size="sm" onClick={() => nav(`/nurse/encounters/${e.id}/results`)}>Open</Button>

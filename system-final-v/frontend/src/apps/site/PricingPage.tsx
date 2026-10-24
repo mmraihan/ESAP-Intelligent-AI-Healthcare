@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { PLANS } from "@/mock/db";
 import { Badge, Banner, Button, Card, SegmentedControl, cx } from "@/components/ui/primitives";
 import { SiteLayout } from "./SiteLayout";
+import { PricingArt } from "./SiteArt";
 import { CheckIcon, LockIcon, ScaleIcon, ShieldIcon } from "@/components/ui/icons";
 
 const NEVER_GATED = [
@@ -54,7 +55,8 @@ export function PricingPage() {
 
   return (
     <SiteLayout>
-      <section className="hero" style={{ paddingBottom: 0 }}>
+      <section className="hero hero-split" style={{ paddingBottom: 0 }}>
+        <div className="hero-copy">
         <span className="hero-eyebrow">Pricing</span>
         <h1>Priced on beds and use, not on how many people you let log in.</h1>
         <p className="hero-lede">
@@ -70,6 +72,8 @@ export function PricingPage() {
             { value: "individual", label: "For individual clinicians" },
           ]}
         />
+        </div>
+        <PricingArt />
       </section>
 
       {shown.length === 0 && (

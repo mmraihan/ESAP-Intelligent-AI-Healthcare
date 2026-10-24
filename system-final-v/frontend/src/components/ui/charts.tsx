@@ -200,8 +200,24 @@ export function RiskGauge({
       <svg width={size} height={size * 0.82} viewBox={`0 0 ${size} ${size * 0.82}`} role="img"
         aria-label={`${label}: ${probability === null ? "not estimated" : pct(probability, 1)}, ${percentilePhrase(probability)}`}>
         <path d={arc(START, START + SWEEP)} fill="none" stroke="var(--seq-track)" strokeWidth={9} strokeLinecap="round" />
+        {/* Quarter ticks just outside the track: the dial reads as an instrument scale. */}
+        {[0, 0.25, 0.5, 0.75, 1].map((q) => {
+          const deg = ((START + SWEEP * q) * Math.PI) / 180;
+          const [ox, oy] = [cx + (r + 8) * Math.cos(deg), cy + (r + 8) * Math.sin(deg)];
+          const [ix, iy] = [cx + (r + 5.5) * Math.cos(deg), cy + (r + 5.5) * Math.sin(deg)];
+          return <line key={q} className="gauge-tick" x1={ix} y1={iy} x2={ox} y2={oy} />;
+        })}
         {probability !== null && p > 0 && (
-          <path d={arc(START, START + SWEEP * Math.max(0.012, p))} fill="none" stroke={color} strokeWidth={9} strokeLinecap="round" />
+          <>
+            <path
+              className="gauge-fill" pathLength={1}
+              d={arc(START, START + SWEEP * Math.max(0.012, p))} fill="none" stroke={color} strokeWidth={9} strokeLinecap="round"
+            />
+            {(() => {
+              const [ex, ey] = polar(START + SWEEP * Math.max(0.012, p));
+              return <circle className="gauge-cap" cx={ex} cy={ey} r={3.4} stroke={color} />;
+            })()}
+          </>
         )}
         {threshold !== undefined && (
           (() => {
@@ -236,17 +252,18 @@ export function RiskGauge({
 export function BarRows({
   rows, max, format = (v: number) => pct(v, 1), colorBy = "magnitude", dense,
 }: {
-  rows: { key: string; label: ReactNode; value: number; meta?: ReactNode; swatch?: string }[];
+  rows: { key: string; label: ReactNode; value: number; meta?: ReactNode; swatch?: string; icon?: ReactNode }[];
   max?: number; format?: (v: number) => string; colorBy?: "magnitude" | "swatch"; dense?: boolean;
 }) {
   const ceiling = max ?? Math.max(...rows.map((r) => r.value), 0.0001);
   return (
-    <ul className={`bar-rows${dense ? " is-dense" : ""}`}>
+    <ul className={`bar-rows${dense ? " is-dense" : ""}${rows.some((r) => r.icon) ? " has-icons" : ""}`}>
       {rows.map((r) => (
         <li key={r.key}>
+          {r.icon && <span className="bar-row-icon">{r.icon}</span>}
           <div className="bar-row-head">
             <span className="bar-row-label">
-              {r.swatch && <span className="chip-swatch" style={{ background: r.swatch }} />}
+              {r.swatch && !r.icon && <span className="chip-swatch" style={{ background: r.swatch }} />}
               {r.label}
             </span>
             <span className="bar-row-value tnum">{format(r.value)}</span>

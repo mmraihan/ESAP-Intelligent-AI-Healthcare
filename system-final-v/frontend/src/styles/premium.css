@@ -1,0 +1,521 @@
+/* =========================================================================
+   Product layer — loads last (main.tsx).
+
+   Layout fixes, the AI assistant, anatomical glyphs, the dial gauge, the
+   patient care journey and phone-width tables. Every colour is a token from
+   tokens.css, so both themes and "system" follow automatically. The --seq-*
+   risk ramp and --status-* hues are used as-is, never retuned.
+   Motion: transform/opacity only, under 300ms, off under reduced motion.
+   ========================================================================= */
+
+/* ---------- layout --------------------------------------------------------- */
+
+/* The patient screens wrap their content in .plain; without a flex column the
+   main gap never reached the cards and they sat edge to edge. */
+.plain {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+
+/* A grid named for N columns never goes past N: auto-fit alone put the four
+   patient cards three-up with one orphan. min(100%, …) keeps phones single. */
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(300px, calc((100% - 16px) / 2))), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(240px, calc((100% - 32px) / 3))), 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(190px, calc((100% - 48px) / 4))), 1fr)); }
+
+/* The page itself never scrolls sideways; wide content scrolls in its own
+   container. `clip` (not `hidden`) so sticky children keep working. This is
+   the backstop: rotated sticky matrix headers escaped their .scroll-x. */
+.main { overflow-x: clip; }
+
+/* Segmented filters with many options scroll inside themselves on a phone. */
+.segmented {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.segmented::-webkit-scrollbar { display: none; }
+.segmented .segment { flex: none; }
+
+/* A long badge (model version strings) in a card header wraps, not overflows. */
+.card-actions { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.card-actions .badge { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+
+@media (max-width: 640px) {
+  /* The encounter header's t0 chip and actions take the full width. */
+  .enc-side { align-items: stretch; width: 100%; min-width: 0; }
+  .enc-side .t0-chip { max-width: 100%; }
+  .enc-side .row { flex-wrap: wrap; }
+}
+
+/* Long forms keep their summary in view (intake: signal completeness). Only
+   where the viewport is tall enough to hold it; otherwise it scrolls. */
+@media (min-width: 1001px) and (min-height: 760px) {
+  .split-sticky > :last-child {
+    position: sticky;
+    top: 76px;
+  }
+}
+
+/* ---------- AI assistant: top-bar launcher --------------------------------- */
+.assist-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  background: color-mix(in srgb, var(--accent-weak) 70%, var(--surface-1));
+  color: var(--accent-ink);
+  font: 650 13px/1 var(--font-sans);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease,
+    transform var(--dur-press) var(--ease-out);
+}
+.assist-launch:hover {
+  background: var(--accent-weak);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+.assist-launch:active { transform: scale(0.97); }
+.assist-launch:focus-visible { outline: none; box-shadow: var(--focus); }
+.assist-launch.is-open {
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-ink);
+}
+@media (max-width: 1100px) {
+  .assist-launch { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  .assist-launch-label { display: none; }
+}
+
+/* ---------- AI assistant: dock --------------------------------------------- */
+.assist-dock {
+  position: fixed;
+  z-index: 61;
+  top: 70px;
+  bottom: 14px;
+  inset-inline-end: 14px;
+  width: min(408px, calc(100vw - 28px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+@media (max-width: 640px) {
+  .assist-dock {
+    top: 64px;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    inset-inline: 8px;
+    width: auto;
+  }
+}
+
+.assist-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 14px 13px 16px;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%),
+    var(--surface-1);
+}
+.assist-mark,
+.assist-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 10px;
+  background: var(--brand-glyph);
+  color: var(--brand-glyph-ink);
+  box-shadow: 0 6px 14px -8px var(--glow);
+}
+.assist-mark { width: 34px; height: 34px; }
+.assist-avatar { width: 24px; height: 24px; border-radius: 8px; margin-top: 2px; }
+.assist-head-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.assist-head-text strong { font-size: 14.5px; letter-spacing: -0.01em; }
+.assist-head-text span { font-size: 12px; color: var(--text-muted); }
+
+.assist-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface-0);
+}
+.assist-msg { display: flex; gap: 8px; align-items: flex-start; max-width: 100%; }
+.assist-msg.is-user { justify-content: flex-end; }
+.assist-bubble {
+  max-width: 86%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.assist-msg.is-assistant .assist-bubble {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-start-start-radius: 5px;
+}
+.assist-msg.is-user .assist-bubble {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-ink);
+  border-start-end-radius: 5px;
+}
+
+/* Three-dot "working" indicator. Frozen (not hidden) under reduced motion. */
+.assist-typing { display: inline-flex; gap: 4px; align-items: center; padding: 12px 14px; }
+.assist-typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: assist-dot 1.1s var(--ease-in-out) infinite;
+}
+.assist-typing i:nth-child(2) { animation-delay: 0.15s; }
+.assist-typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes assist-dot {
+  0%, 70%, 100% { opacity: 0.35; transform: translateY(0); }
+  35% { opacity: 1; transform: translateY(-3px); }
+}
+
+.assist-label {
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.assist-starters { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.assist-starter {
+  text-align: start;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+  font: 500 13px/1.45 var(--font-sans);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.assist-starter:hover {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent-weak) 60%, transparent);
+  color: var(--text-primary);
+}
+.assist-starter:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.assist-captured {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
+  max-height: 150px;
+  overflow-y: auto;
+}
+.assist-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.assist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 560;
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.assist-chip.is-confirm {
+  background: var(--status-warning-weak);
+  color: var(--status-warning);
+  border-color: color-mix(in srgb, var(--status-warning) 28%, transparent);
+}
+
+.assist-ready {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accent-weak) 45%, var(--surface-1));
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.assist-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 14px 8px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-1);
+}
+.assist-composer textarea {
+  flex: 1;
+  min-height: 42px;
+  max-height: 132px;
+  resize: none;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font: 14px/1.45 var(--font-sans);
+}
+.assist-composer textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.assist-send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-ink);
+  cursor: pointer;
+  transition: opacity var(--dur-fast) ease, transform var(--dur-press) var(--ease-out);
+}
+.assist-send:disabled { opacity: 0.4; cursor: default; }
+.assist-send:not(:disabled):active { transform: scale(0.95); }
+.assist-send:focus-visible { outline: none; box-shadow: var(--focus); }
+.assist-foot {
+  margin: 0;
+  padding: 0 14px 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  background: var(--surface-1);
+}
+
+/* Assessment run from the chat: the numbers it returned, as a compact card. */
+.assist-result {
+  align-self: stretch;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.assist-result-head {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+.assist-result-grid { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.assist-result-grid > div {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.assist-result-grid dt { font-size: 11px; color: var(--text-muted); }
+.assist-result-grid dd { margin: 2px 0 0; font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.assist-result-conds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.assist-result-conds li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.assist-result-conds li > svg { color: var(--accent); }
+.assist-result-conds .mono { font-size: 10.5px; }
+.assist-result-conds li > .tnum { font-weight: 650; color: var(--text-primary); }
+.assist-result-foot { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+
+/* ---------- anatomical glyphs (CCSR body systems) -------------------------- */
+.body-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 10px;
+  color: var(--fam, var(--accent));
+  background: color-mix(in srgb, var(--fam, var(--accent)) 13%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--fam, var(--accent)) 24%, transparent);
+}
+.bar-rows.has-icons > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+.bar-rows.has-icons > li > .bar-row-icon { grid-row: 1 / span 3; padding-top: 1px; }
+.bar-rows.has-icons > li > :not(.bar-row-icon) { grid-column: 2; }
+
+/* ---------- dial gauge ----------------------------------------------------- */
+.gauge-tick { stroke: var(--border-strong); stroke-width: 1.4; stroke-linecap: round; }
+.gauge-cap { fill: var(--surface-1); stroke-width: 2.4; animation: gauge-cap-in 700ms var(--ease-out) both; }
+@keyframes gauge-cap-in { 0%, 60% { opacity: 0; } }
+.gauge-fill {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: gauge-draw 700ms var(--ease-out) both;
+}
+@keyframes gauge-draw { from { stroke-dashoffset: 1; } }
+/* Captions wrap to different heights; the Why buttons share one baseline. */
+.risk-slot > .gauge-why { margin-top: auto; }
+.gauge-why {
+  min-height: 34px;
+  border-radius: 999px;
+  padding-inline: 12px;
+  font-size: 12.5px;
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent-weak) 50%, var(--surface-1));
+}
+.gauge-why:hover { background: var(--accent-weak); }
+
+/* ---------- patient care journey ------------------------------------------- */
+.journey {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  counter-reset: none;
+}
+.journey-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+/* The connector runs from this dot to the next one. */
+.journey-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 19px;
+  inset-inline-start: calc(50% + 26px);
+  inset-inline-end: calc(-50% + 21px);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.journey-step.is-done:not(:last-child)::after { background: var(--accent); }
+.journey-dot {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-muted);
+}
+.journey-step.is-done .journey-dot {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
+}
+.journey-step.is-current .journey-dot {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.journey-text { display: flex; flex-direction: column; gap: 2px; max-width: 18ch; }
+.journey-text strong { font-size: 14.5px; line-height: 1.35; }
+.journey-text span { font-size: 13px; color: var(--text-muted); }
+.journey-step.is-current .journey-text span { color: var(--accent-ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .journey { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .journey-step { flex-direction: row; text-align: start; gap: 14px; padding-bottom: 18px; }
+  .journey-step:last-child { padding-bottom: 0; }
+  .journey-step:not(:last-child)::after {
+    top: 44px;
+    bottom: 2px;
+    inset-inline-start: 19px;
+    inset-inline-end: auto;
+    width: 2px;
+    height: auto;
+  }
+  .journey-text { max-width: none; }
+}
+
+/* ---------- phone tables: each row becomes a labelled card ---------------- */
+@media (max-width: 640px) {
+  .scroll-x:has(> .data-table.is-stackable) { overflow: visible; }
+  .data-table.is-stackable,
+  .data-table.is-stackable tbody {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+  .data-table.is-stackable thead { display: none; }
+  .data-table.is-stackable tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-1);
+  }
+  .data-table.is-stackable tbody tr:nth-child(even):not(.is-selected) { background: var(--surface-1); }
+  .data-table.is-stackable tbody tr:last-child { margin-bottom: 0; }
+  .data-table.is-stackable td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    text-align: start !important;
+  }
+  .data-table.is-stackable td[data-label]::before {
+    content: attr(data-label);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  /* The first column is the row's identity: full width, no label. */
+  .data-table.is-stackable td:first-child { grid-column: 1 / -1; }
+  .data-table.is-stackable td:first-child::before { display: none; }
+  .data-table.is-stackable tbody tr.is-clickable:hover td:first-child { box-shadow: none; }
+  .data-table.is-stackable td > * { max-width: 100%; }
+}
+
+/* ---------- reduced motion ------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .gauge-fill,
+  .gauge-cap { animation: none; }
+  .assist-typing i { animation: none; opacity: 0.7; }
+  .assist-launch:active,
+  .assist-send:not(:disabled):active { transform: none; }
+}

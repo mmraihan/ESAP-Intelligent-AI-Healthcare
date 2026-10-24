@@ -107,24 +107,49 @@
   color: var(--text-muted);
 }
 .au-title {
-  margin-top: 1.25rem;
-  /* Sized to the copy column (a container), so "Five questions answered"
-     always fits its one line beside the mock: the clause is ~11.8em wide. */
-  font-size: clamp(1.45rem, 4.6cqi, 2.05rem);
-  font-weight: 700;
-  line-height: 1.18;
-  letter-spacing: -0.025em;
+  margin-top: 1.4rem;
+  /* Sized to the copy column (a container), as in the reference: three
+     lines beside the mock, the last one the gradient word. */
+  font-size: clamp(2.15rem, 8.4cqi, 3.6rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
 }
-/* Each clause is its own block so it can rise on its own beat; the plain
-   clause never breaks on a wide screen, the gradient clause wraps balanced. */
+/* Each clause is its own block so it can rise on its own beat. */
 .au-title-line {
   display: block;
   text-wrap: balance;
 }
-@media (min-width: 1181px) {
-  .au-title-line:first-child {
-    white-space: nowrap;
-  }
+.au-title .au-grad {
+  display: inline-block;
+  padding-block-end: 0.06em;
+}
+.au-hero-badge {
+  font-size: 0.8rem;
+}
+/* Three CTAs on one row beside the mock, as in the reference. */
+.au-hero .au-cta-row {
+  gap: 0.6rem;
+}
+.au-hero .au-cta-row .pub-btn {
+  padding-inline: 0.95rem;
+}
+/* A live dot in the pill: a steady core with a ring that breathes outward. */
+.au-badge-pulse {
+  position: relative;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.au-badge-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  opacity: 0;
 }
 /* The second half of a headline: teal→green in light, cyan→blue→violet in dark. */
 .au-grad,
@@ -193,6 +218,40 @@
 }
 .au-btn-quiet {
   background: transparent;
+}
+/* Magnetic CTA: --mg-x / --mg-y are written by <Magnetic>; the transition is
+   the spring back when the pointer leaves. */
+.au-magnet {
+  display: inline-flex;
+  translate: var(--mg-x, 0) var(--mg-y, 0);
+  transition: translate 0.45s var(--ease-out);
+}
+
+/* Reading progress: a hairline under the header that fills as the page
+   scrolls. Scroll-driven, so it costs no script; hidden where unsupported. */
+.au-progress {
+  display: none;
+}
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .au-progress {
+      display: block;
+      position: fixed;
+      inset-inline: 0;
+      top: 0;
+      z-index: 60;
+      height: 3px;
+      background: var(--pub-grad-text);
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      animation: au-fill linear both;
+      animation-timeline: scroll(root);
+      pointer-events: none;
+    }
+    [dir="rtl"] .au-progress {
+      transform-origin: 100% 50%;
+    }
+  }
 }
 
 /* ---------- glows (no stars) ---------------------------------------------- */
@@ -300,7 +359,7 @@
 }
 .au-hero-inner {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   align-items: center;
   gap: clamp(2rem, 4vw, 3.5rem);
   max-width: 84rem;
@@ -310,30 +369,6 @@
   min-width: 0;
   container-type: inline-size;
 }
-/* The hero's centrepiece: the full-width heart monitor above the headline. */
-.au-hero-monitor {
-  margin-block-end: 0.25rem;
-}
-/* Narrow columns: a slightly smaller heart so the strip keeps readable beats. */
-@container (max-width: 26rem) {
-  .au-hero-monitor .hm-pulse {
-    width: 68px;
-    height: 68px;
-  }
-  .au-hero-monitor .hm-pulse-core {
-    width: 58px;
-    height: 58px;
-    border-radius: 18px;
-  }
-  .au-hero-monitor .hm-pulse-ring {
-    inset: 5px;
-    border-radius: 20px;
-  }
-  .au-hero-monitor .hm-ecg {
-    height: 72px;
-  }
-}
-
 /* Product dashboard mock. Decorative (aria-hidden), all values illustrative. */
 .au-visual {
   display: grid;
@@ -598,6 +633,29 @@
   border-radius: 50%;
   color: var(--on-accent);
   background: var(--accent);
+}
+/* The mock answers the pointer like the real product would: tiles lift, the
+   sidebar and the reasoning chips highlight. Decorative, so hover-only. */
+@media (hover: hover) and (pointer: fine) {
+  .au-tile,
+  .au-why-chips span,
+  .au-win-item,
+  .au-why-link {
+    transition: translate 0.25s var(--ease-out), border-color 0.2s ease, background-color 0.2s ease,
+      color 0.2s ease, box-shadow 0.25s var(--ease-out);
+  }
+  .au-tile:hover {
+    translate: 0 -3px;
+    border-color: color-mix(in srgb, var(--g) 45%, var(--border));
+    box-shadow: 0 10px 22px -14px color-mix(in srgb, var(--g) 60%, transparent);
+  }
+  .au-win-item:not(.is-on):hover,
+  .au-why-chips span:hover,
+  .au-why-link:hover {
+    color: var(--accent-ink);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    background: var(--accent-weak);
+  }
 }
 
 /* ---------- sections ------------------------------------------------------ */
@@ -1363,11 +1421,44 @@
 }
 .au-faq-q svg {
   flex: none;
+  box-sizing: content-box;
+  padding: 0.35rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
   color: var(--text-muted);
-  transition: transform 240ms var(--ease-out);
+  transition: transform 240ms var(--ease-out), color 200ms ease, background-color 200ms ease,
+    border-color 200ms ease;
+}
+.au-faq-q {
+  transition: color 200ms ease;
 }
 .au-faq-item[data-open] .au-faq-q svg {
   transform: rotate(180deg);
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: transparent;
+}
+/* Press feedback on the page's own buttons, matching .pub-btn. */
+.au-faq-q:active svg,
+.au-step:active {
+  scale: 0.97;
+}
+.au-faq-q svg,
+.au-step {
+  transition-property: transform, color, background-color, border-color, box-shadow, scale;
+  transition-duration: 240ms, 200ms, 200ms, 200ms, 240ms, var(--dur-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  .au-faq-q:hover {
+    color: var(--accent-ink);
+  }
+  .au-faq-q:hover svg {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    color: var(--accent-ink);
+  }
+  .au-faq-item[data-open] .au-faq-q:hover svg {
+    color: var(--on-accent);
+  }
 }
 .au-faq-a {
   display: grid;
@@ -1463,8 +1554,13 @@
   .au-dots span:nth-child(n + 37) {
     display: none;
   }
-  .au-cta-row .pub-btn {
+  .au-cta-row .pub-btn,
+  .au-magnet {
     flex: 1 1 100%;
+  }
+  /* Phone: the headline flows as one sentence instead of forced lines. */
+  .au-title-line {
+    display: inline;
   }
 }
 
@@ -1618,6 +1714,11 @@
     animation: au-float-sm 6s ease-in-out -1.8s infinite;
   }
 
+  /* The pill's live dot: a ring breathes out every 2.4s. */
+  .au-badge-pulse::after {
+    animation: au-ping 2.4s var(--ease-out) infinite;
+  }
+
   /* Headline: a soft highlight crosses the gradient clause once every 8s
      (1.4s of travel, then rest). It moves background-position, the one
      non-transform property here: a highlight clipped to the glyphs has no
@@ -1747,6 +1848,17 @@
   18%,
   100% {
     background-position: 0% 0, 0 0;
+  }
+}
+@keyframes au-ping {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
   }
 }
 @keyframes au-breathe {

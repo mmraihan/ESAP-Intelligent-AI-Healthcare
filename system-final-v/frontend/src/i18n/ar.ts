@@ -986,4 +986,27 @@ export const AR: Record<string, string> = {
   "Too short": "قصيرة جدًا",
   "Good": "جيدة",
   "Strong": "قوية",
+
+  // Intake assistant (redesigned dock)
+  "I couldn't reach the assistant just now.": "تعذّر الوصول إلى المساعد الآن.",
+  "Turns what you type into intake fields": "يحوّل ما تكتبه إلى حقول الإدخال",
+  "Language-model assisted extraction": "استخراج بمساعدة نموذج لغوي",
+  "Rule-based extraction": "استخراج قائم على القواعد",
+  "Working…": "جارٍ العمل…",
+  "Try writing something like": "جرّب كتابة شيء مثل",
+  "Needs your confirmation": "يحتاج إلى تأكيدك",
+  "Enough is captured to run the five models.": "تم جمع ما يكفي لتشغيل النماذج الخمسة.",
+  "I'm 54 and I've had chest pain since yesterday": "عمري 54 عامًا وأشعر بألم في الصدر منذ الأمس",
+  "I take metformin and lisinopril every day": "أتناول الميتفورمين والليسينوبريل كل يوم",
+  "I've been short of breath for three days": "أعاني من ضيق في التنفس منذ ثلاثة أيام",
+
+  // Care journey (patient home)
+  "Your care journey": "رحلة رعايتك",
+  "Where your care is up to — each step is done by a person, not the computer tool.": "أين وصلت رعايتك — كل خطوة يقوم بها شخص، وليس الأداة الحاسوبية.",
+  "Admitted": "تم الدخول",
+  "Details recorded": "تم تسجيل التفاصيل",
+  "Reviewed by your doctor": "راجعها طبيبك",
+  "Shared with you": "تمت مشاركتها معك",
+  "In progress": "قيد التنفيذ",
+  "Not yet": "ليس بعد",
 };

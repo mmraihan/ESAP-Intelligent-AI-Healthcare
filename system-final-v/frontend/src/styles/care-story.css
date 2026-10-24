@@ -1,0 +1,677 @@
+/* =========================================================================
+   "One admission" — the product-page story (apps/site/CareStory.tsx).
+
+   Scoped under .cs. The root carries data-scene="0…4"; every actor and overlay
+   reads its mark from that one attribute, so a scene change is one attribute
+   write and the people walk there on a transform transition.
+
+   Colours: theme tokens for the room, UI and ink; a fixed set of skin and hair
+   tones for the people (these do not change with the theme). Dark values follow
+   the house pattern: OS media query (guarded) and [data-theme="dark"].
+   Motion: transform / opacity (and one stroke draw). Under reduced motion every
+   actor sits on its mark, nothing loops, and nothing auto-advances.
+   ========================================================================= */
+
+.cs {
+  --cs-skin-a: #b97a56;
+  --cs-skin-b: #7a4a2e;
+  --cs-skin-c: #f1c9a5;
+  --cs-hair-a: #2b211a;
+  --cs-hair-b: #1d1a24;
+  --cs-hair-c: #4a2e1c;
+  --cs-ink: #1b2430;
+  --cs-coat: #ffffff;
+  --cs-coat-line: #c9d6df;
+  --cs-pants: #3b4a66;
+  --cs-pants-dark: #253047;
+  --cs-shoe: #1f2733;
+  --cs-wall: color-mix(in srgb, var(--pub-g1-weak, var(--accent-weak)) 85%, var(--surface-2));
+  --cs-floor: color-mix(in srgb, var(--surface-2) 80%, var(--border));
+  --cs-wall-edge: color-mix(in srgb, var(--cs-wall) 55%, var(--border-strong));
+  --cs-floor-edge: color-mix(in srgb, var(--cs-floor) 45%, var(--border-strong));
+  --cs-dur: 1.6s;
+  --cs-ease: cubic-bezier(0.45, 0, 0.2, 1);
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cs {
+    --cs-coat: #dfe7f3;
+    --cs-coat-line: #9fb0c8;
+    --cs-wall: color-mix(in srgb, var(--surface-2) 70%, var(--surface-1));
+    --cs-floor: color-mix(in srgb, var(--surface-sunken) 70%, var(--border));
+    --cs-ink: #0b1222;
+  }
+}
+:root[data-theme="dark"] .cs {
+  --cs-coat: #dfe7f3;
+  --cs-coat-line: #9fb0c8;
+  --cs-wall: color-mix(in srgb, var(--surface-2) 70%, var(--surface-1));
+  --cs-floor: color-mix(in srgb, var(--surface-sunken) 70%, var(--border));
+  --cs-ink: #0b1222;
+}
+
+/* ---------- scene tabs ----------------------------------------------------- */
+.cs-tabs {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.cs-tab {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font: 600 14px/1.2 var(--font-sans);
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.cs-tab:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.cs-tab:focus-visible { outline: none; box-shadow: var(--focus); }
+.cs-tab[aria-selected="true"] {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent-weak) 55%, var(--surface-1));
+}
+.cs-tab-n {
+  font: 700 11px var(--font-mono);
+  color: var(--accent-ink);
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--accent-weak);
+}
+/* The progress bar is the timer: when it finishes, the next scene starts. */
+.cs-tab-bar {
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--pub-grad-text, var(--accent));
+  transform: scaleX(0);
+  transform-origin: left center;
+  display: none;
+}
+[dir="rtl"] .cs-tab-bar { transform-origin: right center; }
+@media (prefers-reduced-motion: no-preference) {
+  .cs-tab-bar {
+    display: block;
+    animation: cs-fill 7s linear forwards;
+    animation-play-state: paused;
+  }
+  .cs-tab-bar[data-run] { animation-play-state: running; }
+}
+@keyframes cs-fill { to { transform: scaleX(1); } }
+
+/* ---------- body: caption + stage ------------------------------------------ */
+.cs-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+  gap: 22px;
+  align-items: stretch;
+}
+.cs-caption {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+.cs-caption-in { display: flex; flex-direction: column; gap: 12px; }
+.cs-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 12px var(--font-mono);
+  color: var(--accent-ink);
+  background: var(--accent-weak);
+}
+.cs-caption h3 { margin: 0; font-size: clamp(1.4rem, 2.2vw, 1.8rem); letter-spacing: -0.025em; }
+.cs-caption p { margin: 0; font-size: 15.5px; line-height: 1.65; color: var(--text-secondary); }
+.cs-caption .cs-rule {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-strong);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cs-rule svg { flex: none; margin-top: 3px; color: var(--accent); }
+
+.cs-controls { display: flex; align-items: center; gap: 8px; }
+.cs-ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: 600 13px var(--font-sans);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease, transform var(--dur-press) var(--ease-out);
+}
+.cs-ctl:hover { background: var(--surface-2); }
+.cs-ctl:active { transform: scale(0.96); }
+.cs-ctl:focus-visible { outline: none; box-shadow: var(--focus); }
+.cs-count { margin-inline-start: auto; font: 600 12px var(--font-mono); color: var(--text-muted); }
+
+/* ---------- stage: a 3D diorama -------------------------------------------- */
+/* The stage is the camera's viewport. Inside it, .cs-cam / .cs-lean / .cs-sway
+   each add one rotation (scene, pointer, ambient) and pass 3D through, and
+   the room's layers sit at depths in stage-width units (cqw), so the whole
+   diorama scales with the column. */
+.cs-stage {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: 640 / 400;
+  perspective: 160cqw;
+  perspective-origin: 50% 30%;
+}
+.cs-cam,
+.cs-lean,
+.cs-sway {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+/* Scene cameras. Positive rotateY brings the left of the room (the door)
+   toward the viewer; negative brings the right (where the staff stand). */
+.cs-cam {
+  --cam: translateY(-3cqw) rotateX(-24deg) rotateY(18deg) scale(0.76);
+  transform: var(--cam);
+  transition: transform 1.5s var(--cs-ease);
+}
+.cs[data-scene="1"] .cs-cam { --cam: translateY(-3cqw) rotateX(-20deg) rotateY(-16deg) translateX(-3cqw) scale(0.80); }
+.cs[data-scene="2"] .cs-cam { --cam: translateY(-3cqw) rotateX(-16deg) rotateY(-5deg) translateX(1cqw) scale(0.80); }
+.cs[data-scene="3"] .cs-cam { --cam: translateY(-3cqw) rotateX(-20deg) rotateY(-17deg) translateX(-3cqw) scale(0.8); }
+.cs[data-scene="4"] .cs-cam { --cam: translateY(-3cqw) rotateX(-20deg) rotateY(14deg) translateX(2cqw) scale(0.82); }
+.cs-lean {
+  transform: rotateY(calc(var(--lx, 0) * 5deg)) rotateX(calc(var(--ly, 0) * -3deg));
+}
+
+/* The box: back wall layer, a floor plane reaching toward the viewer, and the
+   actor / overlay layers in front of the wall. */
+.cs-layer { position: absolute; inset: 0; }
+.cs-svg { width: 100%; height: 100%; display: block; overflow: hidden; }
+.cs-l-back {
+  transform: translateZ(-9cqw);
+}
+.cs-l-mid { transform: translateZ(0); }
+.cs-l-front { transform: translateZ(5cqw); }
+.cs-l-ui { transform: translateZ(13cqw); }
+/* The floor: laid flat (rotateX 90deg about its top edge) from the foot of
+   the back wall forward, with tile lines that fade out toward the viewer. */
+.cs-plane-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 85%;
+  height: 26cqw;
+  transform-origin: 50% 0;
+  transform: translateZ(-9cqw) rotateX(90deg);
+  border-radius: 0 0 1.2cqw 1.2cqw;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(6.25cqw - 1px), color-mix(in srgb, var(--border-strong) 55%, transparent) calc(6.25cqw - 1px) 6.25cqw),
+    repeating-linear-gradient(0deg, transparent 0 calc(6.25cqw - 1px), color-mix(in srgb, var(--border-strong) 40%, transparent) calc(6.25cqw - 1px) 6.25cqw),
+    var(--cs-floor);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+/* Thickness, so the room reads as a solid model: the wall's top and side
+   edges run back from its face, and the floor slab has a front edge. */
+.cs-edge {
+  position: absolute;
+  background: var(--cs-wall-edge);
+}
+.cs-edge-top {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2.4cqw;
+  transform-origin: 50% 0;
+  transform: translateZ(-9cqw) rotateX(-90deg);
+}
+.cs-edge-left,
+.cs-edge-right {
+  top: 0;
+  height: 85%;
+  width: 2.4cqw;
+}
+.cs-edge-left {
+  left: 0;
+  transform-origin: 0 50%;
+  transform: translateZ(-9cqw) rotateY(90deg);
+}
+.cs-edge-right {
+  right: 0;
+  transform-origin: 100% 50%;
+  transform: translateZ(-9cqw) rotateY(-90deg);
+}
+.cs-edge-front {
+  left: 0;
+  right: 0;
+  top: 85%;
+  height: 2.4cqw;
+  border-radius: 0 0 1.2cqw 1.2cqw;
+  background: var(--cs-floor-edge);
+  transform: translateZ(17cqw);
+}
+/* A soft contact shadow on the page under the whole diorama. */
+.cs-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 96%;
+  height: 10%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(11, 30, 43, 0.22), transparent);
+  filter: blur(6px);
+  transform: translateZ(-20cqw);
+}
+/* The SVG's own floor strip is replaced by the 3D plane. */
+.cs-l-back .cs-floor,
+.cs-l-back .cs-skirting { display: none; }
+
+.cs-wall { fill: var(--cs-wall); }
+.cs-l-back .cs-wall { stroke: var(--cs-wall-edge); stroke-width: 1.5; }
+.cs-floor { fill: var(--cs-floor); }
+.cs-skirting { stroke: var(--border-strong); stroke-width: 2; }
+.cs-window { fill: color-mix(in srgb, var(--pub-g2-weak, var(--accent-weak)) 80%, var(--surface-1)); stroke: var(--border-strong); stroke-width: 2; }
+.cs-window-bar { stroke: var(--border-strong); stroke-width: 2; fill: none; }
+.cs-monitor { fill: var(--cs-ink); stroke: var(--border-strong); stroke-width: 2; }
+.cs-monitor-arm { fill: var(--border-strong); }
+.cs-trace {
+  fill: none;
+  stroke: #3ee6b5;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0.35 0.65;
+}
+.cs-pole { stroke: var(--border-strong); stroke-width: 3; stroke-linecap: round; fill: none; }
+.cs-iv { fill: color-mix(in srgb, var(--pub-g2, var(--accent)) 18%, var(--surface-1)); stroke: var(--border-strong); stroke-width: 1.5; }
+.cs-iv-line { fill: none; stroke: color-mix(in srgb, var(--pub-g2, var(--accent)) 40%, var(--border)); stroke-width: 1.6; }
+.cs-bed-frame { fill: var(--border-strong); }
+.cs-bed-back { fill: var(--surface-1); stroke: var(--border-strong); stroke-width: 1.5; }
+.cs-mattress { fill: var(--surface-1); stroke: var(--border-strong); stroke-width: 1.5; }
+.cs-bed-leg { stroke: var(--border-strong); stroke-width: 4; stroke-linecap: round; }
+.cs-wheel { fill: var(--text-muted); }
+.cs-blanket { fill: color-mix(in srgb, var(--accent) 22%, var(--surface-1)); stroke: color-mix(in srgb, var(--accent) 40%, transparent); stroke-width: 1.5; }
+
+/* people */
+.cs-skin-a { fill: var(--cs-skin-a); }
+.cs-skin-b { fill: var(--cs-skin-b); }
+.cs-skin-c { fill: var(--cs-skin-c); }
+.cs-hair-a { fill: var(--cs-hair-a); }
+.cs-hair-b { fill: var(--cs-hair-b); }
+.cs-hair-c { fill: var(--cs-hair-c); }
+.cs-eye { fill: #1b1b22; }
+.cs-mouth { fill: none; stroke: #1b1b22; stroke-width: 1.4; stroke-linecap: round; opacity: 0.7; }
+.cs-pants { fill: var(--cs-pants); }
+.cs-pants-dark { fill: var(--cs-pants-dark); }
+.cs-shoe { fill: var(--cs-shoe); }
+.cs-gown { fill: color-mix(in srgb, var(--pub-g2, #2563eb) 30%, #eef4ff); }
+.cs-gown-tie { fill: none; stroke: color-mix(in srgb, var(--pub-g2, #2563eb) 55%, #ffffff); stroke-width: 1.5; }
+.cs-scrub { fill: var(--pub-g1, var(--accent)); }
+.cs-scrub-dark { fill: color-mix(in srgb, var(--pub-g1, var(--accent)) 70%, #0b1e2b); }
+.cs-vneck { fill: none; stroke: color-mix(in srgb, #ffffff 55%, transparent); stroke-width: 1.5; }
+.cs-coat { fill: var(--cs-coat); stroke: var(--cs-coat-line); stroke-width: 1.5; }
+.cs-coat-seam { fill: none; stroke: var(--cs-coat-line); stroke-width: 1.4; }
+.cs-stetho { fill: none; stroke: #33415c; stroke-width: 2; stroke-linecap: round; }
+.cs-stetho-bell { fill: #9aa7bd; stroke: #33415c; stroke-width: 1.2; }
+.cs-arm { fill: none; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.cs-arm-gown { stroke: color-mix(in srgb, var(--pub-g2, #2563eb) 30%, #eef4ff); }
+.cs-arm-scrub { stroke: var(--pub-g1, var(--accent)); }
+.cs-arm-coat { stroke: var(--cs-coat); }
+.cs-tablet-body { fill: #2a3346; }
+.cs-tablet-screen { fill: color-mix(in srgb, var(--accent) 55%, #dff7f3); }
+.cs-handset { fill: #2a3346; }
+.cs-breath { fill: none; stroke: var(--text-muted); stroke-width: 1.6; stroke-linecap: round; opacity: 0; }
+
+/* ---------- choreography: where everyone stands, per scene ----------------- */
+.cs-actor {
+  transition: transform var(--cs-dur) var(--cs-ease), opacity 500ms ease;
+}
+.cs-patient-walk { transform: translate(168px, 340px); }
+.cs-patient-bed { opacity: 0; }
+.cs-nurse { transform: translate(720px, 340px); }
+.cs-doctor { transform: translate(770px, 340px); }
+
+.cs:not([data-scene="0"]) .cs-patient-walk { opacity: 0; }
+.cs:not([data-scene="0"]) .cs-patient-bed { opacity: 1; transition-delay: 150ms; }
+.cs[data-scene="1"] .cs-nurse,
+.cs[data-scene="2"] .cs-nurse { transform: translate(530px, 340px); }
+.cs[data-scene="3"] .cs-nurse,
+.cs[data-scene="4"] .cs-nurse { transform: translate(600px, 340px); }
+.cs[data-scene="3"] .cs-doctor { transform: translate(508px, 340px); }
+.cs[data-scene="4"] .cs-doctor { transform: translate(498px, 340px); }
+
+/* arm and prop swaps */
+.cs-talk, .cs-phone-arm { opacity: 0; transition: opacity 400ms ease; }
+.cs-think, .cs-arm-rest { transition: opacity 400ms ease; }
+.cs[data-scene="4"] .cs-talk { opacity: 1; }
+.cs[data-scene="4"] .cs-think { opacity: 0; }
+.cs[data-scene="4"] .cs-phone-arm { opacity: 1; }
+.cs[data-scene="4"] .cs-arm-rest { opacity: 0; }
+
+/* parts that move about their own joints */
+.cs-leg, .cs-head, .cs-tap, .cs-breathe { transform-box: fill-box; }
+.cs-leg { transform-origin: 50% 0; }
+.cs-head { transform-origin: 50% 100%; }
+.cs-tap { transform-origin: 90% 10%; }
+.cs-breathe { transform-origin: 50% 100%; }
+
+/* ---------- overlays (HTML on the stage, sized in stage-width units) ------- */
+.cs-l-ui > * {
+  position: absolute;
+  font-family: var(--font-sans);
+  font-size: max(8.5px, 1.85cqw);
+  line-height: 1.3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 450ms ease, transform 450ms var(--ease-out);
+}
+.cs-t0 {
+  left: 2.5%;
+  bottom: 17%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.45em 0.8em;
+  border-radius: 999px;
+  background: var(--surface-1);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  color: var(--accent-ink);
+  font-weight: 700;
+  box-shadow: var(--shadow-1);
+}
+.cs .cs-t0 { opacity: 1; }
+
+.cs-chips {
+  right: 3%;
+  top: 5%;
+  width: 40%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45em;
+}
+.cs-chip {
+  padding: 0.35em 0.7em;
+  border-radius: 0.6em;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-1);
+  color: var(--text-primary);
+  font-weight: 650;
+}
+.cs[data-scene="1"] .cs-chips { opacity: 1; }
+
+.cs-card {
+  left: 2.5%;
+  top: 3.5%;
+  width: 46%;
+  padding: 0.9em 1em;
+  border-radius: 1em;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  transform: translateY(0.8em);
+}
+.cs[data-scene="2"] .cs-card,
+.cs[data-scene="3"] .cs-card { opacity: 1; transform: none; }
+.cs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5em; }
+.cs-card-head strong { font-size: 1.05em; }
+.cs-illus {
+  font-size: 0.78em;
+  font-weight: 700;
+  padding: 0.2em 0.55em;
+  border-radius: 999px;
+  color: var(--accent-ink);
+  background: var(--accent-weak);
+}
+.cs-meter {
+  display: grid;
+  grid-template-columns: 9.6em minmax(0, 1fr) 2.6em;
+  align-items: center;
+  gap: 0.6em;
+  color: var(--text-secondary);
+  font-size: 0.92em;
+}
+.cs-meter strong { text-align: end; color: var(--text-primary); }
+.cs-meter-track { height: 0.45em; border-radius: 999px; background: var(--seq-track); overflow: hidden; }
+.cs-meter-fill { display: block; height: 100%; border-radius: inherit; background: var(--seq-500); transform-origin: left center; }
+.cs-why {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  padding-top: 0.5em;
+  border-top: 1px dashed var(--border-strong);
+  font-size: 0.85em;
+}
+.cs-why span {
+  padding: 0.2em 0.5em;
+  border-radius: 0.45em;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+.cs-why .cs-why-k { background: transparent; color: var(--text-muted); font-weight: 700; padding-inline: 0; }
+.cs-stamp {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.3em 0.65em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--on-accent);
+  background: var(--accent-fill);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 350ms ease, transform 450ms var(--ease-out);
+}
+.cs:not([data-scene="3"]) .cs-stamp { display: none; }
+.cs[data-scene="3"] .cs-stamp { opacity: 1; transform: none; }
+/* During review the driver chips get a highlight, as if being read. */
+.cs[data-scene="3"] .cs-why span:not(.cs-why-k) {
+  background: color-mix(in srgb, var(--accent-weak) 85%, var(--surface-1));
+  color: var(--accent-ink);
+  transition: background-color 400ms ease 900ms, color 400ms ease 900ms;
+}
+
+.cs-phone {
+  left: 3%;
+  top: 6%;
+  width: 27%;
+  padding: 1.1em 0.9em 0.9em;
+  border-radius: 1.3em;
+  border: 0.35em solid #2a3346;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  transform: translateY(1em);
+}
+.cs[data-scene="4"] .cs-phone { opacity: 1; transform: none; transition-delay: 600ms; }
+.cs-phone-notch { width: 30%; height: 0.35em; border-radius: 999px; background: #2a3346; align-self: center; margin-top: -0.6em; }
+.cs-phone strong { font-size: 0.95em; }
+.cs-phone-line { height: 0.45em; border-radius: 999px; background: var(--surface-sunken); }
+.cs-phone-line.is-short { width: 60%; }
+.cs-phone-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+
+.cs-bubble {
+  right: 17%;
+  top: 22%;
+  max-width: 30%;
+  padding: 0.7em 0.9em;
+  border-radius: 1em 1em 0.25em 1em;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  color: var(--text-primary);
+  font-weight: 600;
+  transform: translateY(0.6em) scale(0.96);
+  transform-origin: bottom right;
+}
+.cs-bubble::after {
+  content: "";
+  position: absolute;
+  right: 0.6em;
+  bottom: -0.55em;
+  width: 1em;
+  height: 1em;
+  background: inherit;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transform: rotate(45deg) skew(8deg, 8deg);
+  border-bottom-right-radius: 0.2em;
+}
+.cs[data-scene="4"] .cs-bubble { opacity: 1; transform: none; transition-delay: 1.5s; }
+
+.cs-note {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ---------- motion (only when it is welcome) ------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .cs-caption-in { animation: cs-caption-in 500ms var(--ease-out) both; }
+
+  /* ambient: the diorama sways slowly, as if on a turntable */
+  .cs-sway { animation: cs-sway 9s ease-in-out infinite alternate; }
+
+  /* ambient: breathing, the monitor trace */
+  .cs-breathe { animation: cs-breathe 3.8s ease-in-out infinite; }
+  .cs-trace { animation: cs-trace 2.2s linear infinite; }
+
+  /* 0 · arrival: the patient walks in, short of breath */
+  .cs[data-scene="0"] .cs-patient-walk { animation: cs-walk-in 2.4s var(--cs-ease) both; }
+  .cs[data-scene="0"] .cs-walk-patient { animation: cs-step 0.6s ease-in-out 4; }
+  .cs[data-scene="0"] .cs-walk-patient.cs-leg-b { animation-name: cs-step-b; }
+  .cs[data-scene="0"] .cs-breath { animation: cs-breath 1.6s ease-in-out 2.4s infinite; }
+  .cs[data-scene="0"] .cs-t0 { animation: cs-pop 500ms var(--ease-out) 1.9s both; }
+
+  /* 1 · intake: the nurse walks over and taps; the readings fly to the tablet */
+  .cs[data-scene="1"] .cs-walk-nurse { animation: cs-step 0.55s ease-in-out 3; }
+  .cs[data-scene="1"] .cs-walk-nurse.cs-leg-b { animation-name: cs-step-b; }
+  .cs[data-scene="1"] .cs-tap { animation: cs-tap 0.5s ease-in-out 1.7s 8 alternate; }
+  .cs[data-scene="1"] .cs-chip {
+    animation: cs-fly 1.1s var(--ease-out) both;
+    animation-delay: calc(1.7s + var(--i) * 0.45s);
+  }
+
+  /* 2 · estimate: the meters fill in, one after another */
+  .cs[data-scene="2"] .cs-meter-fill {
+    animation: cs-grow 1s var(--ease-out) both;
+    animation-delay: calc(0.5s + var(--i) * 0.18s);
+  }
+
+  /* 3 · review: nurse steps back, the attending arrives, reads, nods */
+  .cs[data-scene="3"] .cs-walk-nurse,
+  .cs[data-scene="3"] .cs-walk-doctor { animation: cs-step 0.55s ease-in-out 3; }
+  .cs[data-scene="3"] .cs-walk-nurse.cs-leg-b,
+  .cs[data-scene="3"] .cs-walk-doctor.cs-leg-b { animation-name: cs-step-b; }
+  .cs[data-scene="3"] .cs-stamp { animation: cs-pop 450ms var(--ease-out) 1.9s both; }
+  .cs[data-scene="3"] .cs-doctor .cs-nod { animation: cs-nod 0.7s ease-in-out 2.2s 2; }
+
+  /* 4 · shared: the attending explains; the patient reads */
+  .cs[data-scene="4"] .cs-doctor .cs-talk { animation: cs-gesture 1.2s ease-in-out 1.2s 3 alternate; transform-box: fill-box; transform-origin: 0% 100%; }
+}
+
+@keyframes cs-sway {
+  from { transform: rotateY(-2.5deg) translateY(0.4cqw); }
+  to { transform: rotateY(2.5deg) translateY(-0.4cqw); }
+}
+@keyframes cs-caption-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes cs-breathe { 50% { transform: scaleY(1.012); } }
+@keyframes cs-trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes cs-walk-in { from { transform: translate(-70px, 340px); } to { transform: translate(168px, 340px); } }
+@keyframes cs-step { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(14deg); } 75% { transform: rotate(-14deg); } }
+@keyframes cs-step-b { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+@keyframes cs-breath { 0%, 100% { opacity: 0; } 50% { opacity: 0.8; } }
+@keyframes cs-pop { from { opacity: 0; transform: scale(0.85); } }
+@keyframes cs-tap { to { transform: rotate(-9deg); } }
+/* From the patient (about the middle of the stage) to the chip's own slot. */
+@keyframes cs-fly {
+  from { opacity: 0; transform: translate(-34cqw, calc((34 - var(--i) * 6) * 1cqw)) scale(0.7); }
+  25% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cs-grow { from { transform: scaleX(0); } }
+@keyframes cs-nod { 50% { transform: rotate(7deg); } }
+@keyframes cs-gesture { to { transform: rotate(-12deg); } }
+
+/* Reduced motion: everyone on their mark, no transitions between scenes. */
+@media (prefers-reduced-motion: reduce) {
+  .cs-actor,
+  .cs-cam,
+  .cs-l-ui > *,
+  .cs-stamp,
+  .cs-talk, .cs-think, .cs-phone-arm, .cs-arm-rest { transition: none !important; }
+}
+
+/* ---------- responsive ----------------------------------------------------- */
+@media (max-width: 960px) {
+  .cs-body { grid-template-columns: minmax(0, 1fr); }
+  .cs-stage { order: -1; }
+}
+@media (max-width: 640px) {
+  .cs-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -4px;
+    padding-inline: 4px;
+  }
+  .cs-tabs::-webkit-scrollbar { display: none; }
+  .cs-tab { flex: none; min-height: 44px; padding: 8px 12px; }
+  .cs-caption { padding: 18px; }
+  /* On a phone the stage is small: keep only the overlays that tell the story,
+     and put the card over the window rather than over anyone's face. */
+  .cs-bubble, .cs-why { display: none; }
+  .cs-card { left: auto; right: 2%; top: 2.5%; width: 54%; }
+}
+
+/* The section band: a faint wash so it separates from the plain band above. */
+.au-story {
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent-weak) 45%, transparent) 40%, transparent);
+}

@@ -482,7 +482,7 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
       )}
       {draftNote && <Banner tone="accent" title={draftNote}>The form below is the saved draft. Run the assessment when it is ready.</Banner>}
 
-      <div className="split">
+      <div className="split split-sticky">
         <div className="stack" style={{ gap: 16 }}>
           {!enc && (
             <Card title="Patient" subtitle="Admitting stamps t₀ — the moment every model's inputs are cut at">
