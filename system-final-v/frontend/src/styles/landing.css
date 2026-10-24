@@ -688,6 +688,26 @@
   text-align: center;
   margin-bottom: 3rem;
 }
+/* The sign-in heart monitor, opening the story section. Centred columns
+   shrink-wrap, so give the strip a width of its own. */
+.au-story-heart {
+  width: min(100%, 30rem);
+  margin-bottom: 1.5rem;
+}
+/* The story band now opens the page: hero glows, a tighter top so the
+   tabs and the scene start above the fold, and a slightly larger title. */
+.au-story-open {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  padding-top: clamp(2.5rem, 5vw, 4rem);
+}
+.au-story-open .au-center-head {
+  margin-bottom: 2.25rem;
+}
+.au-story-title {
+  font-size: clamp(2.2rem, 1.5rem + 2.8vw, 3.5rem);
+}
 .au-center-head .au-lede {
   max-width: 38rem;
 }
@@ -1215,6 +1235,9 @@
   overflow: clip;
   background: var(--plane);
   color: var(--text-primary);
+  /* The bands follow the theme; a hairline keeps them distinct from the
+     plain sections either side in light mode. */
+  border-block: 1px solid var(--border);
 }
 .au-principle-inner,
 .au-final-inner {

@@ -10,7 +10,7 @@
  * Motion is CSS-only (styles/public.css, `.art-*`): transform and opacity,
  * frozen under prefers-reduced-motion.
  */
-import type { CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { MODELS } from "@/mock/db";
 import "@/styles/site-art.css";
 
@@ -55,6 +55,44 @@ export function SecurityArt() {
   );
 }
 
+/**
+ * Leans a 3D art piece toward the pointer by writing --px / --py (-1…1) on
+ * the element. Skipped on touch and under reduced motion, where the piece
+ * keeps its resting tilt.
+ */
+function usePointerTilt<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof matchMedia === "undefined") return;
+    if (!matchMedia("(pointer: fine)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const move = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      const px = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+      const py = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        el.style.setProperty("--px", px.toFixed(3));
+        el.style.setProperty("--py", py.toFixed(3));
+      });
+    };
+    const leave = () => {
+      cancelAnimationFrame(raf);
+      el.style.setProperty("--px", "0");
+      el.style.setProperty("--py", "0");
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerleave", leave);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerleave", leave);
+    };
+  }, []);
+  return ref;
+}
+
 /** The M-01 stratified recall, drawn against the leakage-alarm ceiling. */
 export function EvidenceArt() {
   const m01 = MODELS.find((m) => m.id === "M-01");
@@ -63,8 +101,15 @@ export function EvidenceArt() {
   const rows = [{ label: "Pooled", value: pooled }, ...m01.strata.map((s) => ({ label: s.label, value: s.value }))];
   const CEIL = 0.6;
   const scale = (v: number) => (v / 0.8) * 100; // axis 0 → 0.8
+  const tiltRef = usePointerTilt<HTMLElement>();
   return (
-    <figure className="site-art art-evidence">
+    <figure ref={tiltRef} className="site-art art-evidence">
+      {/* 3D stage: the panel floats over two plates; the bars sit a little
+          proud of the card. Pointer tilt writes --px/--py (fine pointers only). */}
+      <div className="art-3d-float">
+      <div className="art-3d">
+      <span className="art-plate art-plate-2" aria-hidden="true" />
+      <span className="art-plate art-plate-1" aria-hidden="true" />
       <div className="art-panel">
         <p className="art-panel-head">
           <strong>M-01 · Recall@20</strong>
@@ -92,6 +137,8 @@ export function EvidenceArt() {
           negative control has run.
         </p>
       </div>
+      </div>
+      </div>
     </figure>
   );
 }
@@ -102,7 +149,7 @@ export function PricingArt() {
   const beds = Array.from({ length: 18 }, (_, i) => i);
   return (
     <figure className="site-art art-pricing" aria-hidden="true">
-      <svg viewBox="0 0 400 340" role="presentation">
+      <svg viewBox="0 0 400 352" role="presentation">
         {/* Building */}
         <rect x="70" y="70" width="260" height="220" rx="16" className="art-building" />
         <rect x="160" y="34" width="80" height="44" rx="10" className="art-building" />
@@ -124,8 +171,9 @@ export function PricingArt() {
           );
         })}
         <rect x="178" y="244" width="44" height="46" rx="8" className="art-door" />
-        {/* The ground line carries a heartbeat */}
-        <path className="art-ecg" pathLength={1} d="M20 300 H150 l10 -14 l10 26 l9 -38 l10 38 l8 -12 H380" />
+        {/* The ground line carries a heartbeat. It runs below the building
+            (bottom edge y=290) so the spike's peak (y≈298) never crosses the door. */}
+        <path className="art-ecg" pathLength={1} d="M20 324 H230 l10 -14 l10 26 l9 -38 l10 38 l8 -12 H380" />
       </svg>
       <figcaption className="art-caption">Priced per bed — every clinician on the ward is included.</figcaption>
     </figure>

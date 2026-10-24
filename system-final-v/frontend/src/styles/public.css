@@ -1454,6 +1454,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* The sign-in heart monitor, opening the waitlist intro (decorative). */
+.wl-heart {
+  width: min(100%, 26rem);
+  margin-bottom: 1.25rem;
+}
 .wl-intro .hero-lede {
   max-width: 52ch;
 }

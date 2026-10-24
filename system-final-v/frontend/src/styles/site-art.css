@@ -151,6 +151,83 @@
   .art-bars { grid-template-columns: 6.6rem minmax(0, 1fr) 3rem; }
 }
 
+/* Evidence in 3D: the panel rests tilted over two plates, swings up into
+   place on load, then drifts. Pointer tilt adds up to ±6deg via --px/--py
+   (set by usePointerTilt). Transform/opacity only; the separate `translate`
+   property carries the drift so it never fights the tilt transform. */
+.art-evidence {
+  --tilt-x: 12deg;
+  --tilt-y: -16deg;
+  perspective: 1400px;
+  padding: 28px 18px 36px;
+}
+[dir="rtl"] .art-evidence { --tilt-y: 16deg; }
+@media (max-width: 999px) {
+  .art-evidence { --tilt-x: 6deg; --tilt-y: -6deg; padding: 14px 6px 24px; }
+  [dir="rtl"] .art-evidence { --tilt-y: 6deg; }
+}
+.art-3d-float {
+  transform-style: preserve-3d;
+  animation:
+    art-3d-in 1200ms var(--ease-out) both,
+    art-3d-drift 7s ease-in-out 1300ms infinite;
+}
+.art-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transform:
+    rotateX(calc(var(--tilt-x) - var(--py, 0) * 6deg))
+    rotateY(calc(var(--tilt-y) + var(--px, 0) * 6deg));
+  transition: transform 500ms var(--ease-out);
+}
+/* A soft contact shadow under the stack. */
+.art-3d::after {
+  content: "";
+  position: absolute;
+  inset: 12% 8% -10%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+  transform: translateZ(-120px);
+  filter: blur(18px);
+  pointer-events: none;
+}
+.art-plate {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  background: color-mix(in srgb, var(--surface-1) 70%, var(--accent-weak, transparent));
+  pointer-events: none;
+}
+.art-plate-1 { transform: translate3d(14px, 14px, -40px); opacity: 0.75; }
+.art-plate-2 { transform: translate3d(28px, 28px, -80px); opacity: 0.45; }
+@media (max-width: 999px) {
+  .art-plate-1 { transform: translate3d(7px, 8px, -30px); }
+  .art-plate-2 { transform: translate3d(14px, 16px, -60px); }
+}
+.art-evidence .art-panel {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.art-evidence .art-panel-head { transform: translateZ(14px); }
+.art-evidence .art-bars { transform: translateZ(30px); }
+.art-evidence .art-bar-track {
+  box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+@keyframes art-3d-in {
+  from { opacity: 0; transform: translateY(40px) rotateX(38deg) rotateY(-10deg) scale(0.94); }
+}
+@keyframes art-3d-drift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+/* On this page only, sections tip up out of the page as they reveal. */
+.pub .site-main:has(.art-evidence) > [data-site-reveal] { transform-origin: 50% 0; }
+.pub .site-main:has(.art-evidence) > [data-site-reveal]:not([data-shown]) {
+  transform: perspective(1200px) translateY(28px) rotateX(12deg);
+}
+
 /* ---------- pricing: a ward priced per bed --------------------------------- */
 .art-pricing { max-width: 26rem; justify-self: center; width: 100%; }
 .art-building { fill: var(--surface-1); stroke: var(--border-strong); stroke-width: 1.5; }
@@ -332,6 +409,7 @@
     animation: none !important;
   }
   .art-path-pulse { display: none; }
+  .art-3d { transition: none; }
   .pub .site-main > [data-site-reveal],
   .pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > *,
   .pub .site-main > [data-site-reveal]:is(.plan-grid, .grid) > * {

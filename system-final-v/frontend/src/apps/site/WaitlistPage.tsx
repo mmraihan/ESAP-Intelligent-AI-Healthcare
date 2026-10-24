@@ -10,6 +10,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { SiteLayout } from "./SiteLayout";
 import { WaitlistPath } from "./SiteArt";
+import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { ApiError, NetworkError } from "@/api/client";
 import { joinWaitlist } from "@/api/desk";
 import { Select } from "@/components/ui/primitives";
@@ -81,6 +82,7 @@ export function WaitlistPage() {
       <section className="hero wl-hero">
         <div className="wl-grid">
           <div className="wl-intro">
+            <HeartMonitor className="wl-heart" />
             <span className="hero-eyebrow">Early access</span>
             <h1>Join the ESAP waitlist.</h1>
             <p className="hero-lede">

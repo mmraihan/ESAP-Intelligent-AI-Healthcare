@@ -29,9 +29,9 @@ import {
 } from "@/components/ui/icons";
 
 const SECTIONS = [
-  { id: "admission", label: "Admission" },
   { id: "story", label: "Story" },
   { id: "inside", label: "Inside" },
+  { id: "admission", label: "Admission" },
   { id: "impact", label: "Impact" },
   { id: "intake", label: "Intake" },
   { id: "estimate", label: "Estimate" },
@@ -524,7 +524,30 @@ export function LandingPage() {
         ))}
       </nav>
 
-      {/* 00 · Admission */}
+      {/* 00 · Story: one admission, start to finish, as a 3D diorama */}
+      <section id="story" className="au-sec au-story au-story-open">
+        <Glows />
+        <div className="au-wrap">
+          <div className="au-center-head" data-au-reveal>
+            <HeartMonitor className="au-story-heart" />
+            <Eyebrow n="00">The story</Eyebrow>
+            {/* The page now opens here, so this carries the page's one h1. */}
+            <h1 className="au-h2 au-story-title">One admission, <em>start to finish.</em></h1>
+            <p className="au-lede">
+              Follow one patient from the door to the summary they read later — and see exactly where the
+              software stops and the clinician decides.
+            </p>
+          </div>
+          <div data-au-reveal>
+            <CareStory />
+          </div>
+        </div>
+      </section>
+
+      {/* Inside · scroll-driven exploded view of one estimate */}
+      <ProductExplode />
+
+      {/* 02 · Admission */}
       <section id="admission" className="au-hero">
         <Glows />
         <div className="au-wrap au-hero-inner">
@@ -535,13 +558,13 @@ export function LandingPage() {
               <span className="au-badge-pulse" aria-hidden="true" />
               AI-powered clinical decision support
             </span>
-            <h1 className="au-title">
+            <h2 className="au-title">
               <span className="au-title-line au-rise" style={{ "--i": 1 } as CSSProperties}>Five questions answered</span>{" "}
               <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>the hour a patient is</span>{" "}
               <span className="au-title-line">
                 <span className="au-grad" style={{ "--i": 3 } as CSSProperties}>admitted.</span>
               </span>
-            </h1>
+            </h2>
             <p className="au-lede au-rise" style={{ "--i": 3 } as CSSProperties}>
               ESAP reads what is known at admission and estimates what is likely already present, how the stay is
               likely to go and how long it is likely to last — with the reasoning attached, the calibration stated
@@ -565,26 +588,6 @@ export function LandingPage() {
           <HeroDashboard />
         </div>
       </section>
-
-      {/* 01 · Story: one admission, start to finish, as a 3D diorama */}
-      <section id="story" className="au-sec au-story">
-        <div className="au-wrap">
-          <div className="au-center-head" data-au-reveal>
-            <Eyebrow n="01">The story</Eyebrow>
-            <h2 className="au-h2">One admission, <em>start to finish.</em></h2>
-            <p className="au-lede">
-              Follow one patient from the door to the summary they read later — and see exactly where the
-              software stops and the clinician decides.
-            </p>
-          </div>
-          <div data-au-reveal>
-            <CareStory />
-          </div>
-        </div>
-      </section>
-
-      {/* Inside · scroll-driven exploded view of one estimate */}
-      <ProductExplode />
 
       {/* 01 · Impact */}
       <section id="impact" className="au-sec au-impact">
@@ -716,18 +719,19 @@ export function LandingPage() {
       </section>
 
       {/* 05 · Principle */}
-      <section id="principle" className="pub-night au-band au-principle">
+      <section id="principle" className="au-band au-principle">
         <Glows />
         <div className="au-wrap au-principle-inner" data-au-reveal>
           <Eyebrow n="07">The principle</Eyebrow>
           <p className="au-giant" aria-label="One in twelve">1 in 12</p>
           <blockquote className="au-quote">
-            men has the colour-vision difference a red/amber/green gauge depends on. So our gauges use{" "}
-            <em>one calm ramp</em> — unreadable at a glance, readable at the number.
+            men can&rsquo;t reliably tell apart the red and green a stoplight gauge depends on. So every gauge
+            here uses <em>one calm ramp</em>, and the number does the talking.
           </blockquote>
           <p className="au-lede">
-            A stoplight trains the eye to snap-judge: green means ignore, red means act. That is exactly the
-            over-reliance that turns decision support into software making the call.
+            A stoplight also trains the eye to snap-judge: green means ignore, red means act. That reflex is
+            the over-reliance that turns decision support into software making the call, so we read the
+            number instead.
           </p>
         </div>
       </section>
@@ -806,7 +810,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="pub-night au-band au-final">
+      <section className="au-band au-final">
         <Glows />
         <div className="au-wrap au-final-inner" data-au-reveal>
           <HeartMonitor className="au-final-monitor" />
