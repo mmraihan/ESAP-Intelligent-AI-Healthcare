@@ -62,24 +62,13 @@
   color: var(--text-primary);
 }
 
-.brand-glyph {
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  background: var(--brand-glyph);
-  color: var(--brand-glyph-ink);
-  box-shadow: 0 4px 12px -5px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+/* The logo mark is public/final-logo.svg (BrandMark). Its tile is drawn in
+   the file, so only the soft lift is added here, rounded to match. */
+.brand-mark {
+  display: block;
   flex: none;
-}
-
-.brand-glyph svg { display: block; }
-.brand-cross { fill: var(--brand-glyph-ink); }
-.brand-pulse {
-  fill: none;
-  stroke: var(--brand-1);
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  border-radius: 25%;
+  box-shadow: 0 4px 12px -5px var(--glow);
 }
 
 .brand-words {

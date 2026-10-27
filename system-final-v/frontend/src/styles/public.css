@@ -103,9 +103,8 @@
 :root:has(.pub) body {
   background: var(--plane);
 }
-.pub .brand-glyph {
-  background: var(--brand-glyph);
-  box-shadow: 0 6px 16px -6px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+.pub .brand-mark {
+  box-shadow: 0 6px 16px -6px var(--glow);
 }
 .pub .brand-words strong {
   font-weight: 800;
