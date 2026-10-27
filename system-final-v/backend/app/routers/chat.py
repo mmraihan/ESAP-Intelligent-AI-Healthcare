@@ -115,12 +115,16 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
                 body.message,
                 instructions=("Extract ONLY these if explicitly stated: admission_age (int), "
                               "is_female (1 female / 0 male), bp_sys, bp_dia, weight_kg (numbers), "
-                              "chief_complaint (short string). Omit anything not stated. No diagnoses."),
-                schema_hint={"admission_age": 0, "is_female": 0, "bp_sys": 0, "bp_dia": 0,
+                              "chief_complaint (short string). Omit anything not stated, or use null. "
+                              "No diagnoses."),
+                # null, not 0, for age and sex: with a 0 in the hint the model echoed
+                # is_female=0 for messages that never said the patient's sex.
+                schema_hint={"admission_age": None, "is_female": None, "bp_sys": 0, "bp_dia": 0,
                              "weight_kg": 0.0, "chief_complaint": ""},
             )
             demo = draft.setdefault("features", {}).setdefault("demographics", {})
-            if isinstance(safe.get("admission_age"), int) and "admission_age" not in demo:
+            age = safe.get("admission_age")
+            if isinstance(age, int) and not isinstance(age, bool) and age > 0 and "admission_age" not in demo:
                 demo["admission_age"] = max(0, min(120, safe["admission_age"])); captured.append("Age (assistant)")
             if safe.get("is_female") in (0, 1) and "is_female" not in demo:
                 demo["is_female"] = safe["is_female"]; captured.append("Sex (assistant)")

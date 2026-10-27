@@ -70,6 +70,9 @@
   --accent-fill: #0b3f3b;
   --accent-fill-strong: #0f554f;
   --on-accent: #ffffff;
+  /* Illustration (public hero art only): the signing pen on /terms. */
+  --art-pen: #1f2a44;
+  --art-ink: #0b3f8a;
   /* Text on a --status-*-fill (destructive buttons): white in both themes. */
   --on-status: #ffffff;
 
@@ -183,6 +186,8 @@
     --accent-fill: #22d3ee;
     --accent-fill-strong: #38bdf8;
     --on-accent: #03141f;
+    --art-pen: #cfd9ee;
+    --art-ink: #7fe6f7;
 
     --vital: #2dd4bf;
     --vital-weak: #09283a;
@@ -264,6 +269,8 @@
   --accent-fill: #22d3ee;
   --accent-fill-strong: #38bdf8;
   --on-accent: #03141f;
+  --art-pen: #cfd9ee;
+  --art-ink: #7fe6f7;
 
   --vital: #2dd4bf;
   --vital-weak: #09283a;

@@ -19,6 +19,7 @@ const LINKS = [
   { to: "/security", label: "Security" },
   { to: "/pricing", label: "Pricing" },
   { to: "/waitlist", label: "Waitlist" },
+  { to: "/faq", label: "FAQ" },
 ];
 
 /** "/" shows the product page to a signed-out visitor, so "Product" is current there too. */
@@ -108,7 +109,7 @@ export function SiteFooter() {
           <div className="pub-foot-cols">
             <nav aria-label="Product">
               <strong>Product</strong>
-              {LINKS.map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
+              {LINKS.filter((l) => l.to !== "/faq").map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
             </nav>
             <nav aria-label="For clinicians">
               <strong>For clinicians</strong>
@@ -121,12 +122,29 @@ export function SiteFooter() {
               <Link to="/welcome">Patient portal</Link>
               <Link to="/patient/sharing">Your data rights</Link>
             </nav>
+            <nav aria-label="Help">
+              <strong>Help</strong>
+              <Link to="/faq">FAQ</Link>
+              <Link to="/waitlist">Talk to us</Link>
+            </nav>
+            <nav aria-label="Legal">
+              <strong>Legal</strong>
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/terms">Terms &amp; Conditions</Link>
+              <Link to="/security">Security &amp; compliance</Link>
+            </nav>
           </div>
         </div>
-        <p className="pub-foot-note">
-          Demonstration build. All data shown is synthetic — no real patient information appears anywhere in
-          this application.
-        </p>
+        <div className="pub-foot-note">
+          <p>
+            Demonstration build. All data shown is synthetic — no real patient information appears anywhere in
+            this application.
+          </p>
+          <span className="pub-foot-legal">
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </span>
+        </div>
       </div>
     </footer>
   );

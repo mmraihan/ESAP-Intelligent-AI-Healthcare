@@ -329,7 +329,8 @@
   min-height: 44px;
   justify-content: center;
 }
-@media (max-width: 900px) {
+/* Six links plus the actions need ~1020px; below that the bar collapses to the menu. */
+@media (max-width: 1080px) {
   .pub-nav-links,
   .pub-nav-actions > .theme-toggle,
   .pub-nav-signin {
@@ -342,7 +343,7 @@
     min-height: 44px;
   }
 }
-@media (min-width: 901px) {
+@media (min-width: 1081px) {
   .pub-mobile {
     display: none;
   }
@@ -399,10 +400,33 @@
   }
 }
 .pub-foot .pub-foot-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
   margin-top: 2rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--border);
+}
+.pub-foot .pub-foot-note p {
+  margin: 0;
   font-size: 0.78rem;
+}
+.pub-foot-legal {
+  display: inline-flex;
+  gap: 1.25rem;
+  font-size: 0.78rem;
+}
+.pub-foot-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--text-muted);
+  text-underline-offset: 3px;
+}
+.pub-foot-legal a:hover {
+  color: var(--text-primary);
 }
 @media (max-width: 600px) {
   .pub-foot-cols a {
@@ -921,6 +945,17 @@
 [dir="rtl"] .auth-path > svg,
 [dir="rtl"] .demo-role > svg {
   scale: -1 1;
+}
+.auth-legal {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.auth-legal a {
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-underline-offset: 3px;
 }
 .auth-link {
   align-self: center;
@@ -1588,4 +1623,437 @@
 }
 .pub .wl-intro h1 {
   margin: 16px 0 14px;
+}
+
+/* ---------- legal documents (/privacy, /terms) ---------------------------- */
+.pub .legal-hero .hero-copy {
+  max-width: 48rem;
+}
+.legal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+.legal-meta a {
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-underline-offset: 3px;
+}
+.legal-layout {
+  display: grid;
+  grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+}
+.legal-toc {
+  position: sticky;
+  top: 5.5rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+.legal-toc strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.legal-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.legal-toc a {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border-inline-start: 2px solid transparent;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+}
+.legal-toc a span {
+  color: var(--text-muted);
+}
+.legal-toc a:hover {
+  color: var(--text-primary);
+  background: var(--surface-sunken);
+}
+.legal-toc a[aria-current] {
+  border-inline-start-color: var(--accent);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.legal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 46rem;
+  min-width: 0;
+}
+.legal-summary {
+  padding: 1.25rem 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 16px;
+  background: var(--accent-weak);
+}
+.legal-summary > strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-ink);
+}
+.legal-summary ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.legal-summary li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.legal-summary li svg {
+  flex: none;
+  margin-top: 0.3rem;
+  color: var(--accent-ink);
+}
+.legal-section {
+  scroll-margin-top: 5.5rem;
+}
+.legal-section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  letter-spacing: -0.015em;
+}
+.legal-section h2 span {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.legal-section p,
+.legal-section li {
+  font-size: 0.97rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.legal-section p {
+  margin: 0 0 0.85rem;
+}
+.legal-section ul {
+  margin: 0 0 0.85rem;
+  padding-inline-start: 1.25rem;
+}
+.legal-section li + li {
+  margin-top: 0.45rem;
+}
+.legal-section strong {
+  color: var(--text-primary);
+}
+.legal-section a,
+.legal-contact a {
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-underline-offset: 3px;
+}
+.legal-contact {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+.legal-contact svg {
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--accent-ink);
+}
+.legal-contact p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+@media (max-width: 900px) {
+  .legal-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-toc {
+    position: static;
+    max-height: none;
+  }
+  .legal-toc a {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.legal-layout) {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ---------- FAQ (/faq) ----------------------------------------------------- */
+.pub .faq-hero .hero-copy {
+  max-width: 48rem;
+}
+.faq-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 36rem;
+}
+.faq-search > svg {
+  position: absolute;
+  inset-inline-start: 1rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.faq-search-input {
+  width: 100%;
+  min-height: 52px;
+  padding-inline: 2.85rem 3rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+.faq-search-input::placeholder {
+  color: var(--text-muted);
+}
+.faq-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+.faq-search-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.faq-search-clear {
+  position: absolute;
+  inset-inline-end: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.faq-search-clear:hover {
+  color: var(--text-primary);
+  background: var(--surface-sunken);
+}
+.faq-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  max-width: 52rem;
+}
+.faq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.faq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-1);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--dur-fast) ease, background-color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+.faq-chip span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.faq-chip:hover {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.faq-chip.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+}
+.faq-chip.is-on span {
+  color: var(--accent-ink);
+}
+.faq-count {
+  margin: -0.75rem 0 0;
+  min-height: 1.2em;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+.faq-group h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.015em;
+}
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.faq-item {
+  scroll-margin-top: 5.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+  transition: border-color var(--dur-fast) ease;
+}
+.faq-item[open] {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 56px;
+  padding: 0.85rem 1.15rem;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  list-style: none;
+  cursor: pointer;
+  border-radius: 14px;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.faq-chevron {
+  flex: none;
+  color: var(--text-muted);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+  color: var(--accent-ink);
+}
+.faq-answer {
+  padding: 0 1.15rem 1.1rem;
+}
+.faq-answer p {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.96rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.faq-answer a,
+.faq-cta a {
+  font-weight: 600;
+  color: var(--accent-ink);
+  text-underline-offset: 3px;
+}
+.faq-answer code {
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--surface-sunken);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+.faq-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  margin-top: 0.6rem;
+  padding: 0 0.6rem;
+  margin-inline-start: -0.6rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.faq-copy:hover {
+  color: var(--text-primary);
+  background: var(--surface-sunken);
+}
+.faq-cta {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 16px;
+  background: var(--accent-weak);
+}
+.faq-cta > svg {
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--accent-ink);
+}
+.faq-cta strong {
+  color: var(--text-primary);
+}
+.faq-cta p {
+  margin: 0.3rem 0 0;
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+@media (max-width: 600px) {
+  .faq-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    scrollbar-width: none;
+  }
+  .faq-chip {
+    flex: none;
+    min-height: 44px;
+  }
+  .faq-copy {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-chevron {
+    transition: none;
+  }
 }

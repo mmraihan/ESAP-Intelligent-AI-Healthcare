@@ -204,7 +204,7 @@ export function WaitlistPage() {
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} />
                   <span>
                     I agree that the ESAP team may contact me by email or phone about early access. You can ask
-                    us to remove your details at any time.
+                    us to remove your details at any time. See the <Link to="/privacy">Privacy Policy</Link>.
                   </span>
                 </label>
                 {touched && !consent && (

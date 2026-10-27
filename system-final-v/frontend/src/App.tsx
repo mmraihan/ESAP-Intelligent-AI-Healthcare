@@ -26,6 +26,8 @@ import { PricingPage } from "@/apps/site/PricingPage";
 import { SecurityPage } from "@/apps/site/SecurityPage";
 import { ModelEvidencePage } from "@/apps/site/ModelEvidencePage";
 import { WaitlistPage } from "@/apps/site/WaitlistPage";
+import { PrivacyPage, TermsPage } from "@/apps/site/LegalPages";
+import { FaqPage } from "@/apps/site/FaqPage";
 import { LoginPage } from "@/apps/auth/LoginPage";
 import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
@@ -298,6 +300,9 @@ export function App() {
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/evidence" element={<ModelEvidencePage />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         <Route path="*" element={<OfflineScreen />} />
       </Routes>
     );
@@ -312,6 +317,9 @@ export function App() {
       <Route path="/security" element={<SecurityPage />} />
       <Route path="/evidence" element={<ModelEvidencePage />} />
       <Route path="/waitlist" element={<WaitlistPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/faq" element={<FaqPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       {/* Unlisted demo role picker — exists only when VITE_DEMO_ACCESS_PATH is set. */}

@@ -31,6 +31,35 @@ def test_contraction_is_not_read_as_a_sex_marker():
     assert "admission_age" not in weight_only
 
 
+def test_llm_enrichment_does_not_default_sex_or_age(client, auth, monkeypatch):
+    # The live model echoed the schema hint's zeros back, recording "age 54, chest
+    # pain" as male. The hint now says null, and a 0 age is not a reading.
+    from app import llm
+
+    seen = {}
+
+    def fake_extract(text, *, instructions, schema_hint=None):
+        seen["hint"] = schema_hint
+        return {"admission_age": 0, "is_female": None}
+
+    def no_reply(*a, **k):
+        raise llm.LLMError("offline")
+
+    monkeypatch.setattr(llm, "available", lambda: True)
+    monkeypatch.setattr(llm, "extract_json", fake_extract)
+    monkeypatch.setattr(llm, "chat", no_reply)
+    r = client.post("/api/v1/chat", headers=auth("physician"),
+                    json={"message": "chest pain since yesterday"}).json()
+    assert seen["hint"]["is_female"] is None and seen["hint"]["admission_age"] is None
+    demo = r["draft"].get("features", {}).get("demographics", {})
+    assert "is_female" not in demo and "admission_age" not in demo
+    # A value the model does state still lands.
+    monkeypatch.setattr(llm, "extract_json", lambda *a, **k: {"admission_age": 61, "is_female": 1})
+    r = client.post("/api/v1/chat", headers=auth("physician"),
+                    json={"message": "chest pain since yesterday"}).json()
+    assert r["draft"]["features"]["demographics"] == {"admission_age": 61, "is_female": 1}
+
+
 def test_extractor_never_invents_a_code_for_a_plain_symptom():
     r = chat_extract.extract("she has a bad cough and feels short of breath")
     feats = r["delta"].get("features", {})

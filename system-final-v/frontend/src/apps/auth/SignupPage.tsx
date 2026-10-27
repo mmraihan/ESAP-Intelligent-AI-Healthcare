@@ -7,7 +7,7 @@
  * surface, or the patient one.
  */
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { t } from "@/i18n";
 import { Banner, Select, Toggle, cx } from "@/components/ui/primitives";
@@ -283,6 +283,13 @@ export function SignupPage() {
               />
             </div>
           )}
+
+          <p className="auth-legal">
+            {t("By creating an account, you agree to the")}{" "}
+            <Link to="/terms" target="_blank" rel="noopener">{t("Terms & Conditions")}</Link>{" "}
+            {t("and the")}{" "}
+            <Link to="/privacy" target="_blank" rel="noopener">{t("Privacy Policy")}</Link>.
+          </p>
 
           <button type="submit" className="btn btn-primary auth-submit" disabled={busy || !valid || (!patient && !accepted)}>
             {busy ? <><span className="esap-spinner" /> {t("Creating…")}</> : <>{t("Create account")} <ArrowRight size={15} /></>}

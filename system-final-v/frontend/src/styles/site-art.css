@@ -28,7 +28,9 @@
   /* Decorative heroes step aside on narrow screens; the evidence panel is
      data, so it stays (below the copy). */
   .pub .hero-split > .art-security,
-  .pub .hero-split > .art-pricing { display: none; }
+  .pub .hero-split > .art-pricing,
+  .pub .hero-split > .art-faq,
+  .pub .hero-split > .art-legal { display: none; }
 }
 
 .site-art { margin: 0; min-width: 0; }
@@ -401,6 +403,407 @@
 .pub .site-main > [data-site-reveal] > :nth-child(4),
 .pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > :nth-child(4) { transition-delay: 240ms; }
 
+/* ---------- FAQ + legal: 3D stacks (share .art-3d / .art-3d-float) -------- */
+/* Same stage as the evidence art: a resting tilt, pointer lean via --px/--py,
+   a slow drift. Each layer sits at its own translateZ so the tilt reads as
+   depth. Transform/opacity only; the `translate` and `rotate` properties carry
+   the looping motion so it never fights the positioning transform. */
+.art-faq,
+.art-legal {
+  --tilt-x: 14deg;
+  --tilt-y: -20deg;
+  perspective: 1300px;
+  width: 100%;
+  max-width: 27rem;
+  justify-self: center;
+  padding: 24px 20px 40px;
+}
+[dir="rtl"] :is(.art-faq, .art-legal) { --tilt-y: 20deg; }
+
+/* FAQ: three question cards at increasing depth around a "?" orb. */
+.art-faq-stage { height: 21rem; }
+.art-faq-card {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 16px;
+  background: var(--surface-1);
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--accent) 55%, transparent);
+  transform: translate3d(var(--x), 0, var(--z));
+  animation:
+    art-card-in 900ms var(--ease-out) both,
+    art-card-bob 6s ease-in-out infinite;
+  animation-delay: calc(200ms + var(--i) * 160ms), calc(1200ms - var(--i) * 2s);
+}
+.art-faq-card-0 { --x: 0px;   --z: 60px;  top: 2.2rem; }
+.art-faq-card-1 { --x: 34px;  --z: 0px;   top: 11.8rem; }
+.art-faq-card-2 { --x: -18px; --z: -70px; top: 16.8rem; }
+.art-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+.art-faq-card-2 .art-faq-q { color: var(--text-secondary); }
+.art-faq-chev {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border-inline-end: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+}
+.art-faq-card-0 .art-faq-chev {
+  margin-top: 4px;
+  border-color: var(--accent-ink);
+  transform: rotate(-135deg);
+}
+.art-faq-a {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.art-faq-a i {
+  display: block;
+  height: 7px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-sunken));
+  transform-origin: 0 50%;
+  animation: art-line-in 700ms var(--ease-out) both;
+}
+.art-faq-a i:nth-child(1) { animation-delay: 900ms; }
+.art-faq-a i:nth-child(2) { animation-delay: 1000ms; }
+.art-faq-a i:nth-child(3) { animation-delay: 1100ms; }
+
+/* The orb and the seal: glossy discs standing well proud of the stack. */
+.art-faq-orb,
+.art-legal-seal {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, color-mix(in srgb, white 50%, transparent), transparent 42%),
+    var(--accent-fill);
+  box-shadow:
+    0 22px 40px -16px color-mix(in srgb, var(--accent) 70%, transparent),
+    inset 0 -6px 14px color-mix(in srgb, black 22%, transparent);
+}
+.art-faq-orb {
+  top: -0.8rem;
+  inset-inline-end: -0.6rem;
+  width: 4.4rem;
+  height: 4.4rem;
+  font: 800 2rem/1 var(--font-sans);
+  color: var(--surface-1);
+  transform: translateZ(130px);
+  animation:
+    art-orb-in 900ms var(--ease-out) 650ms both,
+    art-orb-turn 9s ease-in-out 1600ms infinite;
+}
+
+/* Legal: a fanned stack of pages with a seal standing proud of the front. */
+.art-legal-stage { height: 22rem; }
+.art-legal-page {
+  position: absolute;
+  inset: 0 2.4rem 0 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+.art-legal-page-2 {
+  transform: translate3d(34px, 20px, -90px) rotate(5deg);
+  opacity: 0.5;
+  animation: art-fan-in 1000ms var(--ease-out) 150ms both;
+}
+.art-legal-page-1 {
+  transform: translate3d(17px, 10px, -45px) rotate(2.5deg);
+  opacity: 0.75;
+  animation: art-fan-in 1000ms var(--ease-out) 150ms both;
+}
+.art-legal-front {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 26px 50px -28px color-mix(in srgb, var(--accent) 60%, transparent);
+  transform: translateZ(10px);
+  transform-style: preserve-3d;
+}
+.art-legal-front strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  transform: translateZ(18px);
+}
+.art-legal-front ol {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateZ(12px);
+}
+.art-legal-front li {
+  padding-bottom: 9px;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: art-rise 600ms var(--ease-out) both;
+  animation-delay: calc(500ms + var(--i) * 110ms);
+}
+.art-legal-front li span { color: var(--text-muted); }
+.art-legal-rule {
+  display: block;
+  width: 42%;
+  height: 7px;
+  margin-top: auto;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-sunken));
+}
+.art-legal-seal {
+  inset-inline-end: 0.4rem;
+  bottom: 1.4rem;
+  width: 4.8rem;
+  height: 4.8rem;
+  transform: translateZ(110px);
+  animation:
+    art-orb-in 900ms var(--ease-out) 900ms both,
+    art-orb-turn 9s ease-in-out 1900ms infinite;
+}
+.art-legal-seal path {
+  fill: none;
+  stroke: var(--surface-1);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art-legal-tick {
+  stroke-dasharray: 12;
+  stroke-dashoffset: 12;
+  animation: art-tick 500ms var(--ease-out) 1600ms forwards;
+}
+
+@keyframes art-card-in {
+  from { opacity: 0; transform: translate3d(var(--x), 40px, calc(var(--z) - 160px)) rotateX(-30deg); }
+}
+@keyframes art-card-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+@keyframes art-line-in { from { opacity: 0; transform: scaleX(0.2); } }
+@keyframes art-orb-in {
+  from { opacity: 0; transform: translateZ(260px) scale(0.4) rotateY(-180deg); }
+}
+/* A coin-flip every few seconds: rests, turns once, rests. */
+@keyframes art-orb-turn {
+  0%, 70%, 100% { rotate: y 0deg; }
+  85% { rotate: y 360deg; }
+}
+@keyframes art-fan-in { from { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); } }
+@keyframes art-tick { to { stroke-dashoffset: 0; } }
+
+/* FAQ answers tip forward out of their card as they open. */
+.faq-item { perspective: 900px; }
+.faq-item[open] .faq-answer {
+  transform-origin: 50% 0;
+  animation: faq-open 360ms var(--ease-out) both;
+}
+@keyframes faq-open {
+  from { opacity: 0; transform: rotateX(-24deg) translateY(-6px); }
+}
+
+/* Privacy: a turning data cube inside a tilted orbit. The cube's own spin is
+   a slow continuous rotate; the stage keeps the shared tilt + pointer lean. */
+.art-privacy {
+  --tilt-x: 8deg;
+  --tilt-y: -12deg;
+  --cube: 9.5rem;
+  perspective: 1300px;
+  width: 100%;
+  max-width: 27rem;
+  justify-self: center;
+  padding: 24px 20px 40px;
+}
+.art-privacy-stage {
+  display: grid;
+  place-items: center;
+  height: 21rem;
+}
+.art-cube {
+  position: relative;
+  width: var(--cube);
+  height: var(--cube);
+  transform-style: preserve-3d;
+  animation:
+    art-cube-in 1100ms var(--ease-out) 200ms both,
+    art-cube-spin 28s linear 1300ms infinite;
+}
+.art-cube-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 16%, var(--surface-1)), var(--surface-1) 70%);
+  box-shadow: inset 0 0 24px color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent-ink);
+  backface-visibility: hidden;
+}
+.art-cube-face > span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.art-cube-face-0 { transform: translateZ(calc(var(--cube) / 2)); }
+.art-cube-face-1 { transform: rotateY(90deg) translateZ(calc(var(--cube) / 2)); }
+.art-cube-face-2 { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
+.art-cube-face-3 { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
+.art-cube-face-4 { transform: rotateX(90deg) translateZ(calc(var(--cube) / 2)); }
+.art-cube-face-5 { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
+/* The orbit: a ring laid nearly flat around the cube, with one request on it. */
+.art-privacy-orbit {
+  position: absolute;
+  width: 19rem;
+  height: 19rem;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: rotateX(74deg);
+  transform-style: preserve-3d;
+  animation: art-in 900ms ease 600ms both;
+}
+.art-privacy-orbit i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: art-spin 9s linear infinite;
+}
+.art-privacy-orbit i::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+/* A soft pool of light under the cube. */
+.art-privacy-floor {
+  position: absolute;
+  bottom: 1.2rem;
+  width: 12rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), transparent);
+  filter: blur(6px);
+  transform: translateZ(-60px);
+}
+/* Scale only: opacity below 1 on a preserve-3d element flattens it. */
+@keyframes art-cube-in {
+  from { scale: 0; }
+}
+@keyframes art-cube-spin {
+  from { transform: rotateX(-22deg) rotateY(0deg); }
+  to { transform: rotateX(-22deg) rotateY(360deg); }
+}
+@media (max-width: 999px) {
+  .pub .hero-split > .art-privacy { display: none; }
+}
+
+/* ---------- FAQ magnifier ------------------------------------------------- */
+/* Glides card to card (the separate `translate` property carries the path, so
+   the translateZ that lifts it above the stack is untouched), resting on each
+   question while a glint sweeps the lens. */
+.art-magnifier {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  transform: translateZ(150px) rotate(-8deg);
+  filter: drop-shadow(0 18px 18px color-mix(in srgb, black 22%, transparent));
+  animation:
+    art-mag-in 800ms var(--ease-out) 900ms both,
+    art-mag-scan 12s ease-in-out 1700ms infinite;
+}
+.site-art .art-magnifier svg { width: 120px; height: 120px; overflow: visible; }
+.art-lens-hi { stop-color: color-mix(in srgb, white 70%, var(--accent)); stop-opacity: 0.3; }
+.art-lens-lo { stop-color: var(--accent); stop-opacity: 0.05; }
+.art-mag-glass { stroke: none; }
+.art-mag-rim { fill: none; stroke: var(--accent-fill); stroke-width: 8; }
+.art-mag-handle { fill: none; stroke: var(--accent-fill); stroke-width: 13; stroke-linecap: round; }
+.art-mag-collar { fill: none; stroke: var(--accent-fill-strong); stroke-width: 15; stroke-linecap: round; }
+.art-mag-glint {
+  fill: white;
+  opacity: 0.55;
+  transform: rotate(28deg);
+  transform-box: view-box;
+  transform-origin: 48px 48px;
+  animation: art-mag-glint 4s ease-in-out 2.2s infinite;
+}
+@keyframes art-mag-in {
+  from { opacity: 0; scale: 0.6; }
+}
+/* Rest points sit over each card's question text (stage coordinates). */
+@keyframes art-mag-scan {
+  0%, 18%   { translate: 14rem 2.6rem; }
+  30%, 48%  { translate: 15rem 11.6rem; }
+  60%, 78%  { translate: 6rem 16.4rem; }
+  90%, 100% { translate: 14rem 2.6rem; }
+}
+@keyframes art-mag-glint {
+  0%, 55% { translate: 0 0; }
+  80%, 100% { translate: 110px 0; }
+}
+
+/* Terms: a pen signs the front page (SMIL in SiteArt.tsx keeps nib and ink
+   on one path and one clock; CSS only colours it). */
+.art-sign {
+  display: block;
+  width: 180px;
+  height: 48px;
+  margin-top: auto;
+}
+.site-art .art-sign svg { display: block; width: 180px; height: 48px; overflow: visible; }
+.art-sign-line { stroke: var(--border-strong); stroke-width: 1.2; stroke-dasharray: 3 4; }
+.art-sign-ink {
+  fill: none;
+  stroke: var(--art-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art-pen { filter: drop-shadow(0 6px 6px color-mix(in srgb, black 25%, transparent)); }
+.art-pen-body { fill: var(--art-pen); }
+.art-pen-cap { fill: var(--accent); }
+.art-pen-nib { fill: var(--accent-fill-strong); }
+.art-pen-clip { fill: none; stroke: var(--surface-1); stroke-width: 1.6; stroke-linecap: round; opacity: 0.7; }
+
 /* ---------- reduced motion: final state, no movement ----------------------- */
 @media (prefers-reduced-motion: reduce) {
   .site-art,
@@ -410,6 +813,10 @@
   }
   .art-path-pulse { display: none; }
   .art-3d { transition: none; }
+  .art-legal-tick { stroke-dashoffset: 0; }
+  .art-magnifier { translate: 14rem 2.6rem; }
+  .art-cube { transform: rotateX(-22deg) rotateY(-35deg); }
+  .faq-item[open] .faq-answer { animation: none; }
   .pub .site-main > [data-site-reveal],
   .pub .site-main > [data-site-reveal] :is(.plan-grid, .grid) > *,
   .pub .site-main > [data-site-reveal]:is(.plan-grid, .grid) > * {

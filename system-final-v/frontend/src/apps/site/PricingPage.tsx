@@ -7,7 +7,7 @@
  * the free one, and the page says so explicitly.
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PLANS } from "@/mock/db";
 import { Badge, Banner, Button, Card, SegmentedControl, cx } from "@/components/ui/primitives";
 import { SiteLayout } from "./SiteLayout";
@@ -23,7 +23,7 @@ const NEVER_GATED = [
   "The leakage alarm and its negative control",
 ];
 
-const FAQ = [
+export const PRICING_FAQ = [
   {
     q: "What counts as an assessment?",
     a: "One call that produced at least one model result. Re-running an encounter after new labs arrive counts again — that is usually where an unexpected overage comes from, so the admin console shows the meter prominently rather than burying it in a report.",
@@ -148,7 +148,10 @@ export function PricingPage() {
 
       <section className="stack" style={{ gap: 14 }}>
         <h2 style={{ fontSize: 24, margin: 0, letterSpacing: "-0.02em" }}>Questions people actually ask</h2>
-        {FAQ.map((f) => (
+        <p className="muted" style={{ margin: 0 }}>
+          More on accuracy, privacy and the patient portal in the <Link to="/faq">full FAQ</Link>.
+        </p>
+        {PRICING_FAQ.map((f) => (
           <Card key={f.q} title={f.q}>
             <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.7 }}>{f.a}</p>
           </Card>
