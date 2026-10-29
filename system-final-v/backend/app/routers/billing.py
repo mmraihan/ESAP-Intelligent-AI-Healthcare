@@ -149,6 +149,17 @@ def _buyer(actor: Actor, tier: str) -> tuple[str, str]:
     raise ApiError(422, f"Unknown plan '{tier}'.")
 
 
+#: Reserved domains (RFC 2606/6761). Polar refuses them as customer_email, so
+#: demo accounts leave the field empty and the buyer types one at checkout.
+_RESERVED_TLDS = (".example", ".test", ".invalid", ".localhost", ".local")
+_RESERVED_DOMAINS = ("example.com", "example.net", "example.org")
+
+
+def _deliverable(email: str | None) -> bool:
+    domain = (email or "").rpartition("@")[2].lower()
+    return bool(domain) and not domain.endswith(_RESERVED_TLDS) and domain not in _RESERVED_DOMAINS
+
+
 def _customer_ref(owner_kind: str, owner_id: str) -> str:
     """Polar's external customer id: one Polar customer per ESAP user or tenant."""
     return f"{owner_kind}:{owner_id}"
@@ -160,7 +171,6 @@ def create_checkout(body: CheckoutRequest, request: Request, actor: Actor = Depe
     owner_kind, owner_id = _buyer(actor, body.tier)
     payload: dict = {
         "products": [PRODUCTS[_env()][body.tier]],
-        "customer_email": actor.email,
         "external_customer_id": _customer_ref(owner_kind, owner_id),
         "success_url": settings().billing_success_url,
         "return_url": settings().billing_return_url,
@@ -169,6 +179,8 @@ def create_checkout(body: CheckoutRequest, request: Request, actor: Actor = Depe
         "metadata": {"esap_owner_kind": owner_kind, "esap_owner_id": owner_id,
                      "esap_tier": body.tier, "esap_user_id": actor.user_id},
     }
+    if _deliverable(actor.email):
+        payload["customer_email"] = actor.email
     if body.tier in PER_BED_TIERS:
         tenant = db.one_doc("SELECT doc FROM tenants WHERE id=?", (owner_id,)) or {}
         beds = body.beds or int(tenant.get("beds") or 0)

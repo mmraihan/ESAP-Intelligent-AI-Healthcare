@@ -212,3 +212,9 @@ def test_status_reports_the_callers_plan(client):
     _send(client, {"type": "subscription.active", "data": _sub(f"sub_{uuid.uuid4().hex[:8]}", "user", user_id, "pro")})
     r = client.get("/api/v1/billing/status", headers=headers).json()
     assert r["plan"] == "pro" and r["owner"] == "user" and r["subscription"]["status"] == "active"
+
+
+def test_reserved_email_domains_are_not_sent_to_polar():
+    assert billing._deliverable("dr.lee@hospital.org")
+    for email in ("mira.novak@styves.example", "a@example.com", "b@x.test", "", None):
+        assert not billing._deliverable(email)
