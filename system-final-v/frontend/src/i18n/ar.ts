@@ -29,6 +29,7 @@ export const AR: Record<string, string> = {
   "{surface} navigation": "التنقّل في {surface}",
   "Design system": "نظام التصميم",
   "Help & support": "المساعدة والدعم",
+  "Plan & billing": "الخطة والفوترة",
   "Sign out": "تسجيل الخروج",
   "Language": "اللغة",
   "Colour theme": "مظهر الألوان",

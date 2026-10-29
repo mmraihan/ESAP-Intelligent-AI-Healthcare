@@ -15,7 +15,7 @@ import { initials } from "@/lib/format";
 import { AssistiveLine, RoleBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
-  ChevronDown, LogoutIcon, MailIcon, MenuIcon, PaletteIcon, UnlockIcon, XIcon,
+  ChevronDown, CreditCardIcon, LogoutIcon, MailIcon, MenuIcon, PaletteIcon, UnlockIcon, XIcon,
 } from "@/components/ui/icons";
 import { ThemeToggle } from "./ThemeToggle";
 import { AnnouncementBar } from "./AnnouncementBar";
@@ -160,9 +160,11 @@ function ElevationBanner() {
 export function AppShell({
   nav, surface, children, wide,
 }: { nav: NavGroup[]; surface: "clinician" | "admin" | "ops" | "patient"; children: ReactNode; wide?: boolean }) {
-  const { role } = useSession();
+  const { role, tenantId } = useSession();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Self-serve clinicians buy their own plan; hospital staff are on the hospital's.
+  const ownsPlan = surface === "clinician" && tenantId === "t_solo";
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -222,6 +224,12 @@ export function AppShell({
             );
           })}
           <div className="rail-foot">
+            {ownsPlan && (
+              <NavLink to="/pricing" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
+                <span className="rail-icon"><CreditCardIcon size={17} /></span>
+                <span className="rail-label">{t("Plan & billing")}</span>
+              </NavLink>
+            )}
             {/* Platform staff work the other side of support from their own nav. */}
             {surface !== "ops" && (
               <NavLink to="/support" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
