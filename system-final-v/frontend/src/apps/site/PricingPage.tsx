@@ -57,10 +57,11 @@ const INDIVIDUAL_TENANT = "t_solo";
 export function PricingPage() {
   const nav = useNavigate();
   const { authenticated, role, tenantId } = useSession();
-  const [audience, setAudience] = useState<"hospital" | "individual">("hospital");
+  const individual = authenticated && tenantId === INDIVIDUAL_TENANT && role !== "patient";
+  // Individual clinicians can only buy Pro, so open on their tab.
+  const [audience, setAudience] = useState<"hospital" | "individual">(individual ? "individual" : "hospital");
   const [busyTier, setBusyTier] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const individual = authenticated && tenantId === INDIVIDUAL_TENANT && role !== "patient";
   const hospitalBuyer = authenticated && tenantId !== INDIVIDUAL_TENANT && HOSPITAL_BUYERS.includes(role);
 
   /** Paid plans go to Polar checkout when the signed-in account can buy them;
