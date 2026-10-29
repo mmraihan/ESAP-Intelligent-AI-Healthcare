@@ -191,6 +191,23 @@ CREATE TABLE IF NOT EXISTS announcements (
   created_at TEXT NOT NULL, expires_at TEXT, doc TEXT NOT NULL
 );
 
+-- Polar subscriptions, one row per Polar subscription id. `owner_kind` says
+-- whether it pays for a hospital tenant or for one individual's seat; the plan
+-- it grants is written onto that tenant or user, and this row is the history.
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id TEXT PRIMARY KEY, owner_kind TEXT NOT NULL, owner_id TEXT NOT NULL,
+  tenant_id TEXT NOT NULL, tier TEXT NOT NULL, status TEXT NOT NULL,
+  updated_at TEXT NOT NULL, doc TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_subs_owner ON subscriptions(owner_kind, owner_id, updated_at DESC);
+
+-- Every Polar webhook delivery we accepted, keyed by its `webhook-id`. Polar
+-- retries until it sees a 2xx, so the same event can arrive twice; a second
+-- delivery of an id already here is acknowledged and not applied again.
+CREATE TABLE IF NOT EXISTS billing_events (
+  id TEXT PRIMARY KEY, type TEXT NOT NULL, received_at TEXT NOT NULL, doc TEXT NOT NULL
+);
+
 -- Reference data with no query surface: models, plans, drift, rollouts,
 -- fairness, adoption, rbac, demo identities. One row per collection.
 CREATE TABLE IF NOT EXISTS documents (

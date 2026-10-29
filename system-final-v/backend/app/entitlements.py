@@ -44,8 +44,25 @@ def for_tenant(tenant_id: str) -> dict:
     return _TIERS.get(_tenant_plan(tenant_id), _DEFAULT)
 
 
-def models_allowed(tenant_id: str) -> set[str]:
-    return set(for_tenant(tenant_id)["models"])
+def _user_plan(user_id: str) -> str | None:
+    """An individual's own plan (Free/Pro), set at signup and by Polar.
+
+    Self-serve users share one tenant, so the tenant's plan cannot say which
+    of them paid. Accounts that predate per-user plans carry none and fall
+    back to the tenant's.
+    """
+    row = db.one_doc("SELECT doc FROM users WHERE id=?", (user_id,))
+    return (row or {}).get("plan")
+
+
+def for_actor(tenant_id: str, user_id: str | None = None) -> dict:
+    """The capability set for a caller: their own plan if they have one."""
+    plan = _user_plan(user_id) if user_id else None
+    return _TIERS.get(plan, _DEFAULT) if plan else for_tenant(tenant_id)
+
+
+def models_allowed(tenant_id: str, user_id: str | None = None) -> set[str]:
+    return set(for_actor(tenant_id, user_id)["models"])
 
 
 def interop_level(tenant_id: str) -> str:

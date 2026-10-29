@@ -16,13 +16,16 @@ import { Modal, Toast } from "@/components/ui/overlays";
 import { ModeTag, StatusPill } from "@/components/ui/domain";
 import { AlertIcon, BedIcon, ChartIcon, CreditCardIcon, DownloadIcon, FileIcon } from "@/components/ui/icons";
 import { act, requestExport } from "@/api/actions";
-import { api } from "@/api/client";
+import { ApiError, api } from "@/api/client";
+import { openBillingPortal, startCheckout } from "@/api/billing";
 import type { PlanDefinition } from "@/mock/types";
 
 const INCLUDED_ASSESSMENTS = 17_000;
 
 export function AdminBilling() {
-  const { tenantId } = useSession();
+  const { tenantId, role } = useSession();
+  // Polar checkout and the payment portal are for the people who pay the bill.
+  const mayPay = role === "tenant_owner" || role === "billing_admin";
   const tenant = tenantFor(tenantId);
   const [tab, setTab] = useState<"usage" | "invoices" | "plan">("usage");
   const [openInvoice, setOpenInvoice] = useState<(typeof INVOICES)[number] | null>(null);
@@ -37,6 +40,10 @@ export function AdminBilling() {
       () => api.post("/api/v1/requests", { kind: "account_team_contact", detail, ref: `plan:${tenant.plan}` }),
       () => "Sent — your account team will reply to the contact on file",
     ).then(setToast);
+  }
+
+  function pay(go: () => Promise<void>) {
+    go().catch((err) => setToast(err instanceof ApiError ? err.message : "Could not reach the payment provider."));
   }
 
   function compare() {
@@ -208,10 +215,21 @@ export function AdminBilling() {
                 Adding beds or raising the assessment allowance can be done mid-term and is pro-rated.
                 Moving down a tier takes effect at renewal.
               </p>
-              <div className="row" style={{ gap: 8 }}>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
                 <Button onClick={() => setContact("")}>Talk to your account team</Button>
                 <Button variant="ghost" onClick={compare}>Compare plans</Button>
               </div>
+              {mayPay && tenant.plan !== "enterprise" && (
+                <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                  {tenant.plan !== "essential" && (
+                    <Button onClick={() => pay(() => startCheckout("essential", tenant.beds))}>Subscribe to Essential · {num(tenant.beds)} beds</Button>
+                  )}
+                  {tenant.plan !== "professional" && (
+                    <Button onClick={() => pay(() => startCheckout("professional", tenant.beds))}>Subscribe to Professional · {num(tenant.beds)} beds</Button>
+                  )}
+                  <Button variant="ghost" icon={<CreditCardIcon size={15} />} onClick={() => pay(openBillingPortal)}>Manage payments</Button>
+                </div>
+              )}
             </Card>
           </div>
         </div>

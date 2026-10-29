@@ -28,6 +28,7 @@ import { ModelEvidencePage } from "@/apps/site/ModelEvidencePage";
 import { WaitlistPage } from "@/apps/site/WaitlistPage";
 import { PrivacyPage, TermsPage } from "@/apps/site/LegalPages";
 import { FaqPage } from "@/apps/site/FaqPage";
+import { BillingSuccessPage } from "@/apps/site/BillingSuccessPage";
 import { LoginPage } from "@/apps/auth/LoginPage";
 import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
@@ -322,6 +323,7 @@ export function App() {
       <Route path="/faq" element={<FaqPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/billing/success" element={<BillingSuccessPage />} />
       {/* Unlisted demo role picker — exists only when VITE_DEMO_ACCESS_PATH is set. */}
       {DEMO_ACCESS_PATH && (
         <Route path={DEMO_ACCESS_PATH} element={<Suspense fallback={null}><DemoAccessPage /></Suspense>} />

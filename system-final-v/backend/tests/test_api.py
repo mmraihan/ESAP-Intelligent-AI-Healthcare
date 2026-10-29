@@ -342,6 +342,9 @@ def test_no_v1_route_is_unauthenticated(client):
     # The early-access form: someone joining the waitlist has no account. It
     # stores contact details only and is rate-limited (test_waitlist_support.py).
     exempt |= {"/api/v1/public/waitlist"}
+    # Polar's payment webhook has no session; it is authenticated by its
+    # Standard Webhooks signature instead (test_billing.py).
+    exempt |= {"/api/v1/polar/webhook"}
 
     unguarded = []
     for route in app.routes:

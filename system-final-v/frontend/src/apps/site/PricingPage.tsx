@@ -9,6 +9,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PLANS } from "@/mock/db";
+import { useSession } from "@/lib/session";
+import { ROLES } from "@/lib/rbac";
+import { startCheckout, type PaidTier } from "@/api/billing";
+import { ApiError, NetworkError } from "@/api/client";
 import { Badge, Banner, Button, Card, SegmentedControl, cx } from "@/components/ui/primitives";
 import { SiteLayout } from "./SiteLayout";
 import { PricingArt } from "./SiteArt";
@@ -46,9 +50,37 @@ export const PRICING_FAQ = [
   },
 ];
 
+/** Who may buy a hospital plan online: the hospital's owner or billing admin. */
+const HOSPITAL_BUYERS = ["tenant_owner", "billing_admin"];
+const INDIVIDUAL_TENANT = "t_solo";
+
 export function PricingPage() {
   const nav = useNavigate();
+  const { authenticated, role, tenantId } = useSession();
   const [audience, setAudience] = useState<"hospital" | "individual">("hospital");
+  const [busyTier, setBusyTier] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const individual = authenticated && tenantId === INDIVIDUAL_TENANT && role !== "patient";
+  const hospitalBuyer = authenticated && tenantId !== INDIVIDUAL_TENANT && HOSPITAL_BUYERS.includes(role);
+
+  /** Paid plans go to Polar checkout when the signed-in account can buy them;
+   *  everyone else is sent to the step that comes first for them. */
+  async function choose(tier: string) {
+    const paid = (tier === "pro" && individual) || (["pilot", "essential", "professional"].includes(tier) && hospitalBuyer);
+    if (!paid) {
+      if (tier === "free" || tier === "pro") nav(authenticated ? ROLES[role].home : tier === "pro" ? "/signup?plan=pro" : "/signup");
+      else nav("/waitlist");
+      return;
+    }
+    setBusyTier(tier);
+    setCheckoutError(null);
+    try {
+      await startCheckout(tier as PaidTier);
+    } catch (err) {
+      setCheckoutError(err instanceof ApiError ? err.message : err instanceof NetworkError ? err.message : "Could not start checkout.");
+      setBusyTier(null);
+    }
+  }
   const shown = PLANS.filter((p) =>
     audience === "individual" ? ["free", "pro"].includes(p.tier) : !["free", "pro"].includes(p.tier),
   );
@@ -76,6 +108,12 @@ export function PricingPage() {
         <PricingArt />
       </section>
 
+      {checkoutError && (
+        <section>
+          <Banner tone="critical" title="Checkout did not open">{checkoutError}</Banner>
+        </section>
+      )}
+
       {shown.length === 0 && (
         <p className="pub-empty">
           Plan details are not available from this server right now. Every tier keeps calibration, the Why
@@ -95,9 +133,14 @@ export function PricingPage() {
             </p>
             <Button
               variant={p.highlighted ? "primary" : "default"}
-              onClick={() => nav(p.tier === "free" || p.tier === "pro" ? "/signup" : "/product")}
+              disabled={busyTier !== null}
+              onClick={() => void choose(p.tier)}
             >
-              {p.tier === "free" ? "Start free" : p.tier === "pro" ? "Start a trial" : p.tier === "enterprise" ? "Talk to us" : "Start a pilot"}
+              {busyTier === p.tier ? "Opening checkout…"
+                : p.tier === "free" ? "Start free"
+                : p.tier === "pro" ? (individual ? "Upgrade to Pro" : "Get Pro")
+                : p.tier === "enterprise" ? "Talk to us"
+                : hospitalBuyer ? (p.tier === "pilot" ? "Buy the pilot" : "Subscribe") : "Start a pilot"}
             </Button>
             <ul className="plan-features">
               {p.features.map((f) => <li key={f}><CheckIcon size={14} /> {f}</li>)}

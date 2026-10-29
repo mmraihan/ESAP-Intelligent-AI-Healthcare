@@ -75,6 +75,18 @@ class Settings:
         "DEPLOYMENT_MODE", "single_tenant").strip().lower())
     database_url: str | None = field(default_factory=lambda: os.environ.get("DATABASE_URL") or None)
 
+    # Polar payments (routers/billing.py). POLAR_ENV picks the API host and the
+    # product ids; the token and webhook secret are server-only and never
+    # defaulted. Without a token, checkout answers 503 rather than half-working.
+    polar_env: str = field(default_factory=lambda: os.environ.get("POLAR_ENV", "sandbox").strip().lower())
+    polar_access_token: str | None = field(default_factory=lambda: os.environ.get("POLAR_ACCESS_TOKEN") or None)
+    polar_webhook_secret: str | None = field(default_factory=lambda: os.environ.get("POLAR_WEBHOOK_SECRET") or None)
+    #: Where the browser lands after checkout. Polar fills {CHECKOUT_ID}.
+    billing_success_url: str = field(default_factory=lambda: os.environ.get(
+        "BILLING_SUCCESS_URL", "https://care.esap.ai/billing/success?checkout_id={CHECKOUT_ID}"))
+    billing_return_url: str = field(default_factory=lambda: os.environ.get(
+        "BILLING_RETURN_URL", "https://care.esap.ai/pricing"))
+
     @property
     def uses_postgres(self) -> bool:
         return bool(self.database_url and self.database_url.startswith(("postgres://", "postgresql://")))

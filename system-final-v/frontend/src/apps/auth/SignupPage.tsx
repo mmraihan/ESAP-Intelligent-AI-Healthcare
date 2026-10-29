@@ -7,12 +7,13 @@
  * surface, or the patient one.
  */
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { t } from "@/i18n";
 import { Banner, Select, Toggle, cx } from "@/components/ui/primitives";
 import { AlertIcon, ArrowRight, CheckIcon, EyeIcon, EyeOffIcon, HeartPulseIcon, ShieldIcon, StethoscopeIcon } from "@/components/ui/icons";
 import { ApiError, NetworkError, api } from "@/api/client";
+import { startCheckout } from "@/api/billing";
 import type { SessionPayload } from "@/api/bootstrap";
 import { ROLES, type RoleCode } from "@/lib/rbac";
 import { AuthLayout } from "./AuthLayout";
@@ -44,6 +45,9 @@ function strength(pw: string): { score: 0 | 1 | 2 | 3; label: string } {
 
 export function SignupPage() {
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  // Arrived from "Get Pro" on the pricing page: go straight on to checkout.
+  const wantsPro = params.get("plan") === "pro";
   const { startSession } = useSession();
   const [capacity, setCapacity] = useState<Capacity>(null);
   const [step, setStep] = useState(0);
@@ -83,6 +87,16 @@ export function SignupPage() {
         licence_number: kind === "clinician" ? form.licence.trim() || null : null,
       }, { anonymous: true });
       await startSession(session);
+      if (wantsPro && kind === "clinician") {
+        // The account exists either way; if checkout cannot open, they are on
+        // Free and can upgrade from the pricing page later.
+        try {
+          await startCheckout("pro");
+          return;
+        } catch {
+          /* fall through to the workspace */
+        }
+      }
       nav(kind === "patient" ? "/welcome" : ROLES[role].home);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : err instanceof NetworkError ? t("Could not reach the ESAP API.") : t("Something went wrong."));

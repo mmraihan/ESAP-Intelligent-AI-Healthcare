@@ -389,6 +389,8 @@ def signup(body: SignupRequest):
     doc = {
         "id": user_id, "tenantId": "t_solo", "name": body.name, "email": email,
         "roles": [body.role], "scope": "Individual / self-serve", "unitIds": [],
+        # Every self-serve account starts on Free; Pro arrives via Polar checkout.
+        "plan": "free",
         "status": "active", "mfa": "none", "sso": False,
         "lastActive": iso(utcnow()), "createdAt": iso(utcnow()),
         "localTitle": rbac.roles().get(body.role, {}).get("label", body.role),

@@ -237,7 +237,7 @@ def assess(
     response = assembler.apply_display_policy(response, policy)
     # Then the plan boundary: a model the tenant's plan does not include is
     # withheld regardless of the display toggle.
-    response = assembler.apply_entitlements(response, entitlements.models_allowed(actor.tenant_id))
+    response = assembler.apply_entitlements(response, entitlements.models_allowed(actor.tenant_id, actor.user_id))
 
     encounter_id = body.encounter_id
     if encounter_id:
@@ -270,7 +270,7 @@ def _single(model_key: str, body: IntakeRequest, actor: Actor, **kw):
     policy = settings_store.read("model_display", actor.tenant_id)["settings"]
     policy = assembler.merge_unit_override(policy, _unit_of(body.encounter_id, actor.tenant_id))
     full = assembler.apply_display_policy(full, policy)
-    full = assembler.apply_entitlements(full, entitlements.models_allowed(actor.tenant_id))
+    full = assembler.apply_entitlements(full, entitlements.models_allowed(actor.tenant_id, actor.user_id))
     return getattr(full, model_key)
 
 
