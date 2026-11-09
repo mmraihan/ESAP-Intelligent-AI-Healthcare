@@ -38,6 +38,26 @@ def _safe(fn, model_id: str, *args, **kwargs) -> ModelOutcome:
         )
 
 
+def _attach_experimental_towers(
+    differential: ModelOutcome, features, top_n: int, unconfirmed: set[str], warnings: list[str],
+) -> None:
+    """Add Towers B and C beside Tower A when ESAP_EXPERIMENTAL_MODELS is on."""
+    from .predictors import experimental
+
+    if not experimental.enabled() or not differential.result:
+        return
+    towers = experimental.towers(features, top_n)
+    differential.reason = "Tower A sets this ranking. Towers B and C are experimental, shown beside it and not combined."
+    warnings[:] = [w.replace("Tower B is not served, so notes are not read yet", "Tower B had no note to read")
+                   for w in warnings]
+    taints = {"B": ("notes",), "C": ("coded_sequence",)}
+    for name, output in towers.items():
+        if any(f.startswith(taints[name]) for f in unconfirmed):
+            for item in output.items:
+                item.from_unconfirmed_extraction = True
+    differential.result["experimental_towers"] = {name: t.model_dump() for name, t in towers.items()}
+
+
 def assess(req: IntakeRequest, *, top_n: int = 10, frame: str = "intake") -> AssessResponse:
     p = predictors.backend()
     features = req.features
@@ -59,7 +79,12 @@ def assess(req: IntakeRequest, *, top_n: int = 10, frame: str = "intake") -> Ass
     differential = _safe(p.differential, "M-01", features, top_n)
     mortality = _safe(p.mortality, "M-02", features)
     icu = _safe(p.icu, "M-03", features)
-    readmission = _safe(p.readmission, "M-04", features, frame)
+    if frame == "discharge":
+        from .predictors import experimental
+
+        readmission = _safe(experimental.readmission_discharge, "M-04", features, req.discharge)
+    else:
+        readmission = _safe(p.readmission, "M-04", features, frame)
     los = _safe(p.los, "M-05", features)
 
     if fc.calibration_validity == "reduced" and differential.result:
@@ -77,6 +102,8 @@ def assess(req: IntakeRequest, *, top_n: int = 10, frame: str = "intake") -> Ass
             warnings.append(
                 "differential includes signal from extracted history the clinician has not confirmed"
             )
+
+    _attach_experimental_towers(differential, features, top_n, unconfirmed, warnings)
 
     return AssessResponse(
         request_id=req.request_id or str(uuid.uuid4()),
@@ -169,6 +196,10 @@ def apply_display_policy(response: AssessResponse, policy: dict) -> AssessRespon
             items = items[:top_n]
             diff.result["top_n"] = min(diff.result.get("top_n", top_n), top_n)
         diff.result["items"] = items
+        # A category this site suppressed stays hidden in every tower.
+        for tower in (diff.result.get("experimental_towers") or {}).values():
+            kept = [i for i in tower["items"] if i.get("ccsr") not in suppressed]
+            tower["items"] = kept[:top_n] if isinstance(top_n, int) and top_n > 0 else kept
     return response
 
 

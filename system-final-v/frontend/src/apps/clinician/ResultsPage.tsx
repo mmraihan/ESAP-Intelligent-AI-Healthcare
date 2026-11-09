@@ -18,6 +18,7 @@ import {
 } from "@/components/clinical";
 import { AssistiveLine, FusionPill } from "@/components/ui/domain";
 import { PatientSubmissions } from "@/components/clinical/PatientSubmissions";
+import { ExperimentalModelsPanel } from "@/components/clinical/ExperimentalModelsPanel";
 import { Badge, Banner, Button, Card, EmptyState, Field, Select, Tabs, TextArea, TextInput } from "@/components/ui/primitives";
 import { Modal, Toast } from "@/components/ui/overlays";
 import { BookIcon, CheckIcon, ClockIcon, DownloadIcon, GlobeIcon, SendIcon, SparkIcon, StethoscopeIcon } from "@/components/ui/icons";
@@ -212,6 +213,14 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
                 onExplain={(c) => setExplain({ kind: "ccsr", key: c })}
                 unscored={latest?.response.differential.result?.unscored_ccsr_count ?? 0}
               />
+
+              {latest?.response.differential.result?.experimental_towers && (
+                <ExperimentalModelsPanel
+                  key={latest.id}
+                  features={latest.features}
+                  towers={latest.response.differential.result.experimental_towers}
+                />
+              )}
 
               <Card
                 title="Next best test"

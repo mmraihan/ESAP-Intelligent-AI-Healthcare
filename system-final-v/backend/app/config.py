@@ -54,6 +54,9 @@ def _path(name: str, default: str) -> Path:
 class Settings:
     model_mode: str = os.environ.get("MODEL_MODE", "stub").strip().lower()
     exports_dir: Path | None = None
+    # Serves Tower B, Tower C and discharge readmission (predictors/experimental.py).
+    # Tower B has an unresolved leakage alarm, so this stays off in production.
+    experimental_models: bool = field(default_factory=lambda: _bool("ESAP_EXPERIMENTAL_MODELS", False))
     db_path: Path = field(default_factory=lambda: _path("ESAP_DB_PATH", "esap.db"))
     seed_path: Path = field(default_factory=lambda: _path("ESAP_SEED_PATH", "seed/seed.json"))
     secret: str = field(default_factory=lambda: os.environ.get("ESAP_SECRET") or secrets.token_hex(32))

@@ -95,6 +95,21 @@ def _registry() -> list[dict]:
             "env": env,
         })
 
+    from ..predictors import experimental
+
+    if experimental.enabled():
+        rows += [
+            {"model_id": "M-04-discharge", "name": "30-day readmission at discharge", "status": "degraded",
+             "reason": "experimental_flag_on", "enabled": True},
+            {"model_id": "M-01-towerB", "name": "Clinical-text tower", "status": "degraded",
+             "reason": "experimental_unresolved_leakage_alarm", "enabled": True},
+            {"model_id": "M-01-towerC", "name": "Coded-sequence tower", "status": "degraded",
+             "reason": "experimental_uncalibrated", "enabled": True},
+            {"model_id": "M-01-fusion", "name": "A+B+C fusion", "status": "stub",
+             "reason": "not_trained", "enabled": False, "loaded": False},
+        ]
+        return rows
+
     # The towers that are honestly not built. The UI says "Tower A only"
     # everywhere; this is the registry saying the same thing.
     rows += [

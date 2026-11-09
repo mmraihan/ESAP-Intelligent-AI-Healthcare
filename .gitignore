@@ -2,10 +2,12 @@
 Dataset/
 
 # ML prototype — never commit secrets or MIMIC data (PhysioNet DUA)
-ml-pipeline/.env
+/ml-pipeline/
 .env
 csv_exports/
 *.pkl
+# Trained model weights are DUA-restricted — never commit them
+system-final-v/model_exports/
 .DS_Store
 
 # Claude Code local settings/session files — never share prompts/history

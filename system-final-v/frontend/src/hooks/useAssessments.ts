@@ -45,6 +45,15 @@ export type ApiDifferentialItem = {
   explanation: ApiExplanation | null;
 };
 
+export type ExperimentalTower = {
+  tower: "B" | "C";
+  status: "live" | "no_input" | "not_ready" | "error";
+  model_version: string;
+  items: ApiDifferentialItem[];
+  reason: string | null;
+  caveats: string[];
+};
+
 export type StoredAssessment = {
   id: string;
   created_at: string;
@@ -60,7 +69,13 @@ export type StoredAssessment = {
   };
   response: {
     request_id: string;
-    differential: ApiOutcome & { result: { items: ApiDifferentialItem[]; unscored_ccsr_count?: number } | null };
+    differential: ApiOutcome & {
+      result: {
+        items: ApiDifferentialItem[];
+        unscored_ccsr_count?: number;
+        experimental_towers?: Record<string, ExperimentalTower> | null;
+      } | null;
+    };
     mortality: ApiOutcome;
     icu: ApiOutcome;
     readmission: ApiOutcome;

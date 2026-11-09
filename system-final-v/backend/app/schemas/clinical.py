@@ -122,10 +122,23 @@ class Provenance(Strict):
     needs_confirmation: list[str] = Field(default_factory=list)
 
 
+class DischargeFields(Strict):
+    """Post-t0 inputs for the discharge-frame readmission model only.
+
+    A sibling of `features`, not part of it, so an intake model cannot receive
+    anything known only after admission.
+    """
+
+    los_hours: float = Field(ge=0, le=87_600)
+    discharge_location: str = Field(min_length=1, max_length=120)
+    n_ed_visits_180d: int = Field(0, ge=0, le=1000)
+
+
 class IntakeRequest(Strict):
     features: IntakeFeatures
     audit_covariates: AuditCovariates = Field(default_factory=AuditCovariates)
     provenance: Provenance = Field(default_factory=Provenance)
+    discharge: DischargeFields | None = None
     request_id: str | None = None
     #: Optional link to a worklist row, so /assess can update the encounter.
     encounter_id: str | None = None
@@ -183,6 +196,20 @@ class DifferentialItem(BaseModel):
     explanation: Explanation | None = None
 
 
+class TowerOutput(BaseModel):
+    """One experimental M-01 tower, shown beside Tower A and never fused into it."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    tower: Literal["B", "C"]
+    status: Literal["live", "no_input", "not_ready", "error"]
+    model_version: str
+    items: list[DifferentialItem] = Field(default_factory=list)
+    reason: str | None = None
+    caveats: list[str] = Field(default_factory=list)
+    latency_ms: float = 0.0
+
+
 class DifferentialResult(BaseModel):
     label: str = "Likely concurrent conditions"
     items: list[DifferentialItem]
@@ -195,6 +222,7 @@ class DifferentialResult(BaseModel):
     unscored_ccsr_count: int
     unmatched_ccsr: list[str] = Field(default_factory=list)
     unmatched_meds: list[str] = Field(default_factory=list)
+    experimental_towers: dict[str, TowerOutput] | None = None
 
 
 class RiskResult(BaseModel):
@@ -207,6 +235,8 @@ class RiskResult(BaseModel):
 
 
 class ReadmissionResult(RiskResult):
+    # None at discharge: that bundle's test-split distribution was never exported.
+    population_percentile: int | None
     frame: Literal["intake", "discharge"]
     alert_budget: str = "precision@top-decile"
     top_decile_flag: bool

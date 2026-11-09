@@ -227,6 +227,7 @@ def assess(
             400,
             "frame=discharge needs los_hours and discharge_location, which an intake case does not carry.",
         )
+    _refuse_unused_discharge_fields(body, frame)
 
     response = assembler.assess(body, top_n=top_n, frame=frame)
     # Apply this tenant's Settings → Model display policy at the serving boundary:
@@ -264,8 +265,15 @@ def assess(
     return response
 
 
+def _refuse_unused_discharge_fields(body: IntakeRequest, frame: str) -> None:
+    """Discharge fields on an intake request would be ignored; say so instead."""
+    if body.discharge is not None and frame != "discharge":
+        raise ApiError(400, "discharge fields are only read by /predict/readmission?frame=discharge.")
+
+
 def _single(model_key: str, body: IntakeRequest, actor: Actor, **kw):
     rbac.require(actor, "assess:run")
+    _refuse_unused_discharge_fields(body, kw.get("frame", "intake"))
     full = assembler.assess(body, **kw)
     policy = settings_store.read("model_display", actor.tenant_id)["settings"]
     policy = assembler.merge_unit_override(policy, _unit_of(body.encounter_id, actor.tenant_id))
@@ -296,7 +304,10 @@ def predict_readmission(body: IntakeRequest, actor: Actor = Depends(current_acto
     if frame not in {"intake", "discharge"}:
         raise ApiError(400, "frame must be 'intake' or 'discharge'.")
     if frame == "discharge":
-        raise ApiError(400, "frame=discharge needs los_hours and discharge_location (post-t0 fields).")
+        from ..predictors import experimental
+
+        if not experimental.enabled() or body.discharge is None:
+            raise ApiError(400, "frame=discharge needs los_hours and discharge_location (post-t0 fields).")
     return _single("readmission", body, actor, frame=frame)
 
 
