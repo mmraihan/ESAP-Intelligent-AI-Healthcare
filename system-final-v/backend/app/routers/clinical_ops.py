@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, rbac
-from ..deps import Actor, current_actor, display_name, tenant_scope
+from ..deps import SOLO_TENANT_ID, Actor, current_actor, display_name, tenant_scope
 from ..catalogs import known_lab_itemids
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -111,17 +111,22 @@ def create_encounter(
     if unit is None:
         raise ApiError(422, f"No unit '{body.unit_id}' in this tenant.")
 
-    if db.connect().execute(
-        "SELECT 1 FROM encounters WHERE mrn=? AND tenant_id=? AND state != 'closed'",
+    open_with_mrn = db.docs(
+        "SELECT doc FROM encounters WHERE mrn=? AND tenant_id=? AND state != 'closed'",
         (body.mrn, tenant_id),
-    ).fetchone():
+    )
+    if tenant_id == SOLO_TENANT_ID:
+        # One practice's MRN says nothing about another's, and a conflict here
+        # would reveal that someone else has that patient.
+        open_with_mrn = [e for e in open_with_mrn if e.get("createdBy") == actor.user_id]
+    if open_with_mrn:
         raise ApiError(409, f"{body.mrn} already has an open encounter. "
                             "Open it rather than admitting a second one.")
 
     now = iso(utcnow())
     encounter_id = f"enc_{uuid.uuid4().hex[:10]}"
     doc = {
-        "id": encounter_id, "tenantId": tenant_id,
+        "id": encounter_id, "tenantId": tenant_id, "createdBy": actor.user_id,
         "patient": {
             "id": f"pat_{uuid.uuid4().hex[:10]}", "mrn": body.mrn, "name": body.name,
             "age": body.age, "sex": body.sex,

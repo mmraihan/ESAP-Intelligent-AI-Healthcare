@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import { DRIFT, MODELS } from "@/mock/db";
+import { isEvaluated } from "@/lib/evidence";
 import { dateLabel, num } from "@/lib/format";
 import type { ModelCard } from "@/mock/types";
 import { LeakageAlarm } from "@/components/clinical";
@@ -31,7 +32,7 @@ function modelCardMarkdown(m: ModelCard): string {
     "",
     `**Outcome:** ${m.outcome}  `,
     `**Version:** ${m.version} · **Status:** ${m.status} · **Fusion:** ${m.fusion.replace(/_/g, " ")}  `,
-    `**Trained on:** ${m.trainedOn} (n = ${m.cohortN.toLocaleString()})  `,
+    `**Trained on:** ${m.trainedOn}${isEvaluated(m) ? ` (n = ${m.cohortN.toLocaleString()})` : ""}  `,
     `**Last evaluated:** ${m.lastEvaluated}`,
     "",
     "## Headline metrics",
@@ -41,7 +42,7 @@ function modelCardMarkdown(m: ModelCard): string {
     "",
     "## Calibration",
     "",
-    `${m.calibrationMethod}. Expected calibration error: ${m.id === "M-05" ? "n/a (interval model — see coverage)" : m.ece.toFixed(3)}.`,
+    `${m.calibrationMethod}. Expected calibration error: ${!isEvaluated(m) ? "not evaluated on this server" : m.id === "M-05" ? "n/a (interval model — see coverage)" : m.ece.toFixed(3)}.`,
     "",
     "## Performance by subgroup",
     "",
@@ -53,7 +54,7 @@ function modelCardMarkdown(m: ModelCard): string {
     `Leakage alarm: **${m.leakageAlarm ? "FIRING" : "clear"}**. Negative control: ${m.negativeControl}`,
     "",
     "---",
-    "Decision support only — assistive and calibrated, not autonomous diagnosis. These figures come from the",
+    "Decision support only, not autonomous diagnosis. These figures come from the",
     "demonstration dataset; the trained models' measured results are in ml-pipeline/models/*/results.md.",
     "",
   ].join("\n");
@@ -62,6 +63,7 @@ function modelCardMarkdown(m: ModelCard): string {
 export function ModelsPage() {
   const [selected, setSelected] = useState<ModelCard["id"]>("M-01");
   const model = MODELS.find((m) => m.id === selected)!;
+  const evaluated = isEvaluated(model);
   const [toast, setToast] = useState<string | null>(null);
 
   function downloadCard() {
@@ -111,7 +113,9 @@ export function ModelsPage() {
                 <Badge tone="neutral">{model.version}</Badge>
               </div>
             }
-            footnote={`Trained on ${model.trainedOn}. Cohort n = ${num(model.cohortN)}. Last evaluated ${dateLabel(model.lastEvaluated)}.`}
+            footnote={evaluated
+              ? `Trained on ${model.trainedOn}. Cohort n = ${num(model.cohortN)}. Last evaluated ${dateLabel(model.lastEvaluated)}.`
+              : "No evaluation is available on this server, so no cohort size or metric is shown."}
           >
             <div className="grid grid-3">
               {model.headline.map((h) => (
@@ -129,16 +133,20 @@ export function ModelsPage() {
             subtitle="The headline number is an average. These are the numbers that matter for the patient in front of you."
             footnote="A model that performs well on average and poorly on a stratum you routinely treat is, for you, a model that performs poorly. The stratified split is reported first for that reason."
           >
-            <BarRows
-              rows={model.strata.map((s) => ({
-                key: s.label,
-                label: s.label,
-                value: s.value,
-                meta: `${s.metric} · n = ${num(s.n)}`,
-              }))}
-              max={1}
-              format={(v) => v.toFixed(3)}
-            />
+            {evaluated ? (
+              <BarRows
+                rows={model.strata.map((s) => ({
+                  key: s.label,
+                  label: s.label,
+                  value: s.value,
+                  meta: `${s.metric} · n = ${num(s.n)}`,
+                }))}
+                max={1}
+                format={(v) => v.toFixed(3)}
+              />
+            ) : (
+              <p className="muted" style={{ margin: 0 }}>Not evaluated on this server.</p>
+            )}
             {model.strata.length === 2 && Math.abs(model.strata[0].value - model.strata[1].value) > 0.1 && (
               <p className="inline-warn">
                 <AlertIcon size={13} />
@@ -149,21 +157,25 @@ export function ModelsPage() {
             )}
           </Card>
 
-          <LeakageAlarm
-            metric={model.id === "M-01" ? "Recall@20" : "AUROC"}
-            value={Number(model.headline[0].value) || 0}
-            threshold={model.id === "M-01" ? 0.6 : 0.95}
-            negativeControl={model.negativeControl}
-          />
+          {evaluated && (
+            <LeakageAlarm
+              metric={model.id === "M-01" ? "Recall@20" : "AUROC"}
+              value={Number(model.headline[0].value) || 0}
+              threshold={model.id === "M-01" ? 0.6 : 0.95}
+              negativeControl={model.negativeControl}
+            />
+          )}
         </div>
 
         <div className="stack" style={{ gap: 18 }}>
           <Card
             title="Calibration"
-            subtitle={`${model.calibrationMethod} · ECE ${model.ece.toFixed(3)}`}
+            subtitle={evaluated ? `${model.calibrationMethod} · ECE ${model.ece.toFixed(3)}` : "Not evaluated on this server"}
             footnote="Calibration is what makes a probability mean what it says: of the cases the model called 30%, close to 30% should actually have the outcome. Without it a well-ranked model still misleads."
           >
-            {model.id === "M-05" ? (
+            {!evaluated ? (
+              <p className="prose" style={{ margin: 0 }}>No calibration has been measured for this model on this server.</p>
+            ) : model.id === "M-05" ? (
               <div className="stack" style={{ gap: 10 }}>
                 <p className="prose" style={{ margin: 0 }}>
                   M-05 produces an interval, not a probability, so it is not calibrated in the usual
@@ -242,8 +254,8 @@ export function ModelsPage() {
                   <td>
                     <Badge tone={m.status === "live" ? "good" : m.status === "degraded" ? "warning" : "neutral"}>{m.status}</Badge>
                   </td>
-                  <td style={{ textAlign: "right" }} className="tnum">{m.headline[0].value} <span className="muted">{m.headline[0].label}</span></td>
-                  <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" ? "—" : m.ece.toFixed(3)}</td>
+                  <td style={{ textAlign: "right" }} className="tnum">{isEvaluated(m) ? <>{m.headline[0].value} <span className="muted">{m.headline[0].label}</span></> : "—"}</td>
+                  <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : m.ece.toFixed(3)}</td>
                   <td><FusionPill status={m.fusion} /></td>
                 </tr>
               ))}

@@ -47,18 +47,22 @@ export function PatientIntake() {
   const [toast, setToast] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [story, setStory] = useState("");
-  const [when, setWhen] = useState("days");
-  const [worse, setWorse] = useState(true);
+  // Every answer starts blank: "you can skip anything" has to be true, and a
+  // skipped question must never reach the care team as the patient's words.
+  const [when, setWhen] = useState("");
+  const [worse, setWorse] = useState<"" | "yes" | "no">("");
   const [meds, setMeds] = useState("");
   const [questions, setQuestions] = useState<string[]>([""]);
   const [missedDoses, setMissedDoses] = useState(false);
   const [otherChanges, setOtherChanges] = useState("");
   const [modifiers, setModifiers] = useState("");
-  const [hadBefore, setHadBefore] = useState("yes");
+  const [hadBefore, setHadBefore] = useState("");
+  /** The server found a red flag in what was typed, not just in the chips. */
+  const [serverUrgent, setServerUrgent] = useState(false);
 
   /** Everything the patient told us, in their own words — never scored. */
   function submit() {
-    const before = hadBefore === "no" ? "This is new" : hadBefore === "yes" ? "I have had something like this before" : "Not sure if I have had this before";
+    const before = hadBefore === "no" ? "This is new" : hadBefore === "yes" ? "I have had something like this before" : hadBefore === "unsure" ? "Not sure if I have had this before" : "";
     const describe = [
       story.trim(),
       selected.length ? `Bothering me: ${selected.join(", ")}` : "",
@@ -67,22 +71,26 @@ export function PatientIntake() {
       before,
     ].filter(Boolean).join("\n");
     void act(
-      () => api.post("/api/v1/patient/intake", {
+      () => api.post<{ emergency?: boolean }>("/api/v1/patient/intake", {
         describe,
-        since: when,
+        since: when || null,
         severity: null,
-        getting_worse: worse,
-        missed_doses: missedDoses,
+        getting_worse: worse === "" ? null : worse === "yes",
+        missed_doses: missedDoses || null,
+        had_before: hadBefore || null,
         concerns: selected,
         medications: meds.trim() || null,
         questions: questions.map((q) => q.trim()).filter(Boolean),
       }),
-      () => t("Sent to your care team"),
+      (r) => {
+        if (r.emergency) setServerUrgent(true);
+        return t("Sent to your care team");
+      },
     ).then(setToast);
   }
 
   const key = STEPS[step].key;
-  const urgent = selected.includes("Chest pain") || selected.includes("Short of breath");
+  const urgent = serverUrgent || selected.includes("Chest pain") || selected.includes("Short of breath");
 
   function toggleSymptom(s: string) {
     setSelected((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
@@ -109,7 +117,7 @@ export function PatientIntake() {
 
       {urgent && (
         <Banner tone="critical" icon={<AlertIcon size={18} />} title={t("If this is happening right now, do not wait for this form")}>
-          {tr("Chest pain or trouble breathing that is happening **right now** needs someone to look at you straight away. Press your call bell, or if you are at home, call emergency services. You can come back to this afterwards.")}
+          {tr("Chest pain, trouble breathing or signs of a stroke that are happening **right now** need someone to look at you straight away. Press your call bell, or if you are at home, call emergency services on 997. You can come back to this afterwards.")}
         </Banner>
       )}
 
@@ -151,6 +159,7 @@ export function PatientIntake() {
         <Card title={<span className="row" style={{ gap: 8 }}><ClockIcon size={18} /> {t("When did it start?")}</span>}>
           <Field label={t("Roughly how long has this been going on?")}>
             <Select value={when} onChange={(e) => setWhen(e.target.value)} style={{ fontSize: 16 }}>
+              <option value="">{t("Not answered")}</option>
               <option value="today">{t("Today")}</option>
               <option value="days">{t("A few days")}</option>
               <option value="weeks">{t("A few weeks")}</option>
@@ -158,7 +167,13 @@ export function PatientIntake() {
               <option value="longer">{t("Longer than that")}</option>
             </Select>
           </Field>
-          <Toggle checked={worse} onChange={setWorse} label={t("It has been getting worse")} hint={t("Whether something is getting worse matters more than exactly when it started.")} />
+          <Field label={t("Has it been getting worse?")} hint={t("Whether something is getting worse matters more than exactly when it started.")}>
+            <Select value={worse} onChange={(e) => setWorse(e.currentTarget.value as "" | "yes" | "no")} style={{ fontSize: 16 }}>
+              <option value="">{t("Not answered")}</option>
+              <option value="yes">{t("Yes, it has been getting worse")}</option>
+              <option value="no">{t("No, it has not been getting worse")}</option>
+            </Select>
+          </Field>
           <Field label={t("Is there anything that makes it better or worse?")}>
             <TextArea rows={3} placeholder={t("Worse when I lie flat. A bit better if I sit up with pillows.")} style={{ fontSize: 16 }} value={modifiers} onChange={(e) => setModifiers(e.currentTarget.value)} />
           </Field>
@@ -172,6 +187,7 @@ export function PatientIntake() {
           </Field>
           <Field label={t("Have you had this before?")}>
             <Select value={hadBefore} onChange={(e) => setHadBefore(e.currentTarget.value)} style={{ fontSize: 16 }}>
+              <option value="">{t("Not answered")}</option>
               <option value="no">{t("No, this is new")}</option>
               <option value="yes">{t("Yes, something like this before")}</option>
               <option value="unsure">{t("I am not sure")}</option>
@@ -255,8 +271,8 @@ export function PatientIntake() {
           </Button>
         ) : (
           <Button onClick={() => {
-            setStep(0); setSelected([]); setStory(""); setWorse(true); setMeds(""); setQuestions([""]); setMissedDoses(false);
-            setOtherChanges(""); setHadBefore("yes"); setModifiers("");
+            setStep(0); setSelected([]); setStory(""); setWhen(""); setWorse(""); setServerUrgent(false); setMeds(""); setQuestions([""]); setMissedDoses(false);
+            setOtherChanges(""); setHadBefore(""); setModifiers("");
             setToast(t("Started again"));
           }}>{t("Start again")}</Button>
         )}

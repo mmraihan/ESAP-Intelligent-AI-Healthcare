@@ -170,6 +170,11 @@
   color: var(--text-primary);
   border-start-start-radius: 5px;
 }
+.assist-msg.is-emergency .assist-bubble {
+  background: var(--status-critical-weak);
+  border-color: var(--status-critical);
+  font-weight: 500;
+}
 .assist-msg.is-user .assist-bubble {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-ink);

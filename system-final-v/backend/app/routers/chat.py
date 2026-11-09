@@ -11,10 +11,12 @@ needs_confirmation). Running an assessment from the captured draft stays gated b
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import chat_extract, llm, rbac
+from .. import chat_extract, llm, rbac, red_flags
 from ..deps import Actor, current_actor
 
 router = APIRouter(tags=["chat"])
@@ -33,6 +35,8 @@ class ChatRequest(Strict):
     message: str = Field(min_length=1, max_length=4000)
     draft: dict = Field(default_factory=dict)
     history: list[ChatTurn] = Field(default_factory=list, max_length=40)
+    #: The screen's language, so an emergency message matches what the patient is reading.
+    lang: Literal["en", "ar"] | None = None
 
 
 ESSENTIALS = [
@@ -107,6 +111,28 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
     captured = list(result["captured"])
     needs = set(result["needs_confirmation"])
 
+    # Patient safety comes before data entry. This path is deterministic and
+    # skips the language model on purpose: the advice must not depend on a
+    # service being up, must not be reworded, and must not wait on a slow call.
+    flags = red_flags.screen(body.message) if patient_voice else []
+    if flags:
+        captured.extend(label for label in flags if label not in captured)
+        earlier = ((body.draft or {}).get("notes") or {}).get("hpi")
+        text = body.message.strip()
+        draft.setdefault("notes", {})["hpi"] = (f"{earlier}\n{text}" if earlier and earlier != text else text)[:2000]
+        missing = _missing(draft, patient_voice)
+        return {
+            "reply": red_flags.reply(body.message, captured, body.lang),
+            "draft": draft,
+            "captured": captured,
+            "needs_confirmation": sorted(needs),
+            "ready": not missing,
+            "can_run_assessment": False,
+            "llm_used": False,
+            "emergency": True,
+            "red_flags": flags,
+        }
+
     # Optional LLM enrichment of SAFE scalar fields only (never codes/labs), so a
     # phrasing the lexicon missed still lands. Deterministic values always win.
     if llm.available():
@@ -155,4 +181,6 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
         "ready": ready,
         "can_run_assessment": ready and rbac.can(actor.role, "assess:run"),
         "llm_used": llm.available(),
+        "emergency": False,
+        "red_flags": [],
     }

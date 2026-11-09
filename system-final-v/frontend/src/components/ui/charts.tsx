@@ -237,6 +237,7 @@ export function RiskGauge({
         <span className={calibrated ? "cal-badge is-cal" : "cal-badge"}>
           {calibrated ? "Calibrated" : "uncalibrated"}
         </span>
+        <span className="cal-badge">AI-generated</span>
         {flag && <span className="cal-badge is-flag">above alert threshold</span>}
       </div>
     </div>

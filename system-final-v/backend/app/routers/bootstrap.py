@@ -21,7 +21,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from ..care_team import for_patient as care_team_for
-from .. import db, evidence, rbac, settings_store
+from .. import db, evidence, predictors, rbac, settings_store
 from ..deps import Actor, current_actor
 from .clinical import scope_encounters
 
@@ -90,6 +90,17 @@ def bootstrap(actor: Actor = Depends(current_actor)):
         incidents = [i for i in db.docs("SELECT doc FROM incidents")
                      if i.get("tenantName") in (None, own_name)]
 
+    # The staff directory is for the people who administer it. Anyone else gets
+    # their own row, which the client needs for its unit default; the patients
+    # a clinician may see arrive as `encounters`, already scoped above.
+    users: list = []
+    if staff and may_manage_users:
+        users = db.docs("SELECT doc FROM users WHERE tenant_id=? ORDER BY name", (tenant_id,))
+    elif staff:
+        users = db.docs("SELECT doc FROM users WHERE tenant_id=? AND email=?", (tenant_id, actor.email))
+
+    identities = db.document("demo_identity") or {}
+
     return {
         "generated_by": "backend/app/routers/bootstrap.py",
         "seed_note": "Synthetic demo data. No PHI, no MIMIC-IV records.",
@@ -97,12 +108,12 @@ def bootstrap(actor: Actor = Depends(current_actor)):
         "active_tenant_id": tenant_id,
         "source": {"kind": "api", "role": actor.role, "elevated": bool(actor.elevation)},
         "patient_portal_enabled": portal_enabled,
+        "model_mode": predictors.mode(),
 
         "tenants": tenants,
         "facilities": _if(staff, db.docs(
             "SELECT doc FROM facilities WHERE tenant_id=? ORDER BY name", (tenant_id,))),
-        "users": _if(staff and (may_manage_users or may_read_patients),
-                     db.docs("SELECT doc FROM users WHERE tenant_id=? ORDER BY name", (tenant_id,))),
+        "users": users,
         "invites": _if(staff and may_manage_users, db.docs("SELECT doc FROM invites WHERE tenant_id=?", (tenant_id,))),
         "encounters": encounters,
 
@@ -140,6 +151,7 @@ def bootstrap(actor: Actor = Depends(current_actor)):
         # §4.6 grants the fairness capability to.
         "subgroup_fairness": _if(may_fairness, db.document("subgroup_fairness") or []),
 
-        "demo_identity": db.document("demo_identity") or {},
+        # Only the caller's own. The sign-in picker reads /public/demo-accounts.
+        "demo_identity": {actor.role: identities[actor.role]} if actor.role in identities else {},
         "rbac": db.document("rbac") or {},
     }

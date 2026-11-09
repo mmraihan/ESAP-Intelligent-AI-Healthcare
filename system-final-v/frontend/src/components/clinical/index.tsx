@@ -10,7 +10,7 @@
  *    are computed from the model, never narrated by an LLM (EXPLAINABILITY.md).
  *  - Audit covariates are visible only on the fairness surface, never here.
  */
-import { MODELS } from "@/mock/db";
+import { MODELS, PLACEHOLDER_MODELS } from "@/mock/db";
 import { ApiError, api } from "@/api/client";
 import { OFFLINE_NOTICE, isLive } from "@/api/actions";
 import { useState, type ReactNode } from "react";
@@ -21,7 +21,7 @@ import { ago, dateTimeLabel, pct, percentilePhrase, seqToken } from "@/lib/forma
 import type { Encounter } from "@/mock/types";
 import { BarRows, RiskGauge } from "@/components/ui/charts";
 import { Drawer } from "@/components/ui/overlays";
-import { AssistiveLine, FusionPill } from "@/components/ui/domain";
+import { AiGeneratedTag, AssistiveLine, FusionPill } from "@/components/ui/domain";
 import { Badge, Button, Card, Meter, cx } from "@/components/ui/primitives";
 import {
   AlertIcon, CheckIcon, ClockIcon, FlaskIcon, InfoIcon, ScaleIcon, SparkIcon, StethoscopeIcon,
@@ -125,8 +125,10 @@ export function RiskRow({ slots, onExplain }: { slots: RiskSlot[]; onExplain?: (
 export function LosCard({ low, high, coverage: given, level = 0.95, lowSignal }: {
   low: number | null; high: number | null; coverage?: number; level?: number; lowSignal?: boolean;
 }) {
-  // Measured coverage from M-05's evaluation of record, unless the caller has a better figure.
-  const coverage = given ?? (Number(MODELS.find((m) => m.id === "M-05")?.headline[0]?.value) || level);
+  // Measured coverage from M-05's evaluation of record, unless the caller has a
+  // better figure. With no evaluation there is no measurement to state.
+  const measured = Number(MODELS.find((m) => m.id === "M-05")?.headline[0]?.value);
+  const coverage = given ?? (!PLACEHOLDER_MODELS && measured > 0 ? measured : null);
   if (low === null || high === null) {
     return (
       <Card title="Expected length of stay" subtitle="M-05">
@@ -139,7 +141,10 @@ export function LosCard({ low, high, coverage: given, level = 0.95, lowSignal }:
     <Card
       title={<span className="row" style={{ gap: 7 }}><ClockIcon size={16} /> Expected length of stay</span>}
       subtitle="M-05 · conformal interval"
-      footnote={`Measured coverage ${pct(coverage, 1)} against a nominal ${pct(level, 0)} level. Tail coverage is reduced beyond 14 days.`}
+      actions={<AiGeneratedTag />}
+      footnote={coverage === null
+        ? "Coverage has not been measured on this server."
+        : `Measured coverage ${pct(coverage, 1)} against a nominal ${pct(level, 0)} level. Tail coverage is reduced beyond 14 days.`}
     >
       <p className="los-value tnum">
         {low}–{high} <span className="los-unit">days</span>
@@ -182,7 +187,7 @@ export function DifferentialCard({
     <Card
       title={<span className="row" style={{ gap: 7 }}><StethoscopeIcon size={16} /> Likely concurrent conditions</span>}
       subtitle={`M-01 · top ${Math.min(topN, items.length)} of ~502 CCSR categories`}
-      actions={<FusionPill status={fusionStatus} />}
+      actions={<div className="row" style={{ gap: 8 }}><AiGeneratedTag /><FusionPill status={fusionStatus} /></div>}
       footnote={
         unscored > 0
           ? `${unscored} CCSR categories were not scored for this patient because the required inputs were absent. They are omitted rather than shown as zero.`
@@ -364,7 +369,9 @@ export function SignalRail({ enc, compact }: { enc: Encounter; compact?: boolean
       title="Signal completeness"
       subtitle={`${got} of ${signals.length} input groups present`}
       footnote={
-        enc.calibrationValidity === "reduced"
+        PLACEHOLDER_MODELS
+          ? "These estimates come from a placeholder model, so none of them are calibrated."
+          : enc.calibrationValidity === "reduced"
           ? "With this little input the ranking is still usable but the absolute probabilities are not calibrated. Adding prior history or an admission note is the single biggest improvement."
           : "Enough input is present for calibrated probabilities."
       }

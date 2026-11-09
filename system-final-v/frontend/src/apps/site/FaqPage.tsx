@@ -53,78 +53,90 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
   {
     id: "ehr-integration", cat: "product",
     q: "Does it connect to our EHR?",
-    text: "Yes. Hospitals connect through standard HL7 v2 and FHIR interfaces, managed from the admin console. Individual clinicians can also enter an admission by hand.",
+    text: "Not yet. HL7 v2 and FHIR connections are planned and are not running in this build. For now, an admission is entered by hand.",
   },
 
   // Models & accuracy
   {
     id: "how-accurate", cat: "accuracy",
     q: "How accurate are the models?",
-    text: "Each model's discrimination and calibration are published on the Evidence page, split by subgroup rather than pooled into one flattering number. The figures in this demonstration build are illustrative, not validated performance claims.",
+    text: "The hosted demo serves placeholder models, so its estimates are not accurate predictions and there is no validated performance to report. Measured results appear on the Evidence page only when an evaluation is available on the server.",
     a: (
       <p>
-        Each model&rsquo;s discrimination and calibration are published on the{" "}
-        <Link to="/evidence">Evidence page</Link>, split by subgroup rather than pooled into one
-        flattering number. The figures in this demonstration build are <strong>illustrative</strong>,
-        not validated performance claims.
+        The hosted demo serves <strong>placeholder models</strong>, so its estimates are not accurate
+        predictions and there is no validated performance to report. Measured results appear on the{" "}
+        <Link to="/evidence">Evidence page</Link> only when an evaluation is available on the server.
       </p>
     ),
   },
   {
     id: "calibration", cat: "accuracy",
     q: "What does \"calibrated\" mean, and why does it matter?",
-    text: "A calibrated model's 20% means roughly 20 in 100 similar patients have the outcome. A model can rank patients well and still be badly calibrated, which makes its numbers misleading at the bedside. ESAP Clinical AI shows the calibration state next to every estimate, and hides an estimate entirely when there is too little input to calibrate it.",
+    text: "A calibrated model's 20% means roughly 20 in 100 similar patients have the outcome. A model can rank patients well and still be badly calibrated, which makes its numbers misleading at the bedside. ESAP Clinical AI shows the calibration state next to every estimate. Placeholder models are always shown as uncalibrated.",
   },
   {
     id: "no-estimate", cat: "accuracy",
     q: "Why is an estimate sometimes missing?",
-    text: "When the information at admission is too thin for the model to be calibrated — for example, a first visit with no history and few results — ESAP Clinical AI suppresses the estimate rather than showing an unreliable one with a warning. A missing estimate is not reassurance; it means the model has nothing trustworthy to say.",
+    text: "A model can be turned off for a site or unit, or may not be included in a plan. Its estimate is then withheld and the screen says so. A missing estimate is not reassurance. When the information at admission is thin, the estimate is still shown but its Calibrated badge is removed.",
   },
   {
     id: "fairness", cat: "accuracy",
     q: "How do you make sure the models are fair?",
-    text: "Race, ethnicity, insurance and marital status are never used as model inputs. Where a hospital supplies them, they are used only to measure whether performance and calibration hold up across groups, and the results are shown on a fairness panel the hospital's privacy officer can read.",
+    text: "Race, ethnicity, insurance and marital status are never used as model inputs. They are recorded only so performance can be compared across groups. No subgroup evaluation has been run on these models yet, so there are no fairness results to report.",
   },
   {
     id: "training-data", cat: "accuracy",
     q: "What data were the models trained on?",
-    text: "The models are developed on a de-identified research dataset that is kept physically separate from any hospital's production data. We do not train on a customer's patients without a separate, explicit agreement.",
+    text: "The models are developed offline on the de-identified MIMIC-IV research dataset. The serving application has no connection to that database and no path that sends patient data into model training.",
   },
 
   // Privacy & security
   {
     id: "who-owns-data", cat: "privacy",
     q: "Who owns the patient data?",
-    text: "The hospital does. ESAP Clinical AI processes it on the hospital's behalf, under a Business Associate Agreement and a data processing agreement. The full detail is in our Privacy Policy.",
+    text: "The hospital does. Before any pilot with real patients, the terms would be set in a data processing agreement. No such agreement is in place for this demo, which holds synthetic data only. See our Privacy Policy.",
     a: (
       <p>
-        The hospital does. ESAP Clinical AI processes it on the hospital&rsquo;s behalf, under a Business Associate
-        Agreement and a data processing agreement. The full detail is in our{" "}
-        <Link to="/privacy">Privacy Policy</Link>.
+        The hospital does. Before any pilot with real patients, the terms would be set in a data
+        processing agreement. No such agreement is in place for this demo, which holds synthetic data
+        only. See our <Link to="/privacy">Privacy Policy</Link>.
       </p>
     ),
   },
   {
     id: "hipaa-gdpr", cat: "privacy",
     q: "Is ESAP Clinical AI HIPAA and GDPR compliant?",
-    text: "ESAP Clinical AI runs a HIPAA / HITECH programme and signs a BAA as standard. EU data residency is available, with the full GDPR data-subject process. SOC 2 Type II is in progress and HITRUST is planned — we do not claim certifications we do not yet hold. See the Security page.",
+    text: "No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work, and no certification is held. This demo must only be used with synthetic data. See the Security page for what is built and what is planned.",
     a: (
       <p>
-        ESAP Clinical AI runs a HIPAA / HITECH programme and signs a BAA as standard. EU data residency is available,
-        with the full GDPR data-subject process. SOC 2 Type II is in progress and HITRUST is planned — we
-        do not claim certifications we do not yet hold. See the <Link to="/security">Security page</Link>.
+        No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work,
+        and no certification is held. This demo must only be used with synthetic data. See the{" "}
+        <Link to="/security">Security page</Link> for what is built and what is planned.
       </p>
     ),
   },
   {
     id: "who-can-see", cat: "privacy",
     q: "Can ESAP Clinical AI staff see our patients?",
-    text: "Not by default. ESAP Clinical AI staff have no standing access to health data. Emergency access needs a named patient, a written reason, a ticket, a second approver, and expires within 60 minutes. Every such access appears in the hospital's own audit log, and a hospital can switch it off entirely.",
+    text: "Not by default. ESAP Clinical AI staff have no standing access to health data. Emergency access needs a named patient, a written reason, a ticket and a second approver, it expires automatically, and it is recorded in the platform audit log.",
   },
   {
     id: "audit-log", cat: "privacy",
     q: "Is every access to a record logged?",
-    text: "Yes — reads as well as writes. The audit log is append-only and kept for six years. There is no delete path for anyone, including us.",
+    text: "Reads of patient records and consequential changes are recorded, and the application has no screen or API that edits or deletes an entry. Tamper-evident storage and a fixed retention period are planned.",
+  },
+
+  {
+    id: "planned-security", cat: "privacy",
+    q: "Which security controls are still planned?",
+    text: "Encryption at rest, hospital single sign-on, required multi-factor sign-in for administrators, tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi Arabia are among the items not built yet. The Security page has the full list.",
+    a: (
+      <p>
+        Encryption at rest, hospital single sign-on, required multi-factor sign-in for administrators,
+        tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi
+        Arabia are among the items not built yet. The <Link to="/security">Security page</Link> has the full list.
+      </p>
+    ),
   },
 
   // Patients & carers

@@ -11,10 +11,12 @@ import json
 import secrets
 import uuid
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, settings_store
+from .. import audit, db, red_flags, settings_store
 from ..deps import Actor, current_actor
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -40,6 +42,7 @@ class SymptomIntake(Strict):
     severity: int | None = Field(None, ge=0, le=10)
     getting_worse: bool | None = None
     missed_doses: bool | None = None
+    had_before: Literal["yes", "no", "unsure"] | None = None
     concerns: list[str] = Field(default_factory=list, max_length=20)
     medications: str | None = Field(None, max_length=2000)
     questions: list[str] = Field(default_factory=list, max_length=20)
@@ -104,14 +107,16 @@ def submit_symptoms(body: SymptomIntake, request: Request,
     doc = {
         "id": f"sym_{uuid.uuid4().hex[:10]}", "submittedAt": iso(utcnow()),
         "describe": body.describe, "since": body.since, "severity": body.severity,
-        "gettingWorse": body.getting_worse, "missedDoses": body.missed_doses, "concerns": body.concerns,
-        "medications": body.medications, "questions": body.questions,
+        "gettingWorse": body.getting_worse, "missedDoses": body.missed_doses, "hadBefore": body.had_before,
+        "concerns": body.concerns, "medications": body.medications, "questions": body.questions,
         "scored": False,
         "note": "Shared with your care team as written. It is not used to produce a score.",
     }
     _store(patient_id, "symptoms", doc)
     audit.record(actor, "patient.submit", f"symptom intake:{doc['id']}", ip=_ip(request))
-    return doc
+    # Tells the form to show the emergency message for symptoms only typed as
+    # free text. Safety advice for this response only; never stored as a finding.
+    return {**doc, "emergency": bool(red_flags.screen("\n".join([body.describe, *body.concerns])))}
 
 
 @router.post("/previsit", status_code=201)

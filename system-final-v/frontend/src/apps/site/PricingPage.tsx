@@ -42,7 +42,7 @@ export const PRICING_FAQ = [
   },
   {
     q: "Can we run this on our own infrastructure?",
-    a: "Yes, on Enterprise. On-prem delivery includes the serving runtime and the models; nothing calls home, and no webfont or CDN request is required for the UI to render.",
+    a: "Not yet. On-premises delivery is planned for Enterprise and is not available in this build.",
   },
   {
     q: "Is there a discount for a pilot?",

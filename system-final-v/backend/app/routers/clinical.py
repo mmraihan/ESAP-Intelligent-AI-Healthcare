@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .. import assembler, audit, db, entitlements, rbac, settings_store
 from ..config import settings
-from ..deps import Actor, current_actor, display_name, tenant_scope
+from ..deps import SOLO_TENANT_ID, Actor, current_actor, display_name, tenant_scope
 from ..errors import ApiError
 from ..schemas.clinical import (
     AssessResponse,
@@ -96,6 +96,10 @@ def scope_encounters(actor: Actor, rows: list[dict], grade: str) -> list[dict]:
     """
     if grade == "none" or (grade == "breakglass" and not actor.elevation):
         return []  # no standing access is no rows, even for a caller that forgot to check
+    if actor.tenant_id == SOLO_TENANT_ID:
+        # Self-serve clinicians share a tenant and a default unit but not
+        # patients. Matched on account id: two doctors can share a name.
+        return [r for r in rows if r.get("createdBy") == actor.user_id]
     if grade != "scoped":
         return rows
     if actor.role == "patient":

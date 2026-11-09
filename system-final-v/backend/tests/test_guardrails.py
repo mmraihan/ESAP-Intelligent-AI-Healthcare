@@ -58,12 +58,19 @@ def test_reduced_calibration_suppresses_every_differential_badge(client, auth):
     assert any("calibration_validity=reduced" in w for w in r["warnings"])
 
 
-def test_reduced_calibration_does_not_suppress_risk_models(client, auth):
-    """M-02..M-05 keep native missingness; §3.1 is M-01-specific."""
+def test_a_placeholder_model_is_never_badged_calibrated(client, auth):
+    """Whatever the input: a stub has not been calibrated against anything.
+
+    The §3.1 rule that imputation leaves M-02..M-05's own flag alone only has
+    meaning for trained models, so it is covered by test_real_models.py.
+    """
     sparse = {"features": {"demographics": {"admission_age": 61, "is_female": 1}}}
     r = client.post("/api/v1/assess", headers=auth("physician"), json=sparse).json()
-    assert r["mortality"]["result"]["calibrated"] is True
-    assert r["icu"]["result"]["calibrated"] is True
+    assert r["mortality"]["status"] == "stub"
+    assert r["mortality"]["result"]["calibrated"] is False
+    assert r["icu"]["result"]["calibrated"] is False
+    assert r["readmission"]["result"]["calibrated"] is False
+    assert "Placeholder model, not for clinical use" in r["disclaimer"]
 
 
 def test_los_never_badges_a_flat_calibrated_interval(client, auth, case):

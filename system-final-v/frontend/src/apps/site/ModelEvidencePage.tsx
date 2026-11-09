@@ -6,6 +6,7 @@
  * vendor who volunteered it is a vendor worth a second meeting.
  */
 import { MODELS, SUBGROUP_FAIRNESS } from "@/mock/db";
+import { isEvaluated } from "@/lib/evidence";
 import { num } from "@/lib/format";
 import { BarRows } from "@/components/ui/charts";
 import { Badge, Banner, Card } from "@/components/ui/primitives";
@@ -18,6 +19,8 @@ export function ModelEvidencePage() {
   const m02 = MODELS.find((m) => m.id === "M-02");
   const m01Recall = Number(m01?.headline[0]?.value) || 0;
   const cold = m01?.strata.find((x) => /cold/i.test(x.label));
+  const m01Ready = m01 ? isEvaluated(m01) : false;
+  const withEce = MODELS.filter((m) => m.id !== "M-05" && isEvaluated(m));
   const coldShare = m01 && cold ? cold.n / Math.max(1, m01.strata.reduce((a, x) => a + x.n, 0)) : null;
   if (!m01) {
     return (
@@ -41,7 +44,21 @@ export function ModelEvidencePage() {
         <EvidenceArt />
       </section>
 
+      {!MODELS.some(isEvaluated) && (
+        <section>
+          <Banner tone="warning" icon={<AlertIcon size={18} />} title="No model evaluation is published on this server">
+            The evaluation files are not on this server, so no performance figures are shown. Estimates
+            in the hosted demo come from placeholder models and are not validated.
+          </Banner>
+        </section>
+      )}
+
       <section className="grid grid-2">
+        {!m01Ready ? (
+          <Card title="M-01 differential — pooled vs. stratified" subtitle="Not evaluated on this server">
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>No results are available to show.</p>
+          </Card>
+        ) : (
         <Card
           title="M-01 differential — pooled vs. stratified"
           subtitle={`Recall@20 · ${m01.headline.find((h) => /labels/i.test(h.label))?.value ?? "—"} CCSR categories scored`}
@@ -61,17 +78,24 @@ export function ModelEvidencePage() {
             the product labels them rather than averaging them away.
           </p>
         </Card>
+        )}
 
         <Card title="Calibration" subtitle="Expected calibration error on the held-out test set">
-          <BarRows
-            rows={MODELS.filter((m) => m.id !== "M-05").map((m) => ({ key: m.id, label: `${m.id} ${m.name}`, value: m.ece, meta: m.calibrationMethod }))}
-            max={0.05}
-            format={(v) => v.toFixed(4)}
-          />
-          <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
-            Lower is better; 0.05 is the action threshold. {m02 ? `M-02 is ${m02.ece.toFixed(4)}.` : ""} The per-bin
-            reliability curves are not stored with the evaluation, so they are not drawn here.
-          </p>
+          {withEce.length === 0 ? (
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>No calibration has been measured on this server.</p>
+          ) : (
+            <>
+              <BarRows
+                rows={withEce.map((m) => ({ key: m.id, label: `${m.id} ${m.name}`, value: m.ece, meta: m.calibrationMethod }))}
+                max={0.05}
+                format={(v) => v.toFixed(4)}
+              />
+              <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
+                Lower is better; 0.05 is the action threshold. {m02 && isEvaluated(m02) ? `M-02 is ${m02.ece.toFixed(4)}.` : ""} The per-bin
+                reliability curves are not stored with the evaluation, so they are not drawn here.
+              </p>
+            </>
+          )}
         </Card>
       </section>
 
@@ -177,15 +201,15 @@ export function ModelEvidencePage() {
                           <span className="muted">{m.outcome}</span>
                         </div>
                       </td>
-                      <td><Badge tone={m.status === "live" ? "good" : "warning"}>{m.status}</Badge></td>
+                      <td><Badge tone={m.status === "live" ? "good" : "warning"}>{m.status === "not_ready" ? "not evaluated" : m.status}</Badge></td>
                       <td style={{ textAlign: "right" }} className="tnum">
-                        {m.headline[0]?.value ?? "—"} <span className="muted">{m.headline[0]?.label ?? ""}</span>
+                        {isEvaluated(m) ? <>{m.headline[0]?.value ?? "—"} <span className="muted">{m.headline[0]?.label ?? ""}</span></> : "—"}
                       </td>
-                      <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" ? "—" : m.ece.toFixed(3)}</td>
+                      <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : m.ece.toFixed(3)}</td>
                       <td>
                         <div className="cell-stack">
                           <span>{weakest.label}</span>
-                          <span className="muted tnum">{weakest.metric} {weakest.value.toFixed(3)}</span>
+                          {m.strata.length > 0 && <span className="muted tnum">{weakest.metric} {weakest.value.toFixed(3)}</span>}
                         </div>
                       </td>
                     </tr>

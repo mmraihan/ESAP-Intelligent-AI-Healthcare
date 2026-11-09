@@ -20,8 +20,8 @@ const d = (i: number) => ({ "--i": i } as CSSProperties);
 /** Concentric boundaries around one tenant's data, with the audit chain below. */
 export function SecurityArt() {
   const layers = [
-    { r: 132, label: "Audit · append-only, hash-chained" },
-    { r: 100, label: "Tenant-scoped keys · AES-256" },
+    { r: 132, label: "Every access audited" },
+    { r: 100, label: "Role-based access" },
     { r: 68, label: "Your tenant" },
   ];
   return (

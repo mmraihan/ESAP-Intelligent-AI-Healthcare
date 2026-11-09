@@ -91,6 +91,9 @@ export let NOW = new Date();
  *  role always reads true. */
 export let PATIENT_PORTAL_ENABLED = true;
 
+/** The server is answering with placeholder models, not trained ones. */
+export let PLACEHOLDER_MODELS = false;
+
 export const TENANTS: Tenant[] = [];
 export const FACILITIES: Facility[] = [];
 export const ALL_UNITS: Unit[] = [];
@@ -156,6 +159,7 @@ export type Seed = typeof import("./seed.json");
 export function applyDataset(data: Seed): void {
   NOW = new Date(data.now);
   PATIENT_PORTAL_ENABLED = (data as { patient_portal_enabled?: boolean }).patient_portal_enabled ?? true;
+  PLACEHOLDER_MODELS = (data as { model_mode?: string }).model_mode === "stub";
 
   fill(TENANTS, data.tenants as Tenant[]);
   fill(FACILITIES, data.facilities as Facility[]);
@@ -184,10 +188,9 @@ export function applyDataset(data: Seed): void {
     (data.tenants as Tenant[]).find((t) => t.id === data.active_tenant_id) ??
     (data.tenants as Tenant[])[0];
   assign(ACTIVE_TENANT, active);
-  assign(
-    DEMO_IDENTITY,
-    data.demo_identity as Record<RoleCode, { name: string; email: string; title: string }>,
-  );
+  // Merged, not replaced: a signed-in payload holds only the caller's identity,
+  // and the demo role picker still needs the public list it already loaded.
+  Object.assign(DEMO_IDENTITY, data.demo_identity);
 
   version += 1;
   for (const listener of listeners) listener();
@@ -208,12 +211,18 @@ export function applyPublic(data: {
     CONSENTS, CARE_TEAM, RECORDS, ADOPTION_SERIES, SUBGROUP_FAIRNESS] as unknown[][]) {
     list.length = 0;
   }
+  PLACEHOLDER_MODELS = false;
   fill(MODELS, data.models);
   fill(PLANS, data.plans);
   assign(ACTIVE_TENANT, undefined);
   assign(DEMO_IDENTITY, data.demoAccounts as Record<RoleCode, { name: string; email: string; title: string }>);
   version += 1;
   for (const listener of listeners) listener();
+}
+
+/** Add the sign-in picker's accounts to what a signed-in session already holds. */
+export function mergeDemoAccounts(accounts: Record<string, { name: string; email: string; title: string }>): void {
+  Object.assign(DEMO_IDENTITY, accounts);
 }
 
 /** Signal a change of data source (for example, the API became unreachable). */

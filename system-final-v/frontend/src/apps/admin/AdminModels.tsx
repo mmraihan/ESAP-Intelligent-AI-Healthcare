@@ -7,7 +7,8 @@
  * a tenant cannot turn off a calibration badge or a degraded label.
  */
 import { useEffect, useState } from "react";
-import { MODELS, ALL_UNITS } from "@/mock/db";
+import { MODELS, ALL_UNITS, PLACEHOLDER_MODELS } from "@/mock/db";
+import { isEvaluated } from "@/lib/evidence";
 import type { ModelId } from "@/mock/types";
 import { Badge, Banner, Button, Card, Field, PageHeader, Select, Toggle } from "@/components/ui/primitives";
 import { Modal, Toast } from "@/components/ui/overlays";
@@ -102,7 +103,7 @@ export function AdminModels() {
             </div>
             <div className="row" style={{ gap: 10, alignItems: "center" }}>
               <FusionPill status={m.fusion} />
-              <CalibratedBadge calibrated={m.ece < 0.05} />
+              <CalibratedBadge calibrated={!PLACEHOLDER_MODELS && isEvaluated(m) && m.ece < 0.05} />
               <Toggle
                 checked={enabled[m.id] ?? true}
                 onChange={(v) => void save({ enabled: { [m.id]: v } }, `${m.id} ${v ? "enabled" : "disabled"} for this tenant`).then(setToast)}

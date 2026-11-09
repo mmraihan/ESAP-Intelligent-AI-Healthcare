@@ -96,7 +96,8 @@ def test_assess_returns_all_five_models(client, auth, case):
     r = client.post("/api/v1/assess", headers=auth("physician"), json=case).json()
     ids = {r[k]["model_id"] for k in ("differential", "mortality", "icu", "readmission", "los")}
     assert ids == {"M-01", "M-02", "M-03", "M-04", "M-05"}
-    assert r["disclaimer"].startswith("Decision support only")
+    assert r["disclaimer"].startswith("Placeholder model, not for clinical use")
+    assert "Decision support only" in r["disclaimer"]
     assert r["schema_version"] == "1.0"
 
 

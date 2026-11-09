@@ -28,6 +28,8 @@ type Submission = {
   since?: string | null;
   gettingWorse?: boolean | null;
   missedDoses?: boolean | null;
+  /** Absent on submissions made before this was a separate answer. */
+  hadBefore?: "yes" | "no" | "unsure" | null;
   concerns?: string[];
   medications?: string | null;
   questions?: string[];
@@ -40,6 +42,10 @@ type Include = { symptoms: boolean; meds: boolean; questions: boolean };
 
 const SINCE: Record<string, string> = {
   today: "Today", days: "A few days", weeks: "A few weeks", months: "A few months", longer: "Longer",
+};
+
+const HAD_BEFORE: Record<string, string> = {
+  yes: "Had this before: yes.", no: "Had this before: no.", unsure: "Had this before: not sure.",
 };
 
 function lines(text: string | null | undefined): string[] {
@@ -83,8 +89,9 @@ export function PatientPreVisit() {
   const changes = latest ? lines(latest.describe) : [];
   const started = latest
     ? [
-        latest.since ? `${t("Started")}: ${t(SINCE[latest.since] ?? latest.since)}.` : "",
-        latest.gettingWorse === true ? t("Getting worse: yes.") : latest.gettingWorse === false ? t("Getting worse: no.") : "",
+        `${t("Started")}: ${latest.since ? t(SINCE[latest.since] ?? latest.since) : t("Not answered")}.`,
+        latest.gettingWorse === true ? t("Getting worse: yes.") : latest.gettingWorse === false ? t("Getting worse: no.") : t("Getting worse: not answered."),
+        latest.hadBefore === undefined ? "" : latest.hadBefore ? t(HAD_BEFORE[latest.hadBefore]) : t("Had this before: not answered."),
       ].filter(Boolean).join(" ")
     : "";
   const meds = latest ? lines(latest.medications) : [];
@@ -95,7 +102,7 @@ export function PatientPreVisit() {
     const out = [t("Summary for {name}", { name }), t("Prepared {date} · to be reviewed by a clinician", { date: today }), ""];
     if (include.symptoms) out.push(t("What has changed"), ...changes.map((c) => `- ${c}`), started, "");
     if (include.meds) {
-      out.push(t("What I am taking"), ...(meds.length ? meds.map((m) => `- ${m}`) : [`- ${t("Nothing recorded")}`]));
+      out.push(t("What I am taking"), ...(meds.length ? meds.map((m) => `- ${m}`) : [`- ${t("Not answered")}`]));
       if (latest?.missedDoses) out.push(`- ${t("I have missed some doses recently")}`);
       out.push("");
     }
@@ -184,7 +191,7 @@ export function PatientPreVisit() {
                   <span className="row" style={{ gap: 7 }}><PillIcon size={16} /> {t("What I am taking")}</span>
                 </h3>
                 {meds.length === 0 ? (
-                  <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t("Nothing recorded")}</p>
+                  <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t("Not answered")}</p>
                 ) : (
                   <ul className="qa-list">
                     {meds.map((m) => <li key={m}><PillIcon size={16} /> <span>{m}</span></li>)}

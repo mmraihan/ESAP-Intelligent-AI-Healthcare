@@ -315,7 +315,7 @@ def mortality(features: IntakeFeatures) -> ModelOutcome:
     result = RiskResult(
         probability=round(p, 4),
         population_percentile=_percentile(p, 0.021),
-        calibrated=True,  # M-02..M-05 keep native missingness; §3.1 does not suppress them
+        calibrated=False,  # a placeholder has never been calibrated against anything
         threshold=0.0204,
         flag=None,  # null unless screening_mode is explicitly enabled
         operating_point="sensitivity@0.80 (screening only)",
@@ -337,7 +337,7 @@ def icu(features: IntakeFeatures) -> ModelOutcome:
     result = RiskResult(
         probability=round(p, 4),
         population_percentile=_percentile(p, 0.15),
-        calibrated=True,
+        calibrated=False,
         threshold=0.1609,
         flag=None,
         operating_point="sensitivity@0.80 (screening only)",
@@ -358,7 +358,7 @@ def readmission(features: IntakeFeatures, frame: str = "intake") -> ModelOutcome
     result = ReadmissionResult(
         probability=round(p, 4),
         population_percentile=_percentile(p, 0.13),
-        calibrated=True,
+        calibrated=False,
         threshold=None,
         flag=None,
         operating_point="precision@top-decile (alert budget)",
@@ -446,7 +446,7 @@ def differential(features: IntakeFeatures, top_n: int = 10) -> ModelOutcome:
             ccsr=code,
             probability=round(p, 4),
             family=meta["family"],
-            calibrated=True,  # may be hard-suppressed below
+            calibrated=False,
             from_unconfirmed_extraction=False,
         )
         expl = _explanation(

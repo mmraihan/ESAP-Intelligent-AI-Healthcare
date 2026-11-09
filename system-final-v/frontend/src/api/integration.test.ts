@@ -86,7 +86,7 @@ online()("live API", () => {
 
     expect(result.differential.model_id).toBe("M-01");
     expect(result.los.result?.interval_low).toBeLessThanOrEqual(result.los.result!.interval_high);
-    expect(result.disclaimer).toMatch(/^Decision support only/);
+    expect(result.disclaimer).toMatch(/^Placeholder model, not for clinical use/);
     // Stub mode is declared, never dressed up as live.
     expect(result.mortality.status).toBe("stub");
   });

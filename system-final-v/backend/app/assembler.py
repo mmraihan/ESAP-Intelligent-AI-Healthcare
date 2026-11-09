@@ -24,6 +24,17 @@ from .schemas.clinical import AssessResponse, IntakeRequest, ModelOutcome
 from .security import iso, utcnow
 
 
+#: Replaces the standard disclaimer whenever a placeholder produced the numbers.
+PLACEHOLDER_DISCLAIMER = (
+    "Placeholder model, not for clinical use. AI-generated, not calibrated, not a trained model. "
+    "Decision support only, not diagnosis."
+)
+
+
+def _is_placeholder(response: AssessResponse) -> bool:
+    return any(getattr(response, attr).status == "stub" for attr in _MODEL_ATTR.values())
+
+
 def _safe(fn, model_id: str, *args, **kwargs) -> ModelOutcome:
     try:
         return fn(*args, **kwargs)
@@ -105,7 +116,7 @@ def assess(req: IntakeRequest, *, top_n: int = 10, frame: str = "intake") -> Ass
 
     _attach_experimental_towers(differential, features, top_n, unconfirmed, warnings)
 
-    return AssessResponse(
+    response = AssessResponse(
         request_id=req.request_id or str(uuid.uuid4()),
         generated_at=utcnow(),
         differential=differential,
@@ -116,6 +127,9 @@ def assess(req: IntakeRequest, *, top_n: int = 10, frame: str = "intake") -> Ass
         feature_coverage=fc,
         warnings=warnings,
     )
+    if _is_placeholder(response):
+        response.disclaimer = PLACEHOLDER_DISCLAIMER
+    return response
 
 
 #: The AssessResponse attribute name for each model id.
@@ -260,7 +274,7 @@ def worklist_patch(response: AssessResponse) -> dict:
             "losHigh": los.get("interval_high"),
         },
         "topDifferential": top,
-        "calibrated": fc.calibration_validity == "full",
+        "calibrated": fc.calibration_validity == "full" and not _is_placeholder(response),
         "calibrationValidity": fc.calibration_validity,
         "signalCompleteness": round(present / 4, 2),
         "hasNotes": fc.has_notes,

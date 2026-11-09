@@ -28,6 +28,7 @@ export type PatientSubmission = {
   severity?: number | null;
   gettingWorse?: boolean | null;
   missedDoses?: boolean | null;
+  hadBefore?: "yes" | "no" | "unsure" | null;
   concerns?: string[];
   medications?: string | null;
   questions?: string[];
@@ -112,9 +113,10 @@ export function PatientSubmissions({ encounterId, onToast, canRespond = true }: 
                   <dl className="kv" style={{ marginTop: 8 }}>
                     {s.kind === "symptoms" ? (
                       <>
-                        {s.since && <Row label="Since">{s.since}</Row>}
+                        <Row label="Since">{s.since || "Not answered"}</Row>
                         {s.severity !== null && s.severity !== undefined && <Row label="Severity (0–10)">{s.severity}</Row>}
-                        {s.gettingWorse !== null && s.gettingWorse !== undefined && <Row label="Getting worse">{s.gettingWorse ? "Yes" : "No"}</Row>}
+                        <Row label="Getting worse">{s.gettingWorse === true ? "Yes" : s.gettingWorse === false ? "No" : "Not answered"}</Row>
+                        {s.hadBefore !== undefined && <Row label="Had this before">{s.hadBefore === "yes" ? "Yes" : s.hadBefore === "no" ? "No" : s.hadBefore === "unsure" ? "Not sure" : "Not answered"}</Row>}
                         {s.missedDoses !== null && s.missedDoses !== undefined && <Row label="Missed doses">{s.missedDoses ? "Yes" : "No"}</Row>}
                         {!!s.concerns?.length && <Row label="Concerns">{s.concerns.join(", ")}</Row>}
                         {s.medications && <Row label="Taking">{s.medications}</Row>}

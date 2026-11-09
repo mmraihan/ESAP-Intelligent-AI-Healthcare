@@ -21,6 +21,7 @@ import { pct } from "@/lib/format";
 import { Button, cx } from "@/components/ui/primitives";
 import { AlertIcon, CheckIcon, SendIcon, SparkIcon, XIcon } from "@/components/ui/icons";
 import { BodySystemGlyph } from "@/components/ui/bodySystems";
+import { AiGeneratedTag } from "@/components/ui/domain";
 import { currentLang, t } from "@/i18n";
 
 type Outcome = { result?: { probability?: number | null; interval_low?: number; interval_high?: number } };
@@ -28,9 +29,10 @@ type AssessSummary = {
   mortality: number | null; icu: number | null; readmission: number | null;
   losLow: number | null; losHigh: number | null;
   conditions: { ccsr: string; family: string; probability: number }[];
+  placeholder: boolean;
 };
 type Msg =
-  | { role: "assistant" | "user"; content: string }
+  | { role: "assistant" | "user"; content: string; emergency?: boolean }
   | { role: "result"; summary: AssessSummary };
 
 type ChatResponse = {
@@ -41,6 +43,7 @@ type ChatResponse = {
   ready: boolean;
   can_run_assessment: boolean;
   llm_used: boolean;
+  emergency?: boolean;
 };
 
 export const useAssistant = create<{ open: boolean; setOpen: (v: boolean) => void }>((set) => ({
@@ -142,13 +145,13 @@ export function ChatAssistant() {
         .filter((m): m is Extract<Msg, { content: string }> => m.role !== "result")
         .slice(-12)
         .map((m) => ({ role: m.role, content: m.content }));
-      const res = await api.post<ChatResponse>("/api/v1/chat", { message, draft, history });
+      const res = await api.post<ChatResponse>("/api/v1/chat", { message, draft, history, lang: currentLang() });
       setDraft(res.draft);
       setCaptured(res.captured);
       setNeeds(res.needs_confirmation);
       setCanRun(res.can_run_assessment);
       setLlmUsed(res.llm_used);
-      setMsgs((m) => [...m, { role: "assistant", content: res.reply }]);
+      setMsgs((m) => [...m, { role: "assistant", content: res.reply, emergency: res.emergency }]);
     } catch (err) {
       const text = err instanceof ApiError ? err.message : t("I couldn't reach the assistant just now.");
       setMsgs((m) => [...m, { role: "assistant", content: text }]);
@@ -213,8 +216,8 @@ export function ChatAssistant() {
           m.role === "result" ? (
             <ResultCard key={i} s={m.summary} />
           ) : (
-            <div key={i} className={cx("assist-msg", `is-${m.role}`)}>
-              {m.role === "assistant" && <span className="assist-avatar" aria-hidden="true"><SparkIcon size={12} /></span>}
+            <div key={i} className={cx("assist-msg", `is-${m.role}`, m.emergency && "is-emergency")} role={m.emergency ? "alert" : undefined}>
+              {m.role === "assistant" && <span className="assist-avatar" aria-hidden="true">{m.emergency ? <AlertIcon size={12} /> : <SparkIcon size={12} />}</span>}
               <div className="assist-bubble">{m.content}</div>
             </div>
           ),
@@ -310,7 +313,10 @@ function ResultCard({ s }: { s: AssessSummary }) {
   ];
   return (
     <div className="assist-result">
-      <p className="assist-result-head"><SparkIcon size={13} /> Assessment complete</p>
+      <p className="assist-result-head"><SparkIcon size={13} /> Assessment complete <AiGeneratedTag /></p>
+      {s.placeholder && (
+        <p className="inline-warn"><AlertIcon size={13} /> Placeholder model, not for clinical use. These numbers are not calibrated.</p>
+      )}
       <dl className="assist-result-grid">
         {rows.map(([k, v]) => (
           <div key={k}><dt>{k}</dt><dd className="tnum">{v}</dd></div>
@@ -348,5 +354,6 @@ function summarise(r: any): AssessSummary {
       family: i.family ?? "",
       probability: i.probability ?? 0,
     })),
+    placeholder: [r?.differential, r?.mortality, r?.icu, r?.readmission, r?.los].some((o) => o?.status === "stub"),
   };
 }

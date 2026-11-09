@@ -12,7 +12,7 @@ import { ROLES, can } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
 import { TENANTS } from "@/mock/db";
 import { initials } from "@/lib/format";
-import { AssistiveLine, RoleBadge } from "@/components/ui/domain";
+import { AssistiveLine, PlaceholderModelBanner, RoleBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
   ChevronDown, CreditCardIcon, LogoutIcon, MailIcon, MenuIcon, PaletteIcon, UnlockIcon, XIcon,
@@ -246,6 +246,7 @@ export function AppShell({
         </nav>
 
         <main className={cx("main", wide && "is-wide")} id="main">
+          {surface === "clinician" && <PlaceholderModelBanner />}
           {children}
         </main>
       </div>

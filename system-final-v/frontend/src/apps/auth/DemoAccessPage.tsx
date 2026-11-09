@@ -10,11 +10,12 @@
  * ESAP_DEMO_PICKER is on — switch that off on any deployment that must not
  * offer demo sign-in.
  */
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROLES, type RoleCode } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
-import { DEMO_IDENTITY } from "@/mock/db";
+import { api } from "@/api/client";
+import { DEMO_IDENTITY, mergeDemoAccounts } from "@/mock/db";
 import { LanguageToggle, t } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
@@ -31,6 +32,16 @@ const DEMO_GROUPS: { title: string; note: string; icon: JSX.Element; roles: Role
 export function DemoAccessPage() {
   const nav = useNavigate();
   const { signIn, pending, error } = useSession();
+  const [, setLoaded] = useState(false);
+
+  // A signed-in session only holds its own identity, so a person who opens this
+  // page while signed in still needs the full list to switch role.
+  useEffect(() => {
+    api.get<{ accounts: Record<string, { name: string; email: string; title: string }> }>("/api/v1/public/demo-accounts")
+      .then((r) => { mergeDemoAccounts(r.accounts ?? {}); setLoaded(true); })
+      .catch(() => undefined);
+  }, []);
+
   const available = Object.keys(DEMO_IDENTITY).length > 0;
 
   // Keep the page out of search indexes even if the URL leaks.

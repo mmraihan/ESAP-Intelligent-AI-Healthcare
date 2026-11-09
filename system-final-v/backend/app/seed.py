@@ -22,10 +22,17 @@ import sys
 
 from . import db, evidence
 from .config import settings
+from .deps import SOLO_TENANT_ID
 from .security import expiry, hash_password, iso
 
 DEMO_PASSWORD = "esap-demo"
 DEMO_PATIENT_ID = "pat_demo_salib"
+
+#: Admitting needs a unit, and a self-serve clinician has no hospital to get one from.
+SOLO_FACILITY = {
+    "id": "f_solo", "tenantId": SOLO_TENANT_ID, "name": "My practice", "type": "clinic", "beds": 0,
+    "units": [{"id": "u_solo", "name": "My practice", "serviceLine": "General", "beds": 0, "occupied": 0}],
+}
 
 
 def _clear() -> None:
@@ -139,9 +146,11 @@ def load(seed: dict | None = None) -> None:
 
     _seed_credentials(seed)
     conn.commit()
+    ensure_solo_unit()
     # Model evidence comes from the training runs' metrics files, not the seed.
     evidence.refresh()
     _assess_seeded_encounters()
+    retire_stub_calibration()
 
 
 #: Encounters that have been scored at least once. The rest are still in intake.
@@ -264,6 +273,46 @@ def _seed_credentials(seed: dict) -> None:
     conn.commit()
 
 
+def ensure_solo_unit() -> None:
+    """Give self-serve accounts the default unit. Safe to run on every start."""
+    conn = db.connect()
+    conn.execute(
+        "INSERT OR IGNORE INTO facilities (id, tenant_id, name, doc) VALUES (?,?,?,?)",
+        (SOLO_FACILITY["id"], SOLO_TENANT_ID, SOLO_FACILITY["name"], json.dumps(SOLO_FACILITY)),
+    )
+    conn.commit()
+
+
+def retire_stub_calibration() -> None:
+    """Correct results saved when the placeholder still reported calibrated=true.
+
+    Those rows would otherwise keep showing a Calibrated badge. Only stored
+    placeholder output changes, and running it again does nothing. An encounter
+    that was never assessed has no estimate to be calibrated, so it is cleared
+    too; the seed file marks those true.
+    """
+    conn = db.connect()
+    latest_is_stub: dict[str, bool] = {}
+    for row in conn.execute("SELECT id, encounter_id, response FROM assessments ORDER BY created_at").fetchall():
+        is_stub = '"status":"stub"' in row["response"]
+        latest_is_stub[row["encounter_id"]] = is_stub
+        if not (is_stub and '"calibrated":true' in row["response"]):
+            continue
+        response = json.loads(row["response"])
+        for key in ("differential", "mortality", "icu", "readmission", "los"):
+            result = (response.get(key) or {}).get("result") or {}
+            if "calibrated" in result:
+                result["calibrated"] = False
+            for item in result.get("items") or []:
+                item["calibrated"] = False
+        conn.execute("UPDATE assessments SET response=? WHERE id=?",
+                     (json.dumps(response, separators=(",", ":")), row["id"]))
+    for enc in db.docs("SELECT doc FROM encounters"):
+        if enc.get("calibrated") and latest_is_stub.get(enc["id"], True):
+            db.patch_doc("encounters", enc["id"], {"calibrated": False})
+    conn.commit()
+
+
 def ensure_seeded() -> None:
     db.init_schema()
     if not db.is_seeded():
@@ -271,6 +320,9 @@ def ensure_seeded() -> None:
     else:
         # A re-evaluated model shows up on the next start, no reseed needed.
         evidence.refresh()
+        # An existing database predates these, and it is not reseeded on deploy.
+        ensure_solo_unit()
+        retire_stub_calibration()
 
 
 def main(argv: list[str] | None = None) -> int:

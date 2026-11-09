@@ -25,6 +25,7 @@ from .routers import (
     exports, ops, ops_incidents, ops_people, patient, patient_ops, requests, settings as settings_router,
     support, waitlist, workspace,
 )
+from .assembler import PLACEHOLDER_DISCLAIMER
 from .seed import ensure_seeded
 
 app = FastAPI(
@@ -123,7 +124,8 @@ def meta(actor: Actor = Depends(current_actor)):
     return {
         "schema_version": "1.0",
         "model_mode": predictors.mode(),
-        "disclaimer": "Decision support only — assistive and calibrated, not autonomous diagnosis.",
+        "disclaimer": (PLACEHOLDER_DISCLAIMER if predictors.mode() != "real" else
+                       "Decision support only — assistive and calibrated, not autonomous diagnosis."),
         "guarantees": {
             "features_cut_at_t0": True,
             "audit_covariates_are_model_inputs": False,

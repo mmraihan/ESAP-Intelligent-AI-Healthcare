@@ -18,6 +18,10 @@ from .config import settings
 from .errors import ApiError
 from .security import utcnow
 
+#: The shared tenant for self-serve accounts. Its members are unrelated private
+#: practices, so nothing is shared between them just because the tenant is.
+SOLO_TENANT_ID = "t_solo"
+
 
 @dataclass
 class Actor:
