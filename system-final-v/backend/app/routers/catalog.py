@@ -172,8 +172,13 @@ def public_demo_accounts():
     from .. import rbac
 
     identities = db.document("demo_identity") or {}
-    # Clinical and patient roles only: admin, ops and platform accounts have
-    # private passwords and MFA and are never offered for one-click sign-in.
+    # Clinical and patient roles get one-click sign-in with the demo password.
+    # The super admin is listed too, but marked private: the picker sends it to
+    # the normal sign-in with its own password and MFA. Hospital admin roles
+    # are not listed.
     surfaces = {r: (meta or {}).get("surface") for r, meta in rbac.roles().items()}
-    return {"enabled": True, "accounts": {r: v for r, v in identities.items()
-                                          if r != "guest" and surfaces.get(r) in {"clinician", "patient"}}}
+    accounts = {r: v for r, v in identities.items()
+                if r != "guest" and surfaces.get(r) in {"clinician", "patient"}}
+    if identities.get("super_admin"):
+        accounts["super_admin"] = {**identities["super_admin"], "private": True}
+    return {"enabled": True, "accounts": accounts}

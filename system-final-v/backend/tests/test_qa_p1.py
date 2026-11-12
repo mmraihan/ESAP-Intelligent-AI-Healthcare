@@ -223,8 +223,8 @@ def test_admins_keep_the_directory(client, auth):
 
 
 def test_the_demo_role_page_keeps_every_clinical_and_patient_account(client):
-    # Directory minimisation must not empty the picker. Admin and ops accounts
-    # are deliberately left out (private passwords + MFA).
+    # Directory minimisation must not empty the picker. Hospital admin roles
+    # are left out; the super admin is listed as private (own password + MFA).
     accounts = client.get("/api/v1/public/demo-accounts").json()["accounts"]
-    assert {"physician", "resident", "charge_nurse", "staff_nurse", "case_manager", "patient"} <= set(accounts)
-    assert not {"tenant_owner", "super_admin"} & set(accounts)
+    assert {"physician", "resident", "charge_nurse", "staff_nurse", "case_manager", "patient", "super_admin"} <= set(accounts)
+    assert "tenant_owner" not in accounts and accounts["super_admin"]["private"] is True

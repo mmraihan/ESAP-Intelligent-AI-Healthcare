@@ -132,8 +132,12 @@ def test_demo_picker_lists_only_clinical_and_patient_accounts(client):
     from app import rbac
     accounts = client.get("/api/v1/public/demo-accounts").json()["accounts"]
     assert "physician" in accounts and "patient" in accounts
-    assert all(rbac.roles()[r]["surface"] in {"clinician", "patient"} for r in accounts)
-    for blocked in ("tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor", "super_admin"):
+    # One-click accounts are clinical or patient; the super admin is listed
+    # only as private (own password + MFA). Hospital admin roles are absent.
+    one_click = {r for r, v in accounts.items() if not v.get("private")}
+    assert all(rbac.roles()[r]["surface"] in {"clinician", "patient"} for r in one_click)
+    assert accounts["super_admin"]["private"] is True and "super_admin" not in one_click
+    for blocked in ("tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor"):
         assert blocked not in accounts
 
 

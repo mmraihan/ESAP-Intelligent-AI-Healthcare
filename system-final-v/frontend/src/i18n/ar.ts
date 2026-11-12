@@ -25,6 +25,8 @@ export const AR: Record<string, string> = {
   "Clinician workspace": "مساحة عمل الأطباء",
   "Hospital admin console": "لوحة إدارة المستشفى",
   "Platform ops console": "لوحة تشغيل المنصة",
+  "Own password required": "مطلوبة كلمة المرور الخاصة",
+  "Own password and two-factor code required.": "يلزم إدخال كلمة المرور الخاصة ورمز التحقق الثنائي.",
   "Patient & self-serve": "المريض والخدمة الذاتية",
   "Demo role switcher.": "مبدّل الأدوار التجريبي.",
   "Production ships three separate bundles (§11.1) — a guest-reachable client never contains admin or ops code. This build combines them so one link demonstrates the whole product.":

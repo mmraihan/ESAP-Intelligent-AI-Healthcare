@@ -21,14 +21,22 @@ import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { DemoBadge } from "@/components/ui/domain";
 import { Badge, Banner, Button } from "@/components/ui/primitives";
-import { ActivityIcon, AlertIcon, ArrowRight, HeartPulseIcon, ShieldIcon } from "@/components/ui/icons";
+import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, LockIcon, ShieldIcon } from "@/components/ui/icons";
 
-// Clinical and patient roles only. Admin, ops and platform accounts have
-// private passwords and MFA, so they are never offered for one-click sign-in.
+// Clinical and patient roles sign in with one click (the demo password). The
+// super admin is listed but private: it opens the normal sign-in with the
+// email filled in, and needs its own password and MFA. Hospital admin roles
+// are not offered here.
 const DEMO_GROUPS: { title: string; note: string; icon: JSX.Element; roles: RoleCode[] }[] = [
   { title: "Clinical workspace", note: "Doctors and nurses. Guest-reachable in production.", icon: <ActivityIcon size={18} />, roles: ["physician", "resident", "charge_nurse", "staff_nurse", "case_manager"] },
+  { title: "Platform ops console", note: "Own password and two-factor code required.", icon: <GlobeIcon size={18} />, roles: ["super_admin"] },
   { title: "Patient portal", note: "Plain language, released content only.", icon: <HeartPulseIcon size={18} />, roles: ["patient"] },
 ];
+
+/** Never signed in with the shared demo password, whatever the server sends. */
+const PRIVATE_ROLES = new Set<RoleCode>(["super_admin"]);
+
+const isPrivate = (role: RoleCode) => PRIVATE_ROLES.has(role) || Boolean(DEMO_IDENTITY[role]?.private);
 
 export function DemoAccessPage() {
   const nav = useNavigate();
@@ -38,7 +46,7 @@ export function DemoAccessPage() {
   // A signed-in session only holds its own identity, so a person who opens this
   // page while signed in still needs the full list to switch role.
   useEffect(() => {
-    api.get<{ accounts: Record<string, { name: string; email: string; title: string }> }>("/api/v1/public/demo-accounts")
+    api.get<{ accounts: Record<string, { name: string; email: string; title: string; private?: boolean }> }>("/api/v1/public/demo-accounts")
       .then((r) => { mergeDemoAccounts(r.accounts ?? {}); setLoaded(true); })
       .catch(() => undefined);
   }, []);
@@ -55,6 +63,10 @@ export function DemoAccessPage() {
   }, []);
 
   function enter(role: RoleCode) {
+    if (isPrivate(role)) {
+      nav(`/login?email=${encodeURIComponent(DEMO_IDENTITY[role]?.email ?? "")}`);
+      return;
+    }
     void signIn(role).then(() => nav(ROLES[role].home)).catch(() => undefined);
   }
 
@@ -106,7 +118,7 @@ export function DemoAccessPage() {
                             <strong>{t(ROLES[r].label)}</strong>
                             <small>{DEMO_IDENTITY[r]?.name}</small>
                           </span>
-                          <ArrowRight size={14} />
+                          {isPrivate(r) ? <LockIcon size={14} aria-label={t("Own password required")} /> : <ArrowRight size={14} />}
                         </button>
                       ))}
                     </div>

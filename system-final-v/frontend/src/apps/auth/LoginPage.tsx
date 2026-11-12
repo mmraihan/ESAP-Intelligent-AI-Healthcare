@@ -10,7 +10,7 @@
  * (DemoAccessPage, mounted only when VITE_DEMO_ACCESS_PATH is set).
  */
 import { useState, type FormEvent, type KeyboardEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ROLES } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
 import { t } from "@/i18n";
@@ -23,7 +23,9 @@ export function LoginPage() {
   const nav = useNavigate();
   const { signInWithPassword, verifyMfa, cancelMfa, mfaPending, pending, error } = useSession();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  // /demo-role sends private accounts (the super admin) here with ?email=.
+  const [params] = useSearchParams();
+  const [email, setEmail] = useState(() => params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [capsLock, setCapsLock] = useState(false);

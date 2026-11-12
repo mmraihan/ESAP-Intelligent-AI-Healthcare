@@ -134,7 +134,7 @@ export const SUBGROUP_FAIRNESS: {
 export const ACTIVE_TENANT = {} as Tenant;
 
 /** The identities the demo role-switcher can sign in as. */
-export const DEMO_IDENTITY = {} as Record<RoleCode, { name: string; email: string; title: string }>;
+export const DEMO_IDENTITY = {} as Record<RoleCode, { name: string; email: string; title: string; private?: boolean }>;
 
 export function encounterById(id: string): Encounter | undefined {
   return ENCOUNTERS.find((e) => e.id === id);
@@ -205,7 +205,7 @@ export function applyDataset(data: Seed): void {
 export function applyPublic(data: {
   models: ModelCard[];
   plans: PlanDefinition[];
-  demoAccounts: Record<string, { name: string; email: string; title: string }>;
+  demoAccounts: Record<string, { name: string; email: string; title: string; private?: boolean }>;
 }): void {
   for (const list of [TENANTS, FACILITIES, ALL_UNITS, USERS, INVITES, ENCOUNTERS, ROLLOUTS, DRIFT,
     AUDIT_EVENTS, PLATFORM_AUDIT, BREAK_GLASS, TRANSFERS, INCIDENTS, INVOICES, RELEASED_RESULTS,
@@ -216,13 +216,13 @@ export function applyPublic(data: {
   fill(MODELS, data.models);
   fill(PLANS, data.plans);
   assign(ACTIVE_TENANT, undefined);
-  assign(DEMO_IDENTITY, data.demoAccounts as Record<RoleCode, { name: string; email: string; title: string }>);
+  assign(DEMO_IDENTITY, data.demoAccounts as Record<RoleCode, { name: string; email: string; title: string; private?: boolean }>);
   version += 1;
   for (const listener of listeners) listener();
 }
 
 /** Add the sign-in picker's accounts to what a signed-in session already holds. */
-export function mergeDemoAccounts(accounts: Record<string, { name: string; email: string; title: string }>): void {
+export function mergeDemoAccounts(accounts: Record<string, { name: string; email: string; title: string; private?: boolean }>): void {
   Object.assign(DEMO_IDENTITY, accounts);
 }
 
