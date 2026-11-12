@@ -5,6 +5,8 @@
  * only for what the sales team needs to get back to someone, says plainly who
  * will contact them and why, and grants nothing — joining is not an account.
  * Entries land in the ops console's Waitlist queue (/ops/waitlist).
+ *
+ * English and Arabic (QA issue 14): labels are English keys for t().
  */
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
@@ -14,6 +16,7 @@ import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { ApiError, NetworkError } from "@/api/client";
 import { joinWaitlist } from "@/api/desk";
 import { Select } from "@/components/ui/primitives";
+import { t, tl } from "@/i18n";
 import { AlertIcon, CheckIcon, ClockIcon, MailIcon, ShieldIcon, UsersIcon } from "@/components/ui/icons";
 
 const ORG_TYPES = [
@@ -69,9 +72,9 @@ export function WaitlistPage() {
       });
       setDone({ position: r.position });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message
-        : err instanceof NetworkError ? "We could not reach our server. Please try again in a moment."
-        : "Something went wrong. Nothing was sent.");
+      setError(err instanceof ApiError ? t(err.message)
+        : err instanceof NetworkError ? t("We could not reach our server. Please try again in a moment.")
+        : t("Something went wrong. Nothing was sent."));
     } finally {
       setSending(false);
     }
@@ -83,26 +86,26 @@ export function WaitlistPage() {
         <div className="wl-grid">
           <div className="wl-intro">
             <HeartMonitor className="wl-heart" />
-            <span className="hero-eyebrow">Early access</span>
-            <h1>Join the ESAP waitlist.</h1>
+            <span className="hero-eyebrow">{t("Early access")}</span>
+            <h1>{t("Join the ESAP waitlist.")}</h1>
             <p className="hero-lede">
-              We are opening pilot places to hospitals and clinicians in stages. Leave your details and our
-              team will contact you when a place is ready for your setting.
+              {t("We are opening pilot places to hospitals and clinicians in stages. Leave your details and our team will contact you when a place is ready for your setting.")}
             </p>
             <ul className="wl-points">
               {POINTS.map((p) => (
                 <li key={p.title}>
                   <span className="wl-point-icon" aria-hidden="true">{p.icon}</span>
                   <span>
-                    <strong>{p.title}</strong>
-                    <span>{p.text}</span>
+                    <strong>{t(p.title)}</strong>
+                    <span>{t(p.text)}</span>
                   </span>
                 </li>
               ))}
             </ul>
             <p className="wl-fine">
-              Decision support, not diagnosis. Want to try it on your own cases now?{" "}
-              <Link to="/signup" className="auth-link is-inline">Create a free individual seat</Link>.
+              {tl("Decision support, not diagnosis. Want to try it on your own cases now? {signup}.", {
+                signup: <Link to="/signup" className="auth-link is-inline">{t("Create a free individual seat")}</Link>,
+              })}
             </p>
             <WaitlistPath />
           </div>
@@ -111,91 +114,90 @@ export function WaitlistPage() {
             {done ? (
               <div className="wl-done" role="status">
                 <span className="wl-done-icon" aria-hidden="true"><CheckIcon size={22} /></span>
-                <h2>You are on the list.</h2>
+                <h2>{t("You are on the list.")}</h2>
                 {done.position !== null && (
                   <p className="wl-position">
-                    Your place: <strong className="tnum">#{done.position}</strong>
+                    {t("Your place:")} <strong className="tnum">#{done.position}</strong>
                   </p>
                 )}
                 <p className="auth-sub">
-                  We have your details. Someone from our team will contact you at the email you gave. There is
-                  nothing else you need to do.
+                  {t("We have your details. Someone from our team will contact you at the email you gave. There is nothing else you need to do.")}
                 </p>
-                <Link to="/product" className="pub-btn pub-btn-outline">Back to the product page</Link>
+                <Link to="/product" className="pub-btn pub-btn-outline">{t("Back to the product page")}</Link>
               </div>
             ) : (
               <form className="wl-form" onSubmit={submit} noValidate>
                 <div>
-                  <h2 className="auth-title">Request early access</h2>
-                  <p className="auth-sub">Fields marked * are required. It takes under a minute.</p>
+                  <h2 className="auth-title">{t("Request early access")}</h2>
+                  <p className="auth-sub">{t("Fields marked * are required. It takes under a minute.")}</p>
                 </div>
 
                 <div className="auth-row-2">
                   <label className="auth-field">
-                    <span className="auth-label">Full name <em aria-hidden="true">*</em></span>
+                    <span className="auth-label">{t("Full name")} <em aria-hidden="true">*</em></span>
                     <input className="input auth-input is-plain" autoComplete="name" value={form.name}
                       onChange={set("name")} aria-invalid={touched && nameBad} required />
-                    {touched && nameBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> Tell us your name.</span>}
+                    {touched && nameBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("Tell us your name.")}</span>}
                   </label>
                   <label className="auth-field">
-                    <span className="auth-label">Work email <em aria-hidden="true">*</em></span>
+                    <span className="auth-label">{t("Work email")} <em aria-hidden="true">*</em></span>
                     <input className="input auth-input is-plain" type="email" autoComplete="email" value={form.email}
                       onChange={set("email")} aria-invalid={touched && emailBad} required />
-                    {touched && emailBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> That does not look like an email address.</span>}
+                    {touched && emailBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("That does not look like an email address.")}</span>}
                   </label>
                 </div>
 
                 <div className="auth-row-2">
                   <label className="auth-field">
-                    <span className="auth-label">You are joining as</span>
+                    <span className="auth-label">{t("You are joining as")}</span>
                     <Select value={form.org_type} onChange={set("org_type")}>
-                      {ORG_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      {ORG_TYPES.map((o) => <option key={o.value} value={o.value}>{t(o.label)}</option>)}
                     </Select>
                   </label>
                   <label className="auth-field">
                     <span className="auth-label">
-                      Organization {form.org_type !== "individual" && <em aria-hidden="true">*</em>}
+                      {t("Organization")} {form.org_type !== "individual" && <em aria-hidden="true">*</em>}
                     </span>
                     <input className="input auth-input is-plain" autoComplete="organization" value={form.organization}
                       onChange={set("organization")} aria-invalid={touched && orgBad} />
-                    {touched && orgBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> Which hospital or clinic?</span>}
+                    {touched && orgBad && <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("Which hospital or clinic?")}</span>}
                   </label>
                 </div>
 
                 <div className="auth-row-2">
                   <label className="auth-field">
-                    <span className="auth-label">Job title</span>
-                    <input className="input auth-input is-plain" autoComplete="organization-title" placeholder="Optional"
+                    <span className="auth-label">{t("Job title")}</span>
+                    <input className="input auth-input is-plain" autoComplete="organization-title" placeholder={t("Optional")}
                       value={form.job_title} onChange={set("job_title")} />
                   </label>
                   <label className="auth-field">
-                    <span className="auth-label">Phone</span>
-                    <input className="input auth-input is-plain" type="tel" autoComplete="tel" placeholder="Optional"
+                    <span className="auth-label">{t("Phone")}</span>
+                    <input className="input auth-input is-plain" type="tel" autoComplete="tel" placeholder={t("Optional")}
                       value={form.phone} onChange={set("phone")} />
                   </label>
                 </div>
 
                 <div className="auth-row-2">
                   <label className="auth-field">
-                    <span className="auth-label">Country</span>
-                    <input className="input auth-input is-plain" autoComplete="country-name" placeholder="Optional"
+                    <span className="auth-label">{t("Country")}</span>
+                    <input className="input auth-input is-plain" autoComplete="country-name" placeholder={t("Optional")}
                       value={form.country} onChange={set("country")} />
                   </label>
                   <label className="auth-field">
-                    <span className="auth-label">Beds (approx.)</span>
-                    <input className="input auth-input is-plain" inputMode="numeric" placeholder="Optional"
+                    <span className="auth-label">{t("Beds (approx.)")}</span>
+                    <input className="input auth-input is-plain" inputMode="numeric" placeholder={t("Optional")}
                       value={form.beds} onChange={(e) => setForm({ ...form, beds: e.currentTarget.value.replace(/\D/g, "").slice(0, 6) })} />
                   </label>
                 </div>
 
                 <label className="auth-field">
-                  <span className="auth-label">What would you like to use ESAP for?</span>
-                  <textarea className="input auth-input is-plain wl-textarea" rows={3} maxLength={2000} placeholder="Optional. Please do not include patient information."
+                  <span className="auth-label">{t("What would you like to use ESAP for?")}</span>
+                  <textarea className="input auth-input is-plain wl-textarea" rows={3} maxLength={2000} placeholder={t("Optional. Please do not include patient information.")}
                     value={form.message} onChange={set("message")} />
                 </label>
 
                 {/* Honeypot: off-screen and out of the tab order, so only bots fill it. */}
-                <label className="wl-hp" aria-hidden="true">
+                <label className="wl-hp" aria-hidden="true" lang="en">
                   Website
                   <input tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} />
                 </label>
@@ -203,18 +205,19 @@ export function WaitlistPage() {
                 <label className="wl-consent">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} />
                   <span>
-                    I agree that the ESAP team may contact me by email or phone about early access. You can ask
-                    us to remove your details at any time. See the <Link to="/privacy">Privacy Policy</Link>.
+                    {tl("I agree that the ESAP team may contact me by email or phone about early access. You can ask us to remove your details at any time. See the {privacy}.", {
+                      privacy: <Link to="/privacy">{t("Privacy Policy")}</Link>,
+                    })}
                   </span>
                 </label>
                 {touched && !consent && (
-                  <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> Please agree so our team can reach you.</span>
+                  <span className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {t("Please agree so our team can reach you.")}</span>
                 )}
 
                 {error && <p className="auth-hint is-error" role="alert"><AlertIcon size={13} /> {error}</p>}
 
                 <button type="submit" className="pub-btn pub-btn-primary wl-submit" disabled={sending}>
-                  <MailIcon size={16} /> {sending ? "Sending…" : "Join the waitlist"}
+                  <MailIcon size={16} /> {sending ? t("Sending…") : t("Join the waitlist")}
                 </button>
               </form>
             )}

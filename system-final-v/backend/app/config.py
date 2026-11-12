@@ -68,6 +68,29 @@ class Settings:
     superuser_email: str = field(default_factory=lambda: os.environ.get(
         "ESAP_SUPERUSER_EMAIL", "superadmin@esap.health").strip().lower())
     session_ttl_hours: int = 12
+    #: Sign out after this many minutes with no request (QA issue 8).
+    idle_timeout_minutes: int = field(default_factory=lambda: int(os.environ.get("ESAP_IDLE_TIMEOUT_MINUTES", "30")))
+    #: Wrong passwords allowed before an address is locked, and for how long.
+    lockout_threshold: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_THRESHOLD", "5")))
+    lockout_minutes: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_MINUTES", "15")))
+    #: Admin and platform roles must enrol MFA before they can use the console.
+    require_admin_mfa: bool = field(default_factory=lambda: _bool("ESAP_REQUIRE_ADMIN_MFA", True))
+    #: Where links in emails point (the website, not the API).
+    public_url: str = field(default_factory=lambda: os.environ.get(
+        "ESAP_PUBLIC_URL", "http://localhost:5175").rstrip("/"))
+    #: Session cookie. HttpOnly always; Secure and SameSite=None over HTTPS so a
+    #: website on another host can still send it (QA issue 13).
+    cookie_name: str = "esap_session"
+    cookie_secure: bool = field(default_factory=lambda: _bool("ESAP_COOKIE_SECURE", False))
+    cookie_samesite: str = field(default_factory=lambda: os.environ.get(
+        "ESAP_COOKIE_SAMESITE", "").strip().lower())
+    cookie_domain: str | None = field(default_factory=lambda: os.environ.get("ESAP_COOKIE_DOMAIN") or None)
+    #: Outgoing mail. Unset host = mail is only written to the outbox table.
+    smtp_host: str | None = field(default_factory=lambda: os.environ.get("ESAP_SMTP_HOST") or None)
+    smtp_port: int = field(default_factory=lambda: int(os.environ.get("ESAP_SMTP_PORT", "587")))
+    smtp_user: str | None = field(default_factory=lambda: os.environ.get("ESAP_SMTP_USER") or None)
+    smtp_password: str | None = field(default_factory=lambda: os.environ.get("ESAP_SMTP_PASSWORD") or None)
+    mail_from: str = field(default_factory=lambda: os.environ.get("ESAP_MAIL_FROM", "ESAP Clinical AI <no-reply@esap.ai>"))
 
     # Deployment / tenancy seam (§5). SQLite is the default single-box store; a
     # multi-hospital deployment sets DATABASE_URL to a Postgres DSN and runs the

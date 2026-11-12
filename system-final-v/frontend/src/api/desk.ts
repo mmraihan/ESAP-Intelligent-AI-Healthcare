@@ -66,9 +66,8 @@ export function categoryLabel(c: string): string {
 }
 
 /**
- * "5 min ago" against the real clock. The shared `ago()` measures from the
- * demo's fixed NOW, which is right for seeded records but reads "in 28 d" for
- * a waitlist entry or ticket written today.
+ * "5 min ago" against the real clock, always in English (the ops and support
+ * desks are English-only). `ago()` also uses the real clock now.
  */
 export function since(iso: string): string {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));

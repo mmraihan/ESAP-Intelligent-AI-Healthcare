@@ -36,9 +36,9 @@ export function LoginPage() {
   const [attempt, setAttempt] = useState(0);
 
   /**
-   * There is no email service, so a reset goes to the hospital admin's request
-   * queue. The reply is the same for any address — the server will not say
-   * whether an account exists.
+   * Patients and self-serve clinicians are emailed a reset link; hospital staff
+   * are reset by their administrator. The reply is the same for any address —
+   * the server will not say whether an account exists.
    */
   async function forgot() {
     if (!email.trim()) {
@@ -47,7 +47,7 @@ export function LoginPage() {
     }
     try {
       await api.post("/api/v1/auth/password/forgot", { email: email.trim() }, { anonymous: true });
-      setResetNote(t("If that address has an account, your administrator has been asked to send you a reset link."));
+      setResetNote(t("If that address has an account, we have emailed it a link to choose a new password. The link works for 60 minutes. Hospital staff accounts are reset by the hospital's administrator, who has been told."));
     } catch {
       setResetNote(t("Could not reach the ESAP API."));
     }

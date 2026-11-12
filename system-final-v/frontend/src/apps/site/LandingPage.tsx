@@ -12,11 +12,16 @@
  * and a navy hero with cyan / violet glows in dark mode. Styles are scoped
  * under `.au` in styles/landing.css; the palette comes from the `.pub` tokens
  * in styles/public.css, shared with the other public pages.
+ *
+ * English and Arabic (QA issue 14). Copy is English keys translated with t()
+ * at render; `**…**` in a key marks the emphasised part (an <em> in headings,
+ * a <mark> in the drivers), so the Arabic sentence can place it itself.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/landing.css";
 import { MODELS } from "@/mock/db";
+import { rich, t, tm } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
 import { HeartMonitor } from "@/components/ui/HeartMonitor";
 import { SiteFooter, SiteHeader } from "./SiteLayout";
@@ -74,17 +79,17 @@ const ESTIMATES = [
     body: "A ranked list over 500+ CCSR conditions likely already present at admission.",
     value: "Top 20", unit: "ranked conditions",
     drivers: [
-      { src: "Labs · troponin", text: <>Rising <mark>troponin before admission</mark> moves cardiac causes up the list.</> },
-      { src: "History · prior dx", text: <>A <mark>prior heart-failure code</mark> keeps decompensation in the top five.</> },
+      { src: "Labs · troponin", text: "Rising **troponin before admission** moves cardiac causes up the list." },
+      { src: "History · prior dx", text: "A **prior heart-failure code** keeps decompensation in the top five." },
     ],
   },
   {
     id: "M-02", title: "In-hospital mortality", icon: <HeartPulseIcon size={18} />,
-    body: "Risk of death during this stay, calibrated so 30% means close to 30%.",
+    body: "Risk of death during this stay. From a trained, calibrated model, 30% means close to 30%.",
     value: "31%", unit: "illustrative",
     drivers: [
-      { src: "Vitals · triage", text: <><mark>Low systolic pressure</mark> at triage is the largest single contributor.</> },
-      { src: "Demographics", text: <>Age adds risk; <mark>no prior admissions</mark> widens the uncertainty.</> },
+      { src: "Vitals · triage", text: "**Low systolic pressure** at triage is the largest single contributor." },
+      { src: "Demographics", text: "Age adds risk; **no prior admissions** widens the uncertainty." },
     ],
   },
   {
@@ -92,8 +97,8 @@ const ESTIMATES = [
     body: "Risk of needing intensive care at any point in the stay.",
     value: "44%", unit: "illustrative",
     drivers: [
-      { src: "Vitals · triage", text: <><mark>Respiratory rate of 28</mark> and falling SpO₂ drive most of the estimate.</> },
-      { src: "Labs · lactate", text: <>A <mark>lactate above 4</mark> drawn in the emergency department.</> },
+      { src: "Vitals · triage", text: "**Respiratory rate of 28** and falling SpO₂ drive most of the estimate." },
+      { src: "Labs · lactate", text: "A **lactate above 4** drawn in the emergency department." },
     ],
   },
   {
@@ -101,8 +106,8 @@ const ESTIMATES = [
     body: "Risk of unplanned return within 30 days, reported separately for patients with and without history.",
     value: "18%", unit: "illustrative",
     drivers: [
-      { src: "History · encounters", text: <><mark>Two admissions in the past year</mark> is the strongest signal.</> },
-      { src: "Medications", text: <>Ten or more <mark>home medications</mark> adds modest risk.</> },
+      { src: "History · encounters", text: "**Two admissions in the past year** is the strongest signal." },
+      { src: "Medications", text: "Ten or more **home medications** adds modest risk." },
     ],
   },
   {
@@ -110,8 +115,8 @@ const ESTIMATES = [
     body: "Expected days in hospital, from the day of admission rather than the day before discharge.",
     value: "5.2", unit: "days · illustrative",
     drivers: [
-      { src: "Complaint", text: <>A <mark>hip fracture</mark> complaint sets the baseline stay.</> },
-      { src: "Social · discharge", text: <><mark>Lives alone</mark> lengthens the expected time to a safe discharge.</> },
+      { src: "Complaint", text: "A **hip fracture** complaint sets the baseline stay." },
+      { src: "Social · discharge", text: "**Lives alone** lengthens the expected time to a safe discharge." },
     ],
   },
 ];
@@ -120,10 +125,10 @@ const GUARDS = ["No stoplight colours", "No automatic orders", "Badge suppressed
 
 const PLATFORM = [
   { icon: <BuildingIcon size={18} />, title: "Hospital admin console", body: "Roster, invites, facilities and roles — one tenant, walled off from every other." },
-  { icon: <BookIcon size={18} />, title: "Append-only audit log", body: "Every estimate, every view and every break-glass access, with the reason recorded." },
+  { icon: <BookIcon size={18} />, title: "Audit log", body: "Every estimate, every view and every break-glass access, with the reason recorded. No screen or API can edit an entry." },
   { icon: <ScaleIcon size={18} />, title: "Fairness panel", body: "Performance by subgroup, published to your own compliance team rather than asserted." },
-  { icon: <GlobeIcon size={18} />, title: "SMART on FHIR", body: "Launch from the EHR, HL7v2 ADT for new encounters, FHIR R4 for problems and labs." },
-  { icon: <LockIcon size={18} />, title: "Your data stays yours", body: "US or EU residency, a dedicated VPC or on-prem, and zero standing vendor access." },
+  { icon: <GlobeIcon size={18} />, title: "EHR connection (planned)", body: "SMART on FHIR launch, HL7v2 ADT and FHIR R4 are planned. In this build an admission is entered by hand." },
+  { icon: <LockIcon size={18} />, title: "Your data stays yours", body: "The hospital owns its data and ESAP staff have no standing access. Hosting in Saudi Arabia is planned." },
   { icon: <UsersIcon size={18} />, title: "Patient portal", body: "Plain language, no raw scores, and the patient decides who sees their record." },
 ];
 
@@ -190,6 +195,9 @@ function useActiveSection() {
 function Eyebrow({ n, children }: { n?: string; children: ReactNode }) {
   return <span className="au-eyebrow">{n && <span className="au-eyebrow-n">{n}</span>}{children}</span>;
 }
+
+/** A heading key whose `**…**` part is the gradient <em>. */
+const em = (key: string) => rich(t(key), "em");
 
 /** Soft edge glows behind a band: gradients painted inside the band, so nothing extends past it. */
 function Glows() {
@@ -364,39 +372,39 @@ function HeroDashboard() {
             <aside className="au-win-side">
               <span className="au-win-brand">
                 <BrandMark size={22} withWordmark={false} />
-                <span><strong>ESAP</strong><small>Clinical AI</small></span>
+                <span><strong>ESAP</strong><small>{t("Clinical AI")}</small></span>
               </span>
-              <span className="au-win-item is-on"><UserIcon size={13} /> Overview</span>
-              <span className="au-win-item"><ChartIcon size={13} /> Predictions</span>
-              <span className="au-win-item"><FileIcon size={13} /> Evidence</span>
-              <span className="au-win-item"><BookIcon size={13} /> Notes</span>
+              <span className="au-win-item is-on"><UserIcon size={13} /> {t("Overview")}</span>
+              <span className="au-win-item"><ChartIcon size={13} /> {t("Predictions")}</span>
+              <span className="au-win-item"><FileIcon size={13} /> {t("Evidence")}</span>
+              <span className="au-win-item"><BookIcon size={13} /> {t("Notes")}</span>
             </aside>
             <div className="au-win-main">
               <div className="au-win-head">
                 <div>
-                  <strong>Patient #48293</strong>
-                  <span>68 y/o · Male · Admitted 2h ago</span>
+                  <strong>{t("Patient #48293")}</strong>
+                  <span>{t("68 y/o · Male · Admitted 2h ago")}</span>
                 </div>
-                <span className="au-win-tag">Illustrative</span>
+                <span className="au-win-tag">{t("Illustrative")}</span>
               </div>
-              <p className="au-win-label">Key predictions</p>
+              <p className="au-win-label">{t("Key predictions")}</p>
               <div className="au-tiles">
                 {DEMO.map((d, i) => (
                   <div key={d.id} className={`au-tile ${d.hue}`} style={{ "--i": i } as CSSProperties}>
                     <span className="au-tile-icon">{d.icon}</span>
-                    <small>{d.title}</small>
+                    <small>{t(d.title)}</small>
                     <strong className="tnum">{Math.round(d.p * 100)}%</strong>
-                    <span className="au-tile-sub">illustrative</span>
+                    <span className="au-tile-sub">{t("illustrative")}</span>
                   </div>
                 ))}
               </div>
               <div className="au-why">
                 <div className="au-why-top">
-                  <span>Why this prediction?</span>
-                  <span className="au-why-link">View reasoning <ArrowRight size={11} /></span>
+                  <span>{t("Why this prediction?")}</span>
+                  <span className="au-why-link">{t("View reasoning")} <ArrowRight size={11} className="pub-arrow" /></span>
                 </div>
                 <div className="au-why-chips">
-                  {WHY_CHIPS.map((c, i) => <span key={c} style={{ "--i": i } as CSSProperties}>{c}</span>)}
+                  {WHY_CHIPS.map((c, i) => <span key={c} style={{ "--i": i } as CSSProperties}>{t(c)}</span>)}
                 </div>
               </div>
             </div>
@@ -405,7 +413,7 @@ function HeroDashboard() {
       </div>
       <div className="au-checklist">
         {["Evidence based", "Calibrated", "Transparent limits"].map((c, i) => (
-          <span key={c} style={{ "--i": i } as CSSProperties}><CheckIcon size={12} /> {c}</span>
+          <span key={c} style={{ "--i": i } as CSSProperties}><CheckIcon size={12} /> {t(c)}</span>
         ))}
       </div>
     </div>
@@ -439,7 +447,7 @@ function EstimateSteps() {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <div className="au-steps" role="tablist" aria-label="The five models" data-paused={paused || offscreen ? "" : undefined}>
+      <div className="au-steps" role="tablist" aria-label={t("The five models")} data-paused={paused || offscreen ? "" : undefined}>
         {ESTIMATES.map((e, i) => (
           <button
             key={e.id}
@@ -453,8 +461,8 @@ function EstimateSteps() {
           >
             <span className="au-step-num">{e.id}</span>
             <span>
-              <span className="au-step-title">{e.title}</span>
-              <span className="au-step-body"><span>{e.body}</span></span>
+              <span className="au-step-title">{t(e.title)}</span>
+              <span className="au-step-body"><span>{t(e.body)}</span></span>
             </span>
             {i === sel && (
               <span className="au-step-bar" onAnimationEnd={() => setSel((s) => (s + 1) % ESTIMATES.length)} />
@@ -469,21 +477,21 @@ function EstimateSteps() {
             <span className="au-stage-icon">{cur.icon}</span>
             <div>
               <span className="au-mono">{cur.id}</span>
-              <strong>{cur.title}</strong>
+              <strong>{t(cur.title)}</strong>
             </div>
             <span className="au-stage-val">
-              <strong className="tnum">{cur.value}</strong>
-              <small>{cur.unit}</small>
+              <strong className="tnum">{t(cur.value)}</strong>
+              <small>{t(cur.unit)}</small>
             </span>
           </div>
-          <span className="au-mono au-stage-label">Why this estimate</span>
+          <span className="au-mono au-stage-label">{t("Why this estimate")}</span>
           {cur.drivers.map((d, i) => (
             <div key={d.src} className="au-src" style={{ "--i": i } as CSSProperties}>
-              <span className="au-src-file"><FileIcon size={13} /> {d.src}</span>
-              <p>{d.text}</p>
+              <span className="au-src-file"><FileIcon size={13} /> {t(d.src)}</span>
+              <p>{tm(d.text)}</p>
             </div>
           ))}
-          <span className="au-chip au-chip-ok"><CheckIcon size={12} /> calibrated · reviewed by a clinician</span>
+          <span className="au-chip au-chip-ok"><CheckIcon size={12} /> {t("illustrative · reviewed by a clinician")}</span>
         </div>
       </div>
     </div>
@@ -495,10 +503,10 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <div className="au-faq-item" data-open={open ? "" : undefined}>
       <button type="button" className="au-faq-q" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <span>{q}</span>
+        <span>{t(q)}</span>
         <ChevronDown size={18} />
       </button>
-      <div className="au-faq-a"><p>{a}</p></div>
+      <div className="au-faq-a"><p>{t(a)}</p></div>
     </div>
   );
 }
@@ -515,10 +523,10 @@ export function LandingPage() {
       <SiteHeader />
       <div className="au-progress" aria-hidden="true" />
 
-      <nav className="au-rail" aria-label="Page sections">
+      <nav className="au-rail" aria-label={t("Page sections")}>
         {SECTIONS.map((s, i) => (
           <a key={s.id} href={`#${s.id}`} className="au-rail-btn" aria-current={active === s.id ? "true" : undefined}>
-            <span className="au-rail-label">{String(i).padStart(2, "0")} {s.label}</span>
+            <span className="au-rail-label">{String(i).padStart(2, "0")} {t(s.label)}</span>
             <span className="au-rail-dot" />
           </a>
         ))}
@@ -530,12 +538,11 @@ export function LandingPage() {
         <div className="au-wrap">
           <div className="au-center-head" data-au-reveal>
             <HeartMonitor className="au-story-heart" />
-            <Eyebrow n="00">The story</Eyebrow>
+            <Eyebrow n="00">{t("The story")}</Eyebrow>
             {/* The page now opens here, so this carries the page's one h1. */}
-            <h1 className="au-h2 au-story-title">One admission, <em>start to finish.</em></h1>
+            <h1 className="au-h2 au-story-title">{em("One admission, **start to finish.**")}</h1>
             <p className="au-lede">
-              Follow one patient from the door to the summary they read later — and see exactly where the
-              software stops and the clinician decides.
+              {t("Follow one patient from the door to the summary they read later — and see exactly where the software stops and the clinician decides.")}
             </p>
           </div>
           <div data-au-reveal>
@@ -556,33 +563,31 @@ export function LandingPage() {
                 the gradient, then the lede and CTAs. */}
             <span className="au-badge au-hero-badge au-rise" style={{ "--i": 0 } as CSSProperties}>
               <span className="au-badge-pulse" aria-hidden="true" />
-              AI-powered clinical decision support
+              {t("AI-powered clinical decision support")}
             </span>
             <h2 className="au-title">
-              <span className="au-title-line au-rise" style={{ "--i": 1 } as CSSProperties}>Five questions answered</span>{" "}
-              <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>the hour a patient is</span>{" "}
+              <span className="au-title-line au-rise" style={{ "--i": 1 } as CSSProperties}>{t("Five questions answered")}</span>{" "}
+              <span className="au-title-line au-rise" style={{ "--i": 2 } as CSSProperties}>{t("the hour a patient is")}</span>{" "}
               <span className="au-title-line">
-                <span className="au-grad" style={{ "--i": 3 } as CSSProperties}>admitted.</span>
+                <span className="au-grad" style={{ "--i": 3 } as CSSProperties}>{t("admitted.")}</span>
               </span>
             </h2>
             <p className="au-lede au-rise" style={{ "--i": 3 } as CSSProperties}>
-              ESAP reads what is known at admission and estimates what is likely already present, how the stay is
-              likely to go and how long it is likely to last — with the reasoning attached, the calibration stated
-              and the limits printed on the same card as the number.
+              {t("ESAP reads what is known at admission and estimates what is likely already present, how the stay is likely to go and how long it is likely to last — with the reasoning attached, the calibration stated and the limits printed on the same card as the number.")}
             </p>
             <div className="au-cta-row au-rise" style={{ "--i": 4 } as CSSProperties}>
               <Magnetic>
                 <Link to="/signup" className="pub-btn pub-btn-primary">
-                  <ArrowRight size={16} className="pub-arrow" /> Try it on your own cases
+                  <ArrowRight size={16} className="pub-arrow" /> {t("Try it on your own cases")}
                 </Link>
               </Magnetic>
               <Link to="/evidence" className="pub-btn pub-btn-outline">
-                See the evidence <ArrowRight size={15} className="pub-arrow" />
+                {t("See the evidence")} <ArrowRight size={15} className="pub-arrow" />
               </Link>
-              <Link to="/waitlist" className="pub-btn pub-btn-outline au-btn-quiet">Join the waitlist</Link>
+              <Link to="/waitlist" className="pub-btn pub-btn-outline au-btn-quiet">{t("Join the waitlist")}</Link>
             </div>
             <p className="au-note au-rise" style={{ "--i": 5 } as CSSProperties}>
-              <LockIcon size={13} /> Free tier, no card. Nothing you enter is retained on the free tier.
+              <LockIcon size={13} /> {t("Free tier, no card. Nothing you enter is retained on the free tier.")}
             </p>
           </div>
           <HeroDashboard />
@@ -593,11 +598,10 @@ export function LandingPage() {
       <section id="impact" className="au-sec au-impact">
         <div className="au-wrap">
           <div className="au-center-head" data-au-reveal>
-            <span className="au-kicker">The impact</span>
-            <h2 className="au-h2">Better insights. <em>Better decisions.</em></h2>
+            <span className="au-kicker">{t("The impact")}</span>
+            <h2 className="au-h2">{em("Better insights. **Better decisions.**")}</h2>
             <p className="au-lede">
-              ESAP puts what is likely ahead next to the evidence behind it — so a clinician can plan sooner, with
-              the limits in view.
+              {t("ESAP puts what is likely ahead next to the evidence behind it — so a clinician can plan sooner, with the limits in view.")}
             </p>
           </div>
           <div className="au-impact-grid">
@@ -606,25 +610,24 @@ export function LandingPage() {
                 <div className="au-gauge-top">
                   <span className="au-gauge-icon">{d.icon}</span>
                   <div>
-                    <h3>{d.title}</h3>
-                    <p>{d.body}</p>
+                    <h3>{t(d.title)}</h3>
+                    <p>{t(d.body)}</p>
                   </div>
                 </div>
-                <Ring p={d.p} label="illustrative" />
+                <Ring p={d.p} label={t("illustrative")} />
                 <p className="au-gauge-note">
                   <InfoIcon size={14} />
-                  <span>Illustrative demo value. Not a validated patient-specific prediction.</span>
+                  <span>{t("Illustrative demo value. Not a validated patient-specific prediction.")}</span>
                 </p>
               </article>
             ))}
             <article className="au-gauge-card au-explain au-spot au-lift" data-au-reveal style={{ "--i": 3 } as CSSProperties}>
               <span className="au-gauge-icon"><ShieldIcon size={18} /></span>
-              <h3>Transparent &amp; explainable</h3>
+              <h3>{t("Transparent & explainable")}</h3>
               <p>
-                Every estimate comes with its <strong>reasoning</strong>, its <strong>calibration</strong> and its
-                limits — and a clinician makes the call.
+                {rich(t("Every estimate comes with its **reasoning**, its **calibration** and its limits — and a clinician makes the call."))}
               </p>
-              <Link to="/evidence" className="au-link">Read the evidence <ArrowRight size={14} className="pub-arrow" /></Link>
+              <Link to="/evidence" className="au-link">{t("Read the evidence")} <ArrowRight size={14} className="pub-arrow" /></Link>
             </article>
           </div>
         </div>
@@ -634,26 +637,25 @@ export function LandingPage() {
       <section id="intake" className="au-sec au-sec-alt">
         <div className="au-wrap au-split">
           <div data-au-reveal>
-            <Eyebrow n="04">Intake</Eyebrow>
-            <h2 className="au-h2">Only what is known <em>at admission.</em></h2>
+            <Eyebrow n="04">{t("Intake")}</Eyebrow>
+            <h2 className="au-h2">{em("Only what is known **at admission.**")}</h2>
             <p className="au-lede">
-              Every input is cut at t₀, the moment the encounter opens. Nothing charted during or after the stay
-              can reach the models — that constraint is what makes an estimate early enough to act on.
+              {t("Every input is cut at t₀, the moment the encounter opens. Nothing charted during or after the stay can reach the models — that constraint is what makes an estimate early enough to act on.")}
             </p>
             <ul className="au-checks">
-              <li><CheckIcon size={14} /> Opened by an ADT message or the intake form</li>
-              <li><CheckIcon size={14} /> Labs counted only if drawn before admission</li>
-              <li><CheckIcon size={14} /> Training data cut at the same moment</li>
+              <li><CheckIcon size={14} /> {t("Opened from the intake form today; ADT messages are planned")}</li>
+              <li><CheckIcon size={14} /> {t("Labs counted only if drawn before admission")}</li>
+              <li><CheckIcon size={14} /> {t("Training data cut at the same moment")}</li>
             </ul>
           </div>
           <div className="au-panel au-spot" data-au-reveal style={{ "--i": 1 } as CSSProperties}>
             <div className="au-panel-top">
-              <span className="au-mono">Encounter · inputs read</span>
-              <span className="au-stat-mini"><strong className="tnum">5/5</strong> sources</span>
+              <span className="au-mono">{t("Encounter · inputs read")}</span>
+              <span className="au-stat-mini"><strong className="tnum">5/5</strong> {t("sources")}</span>
             </div>
             {INPUTS.map((d, i) => (
               <div key={d.name} className="au-doc" style={{ "--i": i } as CSSProperties}>
-                {d.icon}<span>{d.name}</span><span className="au-doc-count">{d.count}</span>
+                {d.icon}<span>{t(d.name)}</span><span className="au-doc-count">{t(d.count)}</span>
               </div>
             ))}
             <div className="au-dots" aria-hidden="true">
@@ -661,7 +663,7 @@ export function LandingPage() {
                 <span key={i} data-on={i < 40 ? "" : undefined} style={{ "--i": i } as CSSProperties} />
               ))}
             </div>
-            <p className="au-panel-foot"><span className="au-key-on" /> read at t₀ <span className="au-key-off" /> after t₀ — excluded</p>
+            <p className="au-panel-foot"><span className="au-key-on" /> {t("read at t₀")} <span className="au-key-off" /> {t("after t₀ — excluded")}</p>
           </div>
         </div>
       </section>
@@ -671,12 +673,11 @@ export function LandingPage() {
         <div className="au-wrap">
           <div className="au-sec-head" data-au-reveal>
             <div>
-              <Eyebrow n="05">Estimate</Eyebrow>
-              <h2 className="au-h2">Five models. <em>Every number</em> carries its reasoning.</h2>
+              <Eyebrow n="05">{t("Estimate")}</Eyebrow>
+              <h2 className="au-h2">{em("Five models. **Every number** carries its reasoning.")}</h2>
             </div>
             <p className="au-lede">
-              The drivers behind each estimate are computed from the model itself, not narrated afterwards by a
-              language model — so a clinician can check the basis independently.
+              {t("The drivers behind each estimate are computed from the model itself, not narrated afterwards by a language model — so a clinician can check the basis independently.")}
             </p>
           </div>
           <div data-au-reveal style={{ "--i": 1 } as CSSProperties}><EstimateSteps /></div>
@@ -689,31 +690,28 @@ export function LandingPage() {
           <div className="au-panel au-spot" data-au-reveal>
             <div className="au-ticket">
               <div className="au-ticket-top">
-                <span className="au-mono">Bed 14 · M-03 ICU admission</span>
-                <span className="au-status">Reviewed</span>
+                <span className="au-mono">{t("Bed 14 · M-03 ICU admission")}</span>
+                <span className="au-status">{t("Reviewed")}</span>
               </div>
               <p className="au-ticket-body">
-                The attending read the estimate, its drivers and its limits, and decided to admit to step-down
-                with a 2-hour reassessment.
+                {t("The attending read the estimate, its drivers and its limits, and decided to admit to step-down with a 2-hour reassessment.")}
               </p>
-              <span className="au-mono au-ticket-log"><BookIcon size={12} /> written to the audit log · 08:52</span>
+              <span className="au-mono au-ticket-log"><BookIcon size={12} /> {t("written to the audit log · 08:52")}</span>
             </div>
-            <span className="au-mono au-stage-label">What the interface refuses to do</span>
+            <span className="au-mono au-stage-label">{t("What the interface refuses to do")}</span>
             <div className="au-guards">
               {GUARDS.map((g, i) => (
-                <span key={g} className="au-guard" data-hit={i === 2 ? "" : undefined}>{g}</span>
+                <span key={g} className="au-guard" data-hit={i === 2 ? "" : undefined}>{t(g)}</span>
               ))}
             </div>
           </div>
           <div data-au-reveal style={{ "--i": 1 } as CSSProperties}>
-            <Eyebrow n="06">Review</Eyebrow>
-            <h2 className="au-h2">A clinician <em>makes the call.</em></h2>
+            <Eyebrow n="06">{t("Review")}</Eyebrow>
+            <h2 className="au-h2">{em("A clinician **makes the call.**")}</h2>
             <p className="au-lede">
-              ESAP is decision support, not diagnosis. The number, its drivers and its limits sit on one card; the
-              clinician decides, and the run is recorded. When the input is too thin for a calibrated estimate, the
-              badge is suppressed rather than dressed up.
+              {t("ESAP is decision support, not diagnosis. The number, its drivers and its limits sit on one card; the clinician decides, and the run is recorded. When the input is too thin for a calibrated estimate, the badge is suppressed rather than dressed up.")}
             </p>
-            <Link to="/security" className="au-link">How we stay non-device CDS <ArrowRight size={14} className="pub-arrow" /></Link>
+            <Link to="/security" className="au-link">{t("How we stay non-device CDS")} <ArrowRight size={14} className="pub-arrow" /></Link>
           </div>
         </div>
       </section>
@@ -722,16 +720,13 @@ export function LandingPage() {
       <section id="principle" className="au-band au-principle">
         <Glows />
         <div className="au-wrap au-principle-inner" data-au-reveal>
-          <Eyebrow n="07">The principle</Eyebrow>
-          <p className="au-giant" aria-label="One in twelve">1 in 12</p>
+          <Eyebrow n="07">{t("The principle")}</Eyebrow>
+          <p className="au-giant" aria-label={t("One in twelve")}>{t("1 in 12")}</p>
           <blockquote className="au-quote">
-            men can&rsquo;t reliably tell apart the red and green a stoplight gauge depends on. So every gauge
-            here uses <em>one calm ramp</em>, and the number does the talking.
+            {em("men can’t reliably tell apart the red and green a stoplight gauge depends on. So every gauge here uses **one calm ramp**, and the number does the talking.")}
           </blockquote>
           <p className="au-lede">
-            A stoplight also trains the eye to snap-judge: green means ignore, red means act. That reflex is
-            the over-reliance that turns decision support into software making the call, so we read the
-            number instead.
+            {t("A stoplight also trains the eye to snap-judge: green means ignore, red means act. That reflex is the over-reliance that turns decision support into software making the call, so we read the number instead.")}
           </p>
         </div>
       </section>
@@ -741,26 +736,26 @@ export function LandingPage() {
         <div className="au-wrap">
           <div className="au-sec-head" data-au-reveal>
             <div>
-              <Eyebrow n="08">Platform</Eyebrow>
-              <h2 className="au-h2">Built for the <em>whole ward,</em> and the people who sign it off.</h2>
+              <Eyebrow n="08">{t("Platform")}</Eyebrow>
+              <h2 className="au-h2">{em("Built for the **whole ward,** and the people who sign it off.")}</h2>
             </div>
-            <p className="au-lede">Everything a hospital needs to run it, audit it and trust it — in the same product.</p>
+            <p className="au-lede">{t("What a hospital needs to run it, audit it and trust it — with what is still planned marked as planned.")}</p>
           </div>
           <div className="au-grid">
             {PLATFORM.map((p, i) => (
               <article key={p.title} className="au-card au-spot au-lift" data-au-reveal style={{ "--i": i % 3 } as CSSProperties}>
                 <span className="au-card-icon">{p.icon}</span>
-                <h3>{p.title}</h3>
-                <p>{p.body}</p>
+                <h3>{t(p.title)}</h3>
+                <p>{t(p.body)}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="au-stats" aria-label="ESAP at a glance">
+      <section className="au-stats" aria-label={t("ESAP at a glance")}>
         <div className="au-wrap">
-          <p className="au-kicker au-stats-title" data-au-reveal>ESAP at a glance</p>
+          <p className="au-kicker au-stats-title" data-au-reveal>{t("ESAP at a glance")}</p>
           <div className="au-stats-row">
             {[
               { n: String(MODELS.length || 5), l: "outcomes estimated at the moment of admission" },
@@ -770,21 +765,21 @@ export function LandingPage() {
             ].map((s, i) => (
               <div key={s.l} className="au-stat" data-au-reveal style={{ "--i": i } as CSSProperties}>
                 <strong className="tnum">{s.n}</strong>
-                <span>{s.l}</span>
+                <span>{t(s.l)}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="au-marquee-sec" aria-label="Who it is for">
+      <section className="au-marquee-sec" aria-label={t("Who it is for")}>
         <div className="au-marquee">
           {[0, 1].map((copy) => (
             <ul key={copy} className="au-marquee-track" aria-hidden={copy === 1 ? "true" : undefined}>
               {AUDIENCES.map((a) => (
                 <li key={a.who} className="au-aud">
                   <span className="au-aud-icon">{a.icon}</span>
-                  <span><strong>{a.who}</strong><small>{a.what}</small></span>
+                  <span><strong>{t(a.who)}</strong><small>{t(a.what)}</small></span>
                 </li>
               ))}
             </ul>
@@ -796,12 +791,12 @@ export function LandingPage() {
       <section id="faq" className="au-sec au-sec-alt">
         <div className="au-wrap au-split au-split-top">
           <div data-au-reveal>
-            <Eyebrow n="09">FAQ</Eyebrow>
-            <h2 className="au-h2">Questions people <em>actually</em> ask.</h2>
-            <p className="au-lede">Anything else, the evidence and security pages go into detail.</p>
+            <Eyebrow n="09">{t("FAQ")}</Eyebrow>
+            <h2 className="au-h2">{em("Questions people **actually** ask.")}</h2>
+            <p className="au-lede">{t("Anything else, the evidence and security pages go into detail.")}</p>
             <div className="au-cta-row">
-              <Link to="/evidence" className="pub-btn pub-btn-outline">See the evidence</Link>
-              <Link to="/security" className="pub-btn pub-btn-outline">Security</Link>
+              <Link to="/evidence" className="pub-btn pub-btn-outline">{t("See the evidence")}</Link>
+              <Link to="/security" className="pub-btn pub-btn-outline">{t("Security")}</Link>
             </div>
           </div>
           <div className="au-faq" data-au-reveal style={{ "--i": 1 } as CSSProperties}>
@@ -814,16 +809,16 @@ export function LandingPage() {
         <Glows />
         <div className="au-wrap au-final-inner" data-au-reveal>
           <HeartMonitor className="au-final-monitor" />
-          <Eyebrow>Get started</Eyebrow>
-          <h2 className="au-h2 au-final-title">Start where it <em>costs nothing.</em></h2>
-          <p className="au-lede">Run it on your own cases today. Bring it to the ward when the evidence convinces you.</p>
+          <Eyebrow>{t("Get started")}</Eyebrow>
+          <h2 className="au-h2 au-final-title">{em("Start where it **costs nothing.**")}</h2>
+          <p className="au-lede">{t("Run it on your own cases today. Bring it to the ward when the evidence convinces you.")}</p>
           <div className="au-cta-row">
             <Link to="/signup" className="pub-btn pub-btn-primary">
-              Create a free account <ArrowRight size={15} className="pub-arrow" />
+              {t("Create a free account")} <ArrowRight size={15} className="pub-arrow" />
             </Link>
-            <Link to="/pricing" className="pub-btn pub-btn-outline">See pricing</Link>
+            <Link to="/pricing" className="pub-btn pub-btn-outline">{t("See pricing")}</Link>
           </div>
-          <p className="au-note">90-day hospital pilot available</p>
+          <p className="au-note">{t("90-day hospital pilot available")}</p>
         </div>
       </section>
 

@@ -40,7 +40,6 @@ import threading
 import time
 import warnings
 from dataclasses import dataclass, field, replace
-from pathlib import Path
 
 from ..catalogs import ccsr_family, ccsr_name, lab_label
 from ..config import settings

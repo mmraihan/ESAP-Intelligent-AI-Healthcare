@@ -8,6 +8,7 @@ operators do to it hour by hour.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,6 +31,122 @@ class IncidentRequest(Strict):
     severity: str = "warning"
     detail: str = Field(min_length=5, max_length=2000)
     tenant_name: str | None = None
+    #: Personal data may have been exposed (QA issue 7). Starts the clocks.
+    breach: bool = False
+    data_categories: list[str] = Field(default_factory=list, max_length=20)
+    affected_estimate: int | None = Field(None, ge=0)
+
+
+class BreachRequest(Strict):
+    breach: bool
+    #: When ESAP became aware. The deadlines run from here, not from opening.
+    aware_at: str | None = None
+    data_categories: list[str] = Field(default_factory=list, max_length=20)
+    affected_estimate: int | None = Field(None, ge=0)
+    note: str = Field(min_length=5, max_length=1000)
+
+
+class NotificationRequest(Strict):
+    kind: str
+    #: Who it went to, e.g. the hospital's DPO, or the SDAIA reference number.
+    recipient: str = Field(min_length=2, max_length=200)
+    reference: str | None = Field(None, max_length=120)
+    note: str | None = Field(None, max_length=1000)
+
+
+# --- personal-data breach clocks (QA issue 7) --------------------------------
+# ESAP processes personal data for the hospital (the controller). Two clocks
+# start when ESAP becomes aware of a breach:
+#   24 h  tell the affected hospital, so it can meet its own deadline;
+#   72 h  the hospital notifies SDAIA (Saudi PDPL implementing regulation).
+# People affected are told without undue delay when the breach is likely to
+# harm them. The hours are config, because contracts may set shorter ones.
+
+BREACH_CLOCKS = {
+    "controller": {"hours": 24, "label": "Tell the affected hospital (controller)"},
+    "regulator": {"hours": 72, "label": "Notify SDAIA (Saudi Data & AI Authority)"},
+    "data_subjects": {"hours": None, "label": "Tell the people affected, without undue delay"},
+}
+
+
+def _deadlines(aware_at: str) -> dict:
+    aware = datetime.fromisoformat(aware_at.replace("Z", "+00:00"))
+    return {k: (iso(aware + timedelta(hours=v["hours"])) if v["hours"] else None)
+            for k, v in BREACH_CLOCKS.items()}
+
+
+def _breach_block(aware_at: str, categories: list[str], affected: int | None) -> dict:
+    return {
+        "awareAt": aware_at,
+        "dataCategories": categories,
+        "affectedEstimate": affected,
+        "deadlines": _deadlines(aware_at),
+        "notifications": {},
+    }
+
+
+def templates_for(incident: dict) -> dict:
+    """Plain-text notices with this incident's facts filled in. A starting point
+    for a person to edit and send; nothing here is sent automatically."""
+    b = incident.get("breach") or {}
+    cats = ", ".join(b.get("dataCategories") or []) or "[types of personal data]"
+    count = b.get("affectedEstimate")
+    people = f"about {count}" if count is not None else "[number of]"
+    tenant = incident.get("tenantName") or "[hospital name]"
+    aware = b.get("awareAt") or "[date and time]"
+    due_controller = (b.get("deadlines") or {}).get("controller") or "[24 h]"
+    controller = "\n".join([
+        f"To the Data Protection Officer, {tenant}",
+        "",
+        f"ESAP became aware of a personal data breach at {aware} (UTC).",
+        "",
+        f"What happened: {incident['detail']}",
+        f"Data involved: {cats}",
+        f"People affected: {people}",
+        f"Component: {incident['component']}",
+        "",
+        "What we have done so far: [containment steps]",
+        "What we recommend you do: [actions for the hospital]",
+        "",
+        "Under the Saudi PDPL you, as the controller, must notify SDAIA within 72 hours of becoming aware.",
+        f"Our deadline to you is {due_controller}.",
+        "",
+        "Contact: ESAP incident lead, [name, phone, email]",
+        f"ESAP incident reference: {incident['id']}",
+    ])
+    regulator = "\n".join([
+        "To: Saudi Data & AI Authority (SDAIA), National Data Management Office",
+        "",
+        f"Controller: {tenant}",
+        "Processor: ESAP Clinical AI",
+        f"Date and time the breach was discovered: {aware} (UTC)",
+        f"Description: {incident['detail']}",
+        f"Categories of personal data: {cats}",
+        f"Approximate number of data subjects: {people}",
+        "Likely consequences: [assessment of harm]",
+        "Measures taken or proposed: [containment and remediation]",
+        "Contact point: [DPO name and contact details]",
+        f"Reference: {incident['id']}",
+    ])
+    subjects = "\n".join([
+        f"We are writing to tell you about a problem that affected personal information held by {tenant}.",
+        "",
+        "What happened: [plain-language summary]",
+        f"What information was involved: {cats}",
+        "What we are doing: [steps taken]",
+        "What you can do: [practical advice]",
+        "",
+        "If you have questions, contact our Data Protection Officer: [contact details].",
+    ])
+    return {
+        "controller": {"subject": f"Personal data breach notice: {incident['title']}", "body": controller},
+        "regulator": {"subject": f"PDPL breach notification: {tenant}", "body": regulator},
+        "data_subjects": {"subject": "Important: about your personal information", "body": subjects},
+    }
+
+
+def _with_templates(doc: dict) -> dict:
+    return {**doc, "templates": templates_for(doc)} if doc.get("breach") else doc
 
 
 class IncidentStateRequest(Strict):
@@ -73,12 +190,90 @@ def open_incident(body: IncidentRequest, request: Request,
         "openedAt": iso(utcnow()), "component": body.component, "detail": body.detail,
         "updates": [],
     }
+    if body.breach:
+        doc["breach"] = _breach_block(doc["openedAt"], body.data_categories, body.affected_estimate)
     db.insert_doc("incidents", doc, {
         "tenant_name": body.tenant_name, "severity": body.severity, "state": "open",
     })
     audit.record(actor, "incident.update", f"opened: {body.title}",
                  platform=True, ip=_ip(request))
-    return doc
+    if body.breach:
+        audit.record(actor, "incident.breach_flag", f"{doc['id']}: breach flagged",
+                     platform=True, ip=_ip(request))
+    return _with_templates(doc)
+
+
+@router.get("/incidents/{incident_id}")
+def get_incident(incident_id: str, actor: Actor = Depends(current_actor)):
+    _platform(actor)
+    incident = db.one_doc("SELECT doc FROM incidents WHERE id=?", (incident_id,))
+    if incident is None:
+        raise ApiError(404, "No such incident.")
+    return _with_templates(incident)
+
+
+@router.post("/incidents/{incident_id}/breach")
+def flag_breach(incident_id: str, body: BreachRequest, request: Request,
+                actor: Actor = Depends(current_actor)):
+    """Mark (or unmark) an incident as a personal-data breach. Flagging starts
+    the 24 h and 72 h clocks from the time ESAP became aware."""
+    _platform(actor)
+    rbac.require(actor, "tenant:manage")
+    incident = db.one_doc("SELECT doc FROM incidents WHERE id=?", (incident_id,))
+    if incident is None:
+        raise ApiError(404, "No such incident.")
+    if body.breach:
+        aware = body.aware_at or (incident.get("breach") or {}).get("awareAt") or iso(utcnow())
+        try:
+            parsed = datetime.fromisoformat(aware.replace("Z", "+00:00"))
+        except ValueError:
+            raise ApiError(422, "aware_at must be an ISO date and time.") from None
+        # A time with no zone is UTC (what the templates say). Normalising also
+        # keeps every stored deadline in one format, so "late" compares right.
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        if parsed > utcnow() + timedelta(minutes=5):
+            raise ApiError(422, "aware_at cannot be in the future.")
+        aware = iso(parsed)
+        block = _breach_block(aware, body.data_categories, body.affected_estimate)
+        block["notifications"] = (incident.get("breach") or {}).get("notifications", {})
+        changes = {"breach": block}
+    else:
+        changes = {"breach": None, "breachCleared": {"at": iso(utcnow()), "by": display_name(actor),
+                                                      "note": body.note}}
+    update = {"at": iso(utcnow()), "by": display_name(actor), "state": incident["state"],
+              "note": f"{'Breach flagged' if body.breach else 'Breach flag removed'}: {body.note}"}
+    changes["updates"] = [*incident.get("updates", []), update]
+    doc = db.patch_doc("incidents", incident_id, changes)
+    audit.record(actor, "incident.breach_flag" if body.breach else "incident.breach_unflag",
+                 f"{incident_id}: {body.note}", platform=True, ip=_ip(request))
+    return _with_templates(doc)
+
+
+@router.post("/incidents/{incident_id}/notifications")
+def record_notification(incident_id: str, body: NotificationRequest, request: Request,
+                        actor: Actor = Depends(current_actor)):
+    """Record that a breach notice was sent: who to, when, and its reference."""
+    _platform(actor)
+    rbac.require(actor, "tenant:manage")
+    if body.kind not in BREACH_CLOCKS:
+        raise ApiError(422, f"kind must be one of: {', '.join(BREACH_CLOCKS)}.")
+    incident = db.one_doc("SELECT doc FROM incidents WHERE id=?", (incident_id,))
+    if incident is None:
+        raise ApiError(404, "No such incident.")
+    breach = incident.get("breach")
+    if not breach:
+        raise ApiError(409, "Flag this incident as a breach first.")
+    now = iso(utcnow())
+    due = breach["deadlines"].get(body.kind)
+    entry = {"sentAt": now, "by": display_name(actor), "recipient": body.recipient,
+             "reference": body.reference, "note": body.note,
+             "late": bool(due and now > due)}
+    breach = {**breach, "notifications": {**breach.get("notifications", {}), body.kind: entry}}
+    doc = db.patch_doc("incidents", incident_id, {"breach": breach})
+    audit.record(actor, "incident.breach_notice", f"{incident_id}: {body.kind} -> {body.recipient}",
+                 platform=True, ip=_ip(request))
+    return _with_templates(doc)
 
 
 @router.post("/incidents/{incident_id}/state")

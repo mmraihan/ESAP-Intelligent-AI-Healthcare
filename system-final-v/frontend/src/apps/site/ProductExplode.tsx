@@ -9,12 +9,13 @@
  * never re-renders per frame. Below 960px, or with reduced motion, the scene
  * is static and fully exploded, and the step list carries the text. The
  * scene is decorative (aria-hidden); the ordered list is the accessible copy.
- * Every value drawn on a plate is illustrative.
+ * Every value drawn on a plate is illustrative. Text is English keys for t().
  */
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import "@/styles/explode.css";
+import { t } from "@/i18n";
 
-type Layer = { n: string; title: string; text: string; art: ReactNode };
+type Layer = { n: string; title: string; text: string; art: ReactNode | (() => ReactNode) };
 
 const DOTS = Array.from({ length: 36 }, (_, i) => i);
 const DRIVERS = [0.92, 0.7, 0.48, 0.3];
@@ -43,7 +44,7 @@ const LAYERS: Layer[] = [
   },
   {
     n: "03", title: "Calibration",
-    text: "Each model is calibrated, so 30% means close to 30%. On thin input the badge is suppressed.",
+    text: "From a trained, calibrated model, 30% means close to 30%. Placeholder models are marked uncalibrated, and on thin input the badge is suppressed.",
     art: (
       <svg className="ex-art-cal" viewBox="0 0 120 70" preserveAspectRatio="none">
         <path className="ex-art-cal-ref" d="M6 64 L114 6" />
@@ -63,11 +64,11 @@ const LAYERS: Layer[] = [
   {
     n: "05", title: "The clinician's card",
     text: "The number, its drivers and its limits on one card. A clinician reviews it and decides.",
-    art: (
+    art: () => (
       <span className="ex-art-card">
-        <span className="ex-art-card-head"><b>Bed 14</b><small>Illustrative</small></span>
-        <span className="ex-art-card-val"><b className="tnum">44%</b><small>ICU admission</small></span>
-        <span className="ex-art-card-chip">Calibrated · reviewed</span>
+        <span className="ex-art-card-head"><b>{t("Bed 14")}</b><small>{t("Illustrative")}</small></span>
+        <span className="ex-art-card-val"><b className="tnum">44%</b><small>{t("ICU admission")}</small></span>
+        <span className="ex-art-card-chip">{t("Calibrated · reviewed")}</span>
       </span>
     ),
   },
@@ -178,23 +179,23 @@ export function ProductExplode() {
       <div className="ex-stage">
         <div className="ex-glow" aria-hidden="true" />
         <div className="ex-copy">
-          <span className="au-kicker">Inside an estimate</span>
-          <h2 id="ex-title" className="au-h2">Five layers. <em>One card.</em></h2>
+          <span className="au-kicker">{t("Inside an estimate")}</span>
+          <h2 id="ex-title" className="au-h2">{t("Five layers.")} <em>{t("One card.")}</em></h2>
           <p className="au-lede">
-            One estimate taken apart, from the data cut at admission to the card a clinician reads.
+            {t("One estimate taken apart, from the data cut at admission to the card a clinician reads.")}
           </p>
           <ol className="ex-steps">
             {LAYERS.map((l, i) => (
               <li key={l.n} data-ex={i}>
                 <span className="ex-step-n tnum">{l.n}</span>
                 <span>
-                  <strong>{l.title}</strong>
-                  <span className="ex-step-text">{l.text}</span>
+                  <strong>{t(l.title)}</strong>
+                  <span className="ex-step-text">{t(l.text)}</span>
                 </span>
               </li>
             ))}
           </ol>
-          <p className="ex-hint" aria-hidden="true"><span className="ex-hint-line" /> Scroll</p>
+          <p className="ex-hint" aria-hidden="true"><span className="ex-hint-line" /> {t("Scroll")}</p>
         </div>
 
         <div className="ex-scene" aria-hidden="true">
@@ -204,8 +205,8 @@ export function ProductExplode() {
             {[0, 1, 2].map((k) => <span key={k} className="ex-spark" style={{ "--k": k } as CSSProperties} />)}
             {LAYERS.map((l, i) => (
               <div key={l.n} className="ex-plate" data-ex={i} style={{ "--i": i } as CSSProperties}>
-                <span className="ex-plate-label">{l.n} · {l.title}</span>
-                <span className="ex-plate-art">{l.art}</span>
+                <span className="ex-plate-label">{l.n} · {t(l.title)}</span>
+                <span className="ex-plate-art">{typeof l.art === "function" ? l.art() : l.art}</span>
               </div>
             ))}
           </div>
@@ -213,8 +214,8 @@ export function ProductExplode() {
             {LAYERS.map((l, i) => (
               <div key={l.n} className="ex-callout" data-ex={i} style={{ "--i": i } as CSSProperties}>
                 <span className="ex-callout-n tnum">{l.n}</span>
-                <strong>{l.title}</strong>
-                <p>{l.text}</p>
+                <strong>{t(l.title)}</strong>
+                <p>{t(l.text)}</p>
               </div>
             ))}
           </div>

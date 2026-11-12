@@ -1893,3 +1893,18 @@ html[lang="ar"] .brand-words span { letter-spacing: 0; text-transform: none; }
 
 /* ---- sign-in: brand gradient top edge ---- */
 .auth-card::before { background: linear-gradient(90deg, var(--brand-1), var(--brand-2), var(--brand-4)); }
+
+
+/* "Demo · synthetic data only" — every page header (QA issue 11). */
+.demo-badge {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  padding-block: 3px; padding-inline: 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; line-height: 1.3; white-space: nowrap;
+  background: var(--status-warning-weak); color: var(--status-warning);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 35%, transparent);
+}
+.demo-badge-short { display: none; }
+@media (max-width: 720px) {
+  .demo-badge-full { display: none; }
+  .demo-badge-short { display: inline; }
+}

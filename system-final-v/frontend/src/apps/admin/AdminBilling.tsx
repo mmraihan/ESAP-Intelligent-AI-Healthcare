@@ -10,6 +10,7 @@ import { useState } from "react";
 import { INVOICES, PLANS } from "@/mock/db";
 import { useSession, tenantFor } from "@/lib/session";
 import { dateLabel, num, pct, usd } from "@/lib/format";
+import { planCopy } from "@/lib/planCopy";
 import { Sparkline } from "@/components/ui/charts";
 import { Badge, Banner, Button, Card, Field, Meter, PageHeader, StatTile, Tabs, TextArea } from "@/components/ui/primitives";
 import { Modal, Toast } from "@/components/ui/overlays";
@@ -179,13 +180,13 @@ export function AdminBilling() {
 
       {tab === "plan" && (
         <div className="split">
-          <Card title={plan?.name ?? "Your plan"} subtitle={plan?.forWho}>
+          <Card title={plan?.name ?? "Your plan"} subtitle={plan?.forWho && planCopy(plan.forWho)}>
             <p className="plan-price">{plan?.priceLabel} <span className="plan-unit">{plan?.unit}</span></p>
             <ul className="plan-features">
-              {plan?.features.map((f) => <li key={f}>{f}</li>)}
+              {plan?.features.map((f) => <li key={f}>{planCopy(f)}</li>)}
             </ul>
             <div className="plan-limits">
-              {plan?.limits.map((l) => <div key={l.label}><span>{l.label}</span><strong>{l.value}</strong></div>)}
+              {plan?.limits.map((l) => <div key={l.label}><span>{l.label}</span><strong>{planCopy(l.value)}</strong></div>)}
             </div>
           </Card>
 
@@ -197,7 +198,7 @@ export function AdminBilling() {
                 <dt>Renewal</dt><dd>1 June 2028</dd>
                 <dt>Bed licence</dt><dd className="tnum">{num(tenant.beds)} beds at {usd(48)}/month</dd>
                 <dt>Uplift cap</dt><dd>4% per annum</dd>
-                <dt>BAA</dt><dd>Executed 12 May 2025</dd>
+                <dt>Data processing agreement</dt><dd>Not signed yet (demo)</dd>
               </dl>
             </Card>
 
@@ -289,8 +290,8 @@ export function AdminBilling() {
                 <tr key={p.tier}>
                   <td><strong>{p.name}</strong>{p.tier === tenant.plan && <> <Badge tone="accent">your plan</Badge></>}</td>
                   <td className="tnum">{p.priceLabel} <span className="muted">{p.unit}</span></td>
-                  <td className="muted">{p.forWho}</td>
-                  <td className="muted">{p.features.join(" · ")}</td>
+                  <td className="muted">{planCopy(p.forWho)}</td>
+                  <td className="muted">{p.features.map(planCopy).join(" · ")}</td>
                 </tr>
               ))}
             </tbody>

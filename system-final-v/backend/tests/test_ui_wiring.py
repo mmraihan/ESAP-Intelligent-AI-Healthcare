@@ -115,10 +115,10 @@ def test_break_glass_delegate_needs_full_user_management(client, auth):
 
 
 def test_outbound_record_request_lands_in_the_queue(client, auth):
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"), json={
+    r = client.post("/api/v1/transfers", headers=auth("physician"), json={
         "mrn": "MRN-400001", "patient_display": "Test Patient, 50F", "counterparty": "Northgate Health System"})
     assert r.status_code == 201 and r.json()["state"] == "requested"
-    queue = client.get("/api/v1/admin/interop", headers=auth("physician")).json()["transfers"]
+    queue = client.get("/api/v1/transfers", headers=auth("physician")).json()["transfers"]
     assert r.json()["id"] in {t["id"] for t in queue}
 
 

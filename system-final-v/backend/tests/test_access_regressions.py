@@ -124,11 +124,11 @@ def _solo(client, role="physician"):
 
 
 def test_transfers_stay_inside_their_tenant(client, auth):
-    assert client.get("/api/v1/admin/interop", headers=auth("physician")).json()["transfers"]
+    assert client.get("/api/v1/transfers", headers=auth("physician")).json()["transfers"]
 
     outsider = _solo(client)
     assert client.get("/api/v1/bootstrap", headers=outsider).json()["transfers"] == []
-    assert client.get("/api/v1/admin/interop", headers=outsider).json()["transfers"] == []
+    assert client.get("/api/v1/transfers", headers=outsider).json()["transfers"] == []
 
 
 def test_transfer_cannot_be_decided_from_another_tenant(client):
@@ -136,8 +136,8 @@ def test_transfer_cannot_be_decided_from_another_tenant(client):
     outsider = _solo(client, role="case_manager")
     before = db.one_doc("SELECT doc FROM transfers WHERE id='tr1'")["state"]
 
-    assert client.post("/api/v1/admin/interop/tr1/approve", headers=outsider).status_code == 404
-    r = client.post("/api/v1/admin/interop/tr1/reject", headers=outsider,
+    assert client.post("/api/v1/transfers/tr1/approve", headers=outsider).status_code == 404
+    r = client.post("/api/v1/transfers/tr1/reject", headers=outsider,
                     json={"reason": "Regression: not our patient."})
     assert r.status_code == 404
     assert db.one_doc("SELECT doc FROM transfers WHERE id='tr1'")["state"] == before

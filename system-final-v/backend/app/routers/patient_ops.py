@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, red_flags, settings_store
+from ..care_team import has_care_team
 from ..deps import Actor, current_actor
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -110,8 +111,13 @@ def submit_symptoms(body: SymptomIntake, request: Request,
         "gettingWorse": body.getting_worse, "missedDoses": body.missed_doses, "hadBefore": body.had_before,
         "concerns": body.concerns, "medications": body.medications, "questions": body.questions,
         "scored": False,
-        "note": "Shared with your care team as written. It is not used to produce a score.",
     }
+    # Only claim it was shared when someone is there to read it (QA issue 23).
+    shared = has_care_team(patient_id, actor.email)
+    doc["sharedWith"] = "care_team" if shared else "nobody"
+    doc["note"] = ("Shared with your care team as written. It is not used to produce a score." if shared else
+                   "Saved to your account. You are not connected to a hospital yet, so no care team has "
+                   "received it. Only you can see it. It is not used to produce a score.")
     _store(patient_id, "symptoms", doc)
     audit.record(actor, "patient.submit", f"symptom intake:{doc['id']}", ip=_ip(request))
     # Tells the form to show the emergency message for symptoms only typed as
@@ -129,6 +135,7 @@ def submit_previsit(body: PreVisitNote, request: Request,
         "visitWith": body.visit_with, "questions": body.questions,
         "changesSinceLast": body.changes_since_last,
         "medicationsChanged": body.medications_changed,
+        "sharedWith": "care_team" if has_care_team(patient_id, actor.email) else "nobody",
     }
     _store(patient_id, "previsit", doc)
     audit.record(actor, "patient.submit", f"pre-visit:{doc['id']}", ip=_ip(request))

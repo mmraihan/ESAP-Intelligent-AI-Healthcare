@@ -1,0 +1,24 @@
+# ESAP Clinical AI — public marketing and evidence pages only.
+User-agent: *
+Allow: /$
+Allow: /product
+Allow: /evidence
+Allow: /security
+Allow: /pricing
+Allow: /faq
+Allow: /waitlist
+Allow: /privacy
+Allow: /terms
+Disallow: /doctor/
+Disallow: /nurse/
+Disallow: /admin/
+Disallow: /ops/
+Disallow: /patient/
+Disallow: /design
+Disallow: /account
+Disallow: /support
+Disallow: /invite/
+Disallow: /caregiver/
+Disallow: /reset-password
+
+Sitemap: https://care.esap.ai/sitemap.xml

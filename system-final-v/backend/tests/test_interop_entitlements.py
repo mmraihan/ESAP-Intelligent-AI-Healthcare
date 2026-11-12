@@ -26,7 +26,7 @@ def test_free_tier_excludes_the_differential():
 # --- transfer: MPI + consent -------------------------------------------------
 
 def test_weak_identifiers_go_to_mpi_review(client, auth):
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"),
+    r = client.post("/api/v1/transfers", headers=auth("physician"),
                     json={"mrn": "5", "patient_display": "John", "counterparty": "Mercy External"})
     assert r.status_code == 201, r.text
     body = r.json()
@@ -35,7 +35,7 @@ def test_weak_identifiers_go_to_mpi_review(client, auth):
 
 
 def test_strong_identifiers_are_ready_to_approve(client, auth):
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"),
+    r = client.post("/api/v1/transfers", headers=auth("physician"),
                     json={"mrn": "MRN-778812", "patient_display": "Jonas de Vries 1961",
                           "counterparty": "Mercy External EHR"})
     assert r.status_code == 201, r.text
@@ -45,13 +45,13 @@ def test_strong_identifiers_are_ready_to_approve(client, auth):
 
 
 def test_transfer_requires_a_consent_basis(client, auth):
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"),
+    r = client.post("/api/v1/transfers", headers=auth("physician"),
                     json={"mrn": "X1", "patient_display": "A B", "counterparty": "Y", "consent_basis": ""})
     assert r.status_code == 422
 
 
 def test_esap_counterparty_uses_the_fast_path(client, auth):
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"),
+    r = client.post("/api/v1/transfers", headers=auth("physician"),
                     json={"mrn": "MRN-99", "patient_display": "Test Patient 1970",
                           "counterparty": "Northgate General"})
     assert r.status_code == 201, r.text
@@ -60,7 +60,7 @@ def test_esap_counterparty_uses_the_fast_path(client, auth):
 
 def test_approve_is_blocked_without_a_consent_basis(client, auth):
     """A transfer whose consent basis was cleared cannot be approved."""
-    r = client.post("/api/v1/admin/interop", headers=auth("physician"),
+    r = client.post("/api/v1/transfers", headers=auth("physician"),
                     json={"mrn": "MRN-55", "patient_display": "Consent Test 1980",
                           "counterparty": "Mercy External"})
     tid = r.json()["id"]

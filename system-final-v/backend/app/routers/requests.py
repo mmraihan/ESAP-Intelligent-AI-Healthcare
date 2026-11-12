@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, rbac
+from ..care_team import has_care_team
 from ..deps import Actor, current_actor, display_name
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -96,6 +97,37 @@ def _target_tenant(actor: Actor) -> str:
     return actor.tenant_id
 
 
+def _open_support_ticket(actor: Actor, label: str, detail: str, ref: str | None, now: str) -> str:
+    """File a patient's request in the ESAP support queue, which platform staff work."""
+    tenant = db.one_doc("SELECT doc FROM tenants WHERE id=?", (actor.tenant_id,)) or {}
+    ticket = {
+        "id": f"tk_{uuid.uuid4().hex[:10]}",
+        "subject": label[:160],
+        "category": "data_or_results",
+        "priority": "normal",
+        "status": "open",
+        "requesterName": display_name(actor),
+        "requesterEmail": actor.email,
+        "requesterRole": actor.role,
+        "tenantId": actor.tenant_id,
+        "tenantName": tenant.get("name"),
+        "assignee": None,
+        "awaiting": "support",
+        "messages": [{"id": f"m_{uuid.uuid4().hex[:8]}", "at": now, "author": display_name(actor),
+                      "fromStaff": False,
+                      "body": (f"{detail}\n\nAbout: {ref}" if ref else detail)[:5000]}],
+        "createdAt": now,
+        "updatedAt": now,
+        "source": "patient_request_no_care_team",
+    }
+    db.connect().execute(
+        "INSERT INTO support_tickets (id, tenant_id, requester, status, priority, created_at, updated_at, doc)"
+        " VALUES (?,?,?,?,?,?,?,?)",
+        (ticket["id"], actor.tenant_id, actor.email, "open", "normal", now, now, json.dumps(ticket)),
+    )
+    return ticket["id"]
+
+
 @router.post("/requests", status_code=201)
 def create_request(body: ServiceRequest, request: Request, actor: Actor = Depends(current_actor)):
     kind = KINDS.get(body.kind)
@@ -104,6 +136,9 @@ def create_request(body: ServiceRequest, request: Request, actor: Actor = Depend
     _authorize(actor, kind)
 
     target_tenant = _target_tenant(actor)
+    # A patient with no hospital behind them has no care team to read this. It
+    # goes to ESAP support instead, and the response says so (QA issue 23).
+    to_support = kind.who == "patient" and not has_care_team(actor.user_id, actor.email)
     doc = {
         "id": f"rq_{uuid.uuid4().hex[:10]}",
         "kind": body.kind,
@@ -116,8 +151,11 @@ def create_request(body: ServiceRequest, request: Request, actor: Actor = Depend
         "requestedBy": display_name(actor),
         "requestedByEmail": actor.email,
         "tenantId": target_tenant,
+        "routedTo": "esap_support" if to_support else ("platform" if kind.platform else "care_team"),
     }
     conn = db.connect()
+    if to_support:
+        doc["supportTicketId"] = _open_support_ticket(actor, kind.label, body.detail, body.ref, doc["requestedAt"])
     conn.execute(
         "INSERT INTO service_requests (id, tenant_id, requester, kind, status, created_at, doc)"
         " VALUES (?,?,?,?,?,?,?)",

@@ -6,6 +6,7 @@
  * fold. The `pub` root gives it the public palette (styles/public.css).
  */
 import type { CSSProperties, ReactNode } from "react";
+import { DemoBadge } from "@/components/ui/domain";
 import { Link } from "react-router-dom";
 import { LanguageToggle, t } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
@@ -16,7 +17,7 @@ import { BedIcon, HeartPulseIcon, InfoIcon, RefreshIcon } from "@/components/ui/
 const COPY = {
   signin: {
     title: "Decision support at the moment of admission.",
-    lede: "Five calibrated estimates from what is known at intake, each with its reasoning and its limits on the same card.",
+    lede: "Five estimates from what is known at intake, each with its reasoning and its limits on the same card. The models in this demo are placeholders, not yet calibrated.",
   },
   signup: {
     title: "Run it on your own cases, today.",
@@ -77,6 +78,7 @@ export function AuthLayout({ variant, children }: { variant: "signin" | "signup"
       <main className="auth-main">
         <div className="auth-topline">
           <span className="auth-topline-brand"><Link to="/product" className="brand-link"><BrandMark /></Link></span>
+          <DemoBadge />
           <div className="row" style={{ gap: 8, marginInlineStart: "auto" }}>
             <LanguageToggle compact />
             <ThemeToggle compact />

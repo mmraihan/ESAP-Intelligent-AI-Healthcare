@@ -34,6 +34,8 @@ class Actor:
     #: The demo all-access account (ESAP_DEMO_ALL_ACCESS): every permission at
     #: `full`, every console reachable, no elevation needed.
     all_access: bool = False
+    #: Authenticated by the HttpOnly cookie rather than a Bearer header.
+    via_cookie: bool = False
 
     @property
     def is_platform(self) -> bool:
@@ -86,13 +88,42 @@ def _bearer(request: Request) -> str | None:
     return None
 
 
+#: Header the web client sends on every request. A cookie-authenticated write
+#: without it is refused: a cross-site form cannot set a custom header, and one
+#: set by script forces a CORS preflight that only allowed origins pass.
+CLIENT_HEADER = "x-esap-client"
+_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+#: What an admin who has not enrolled MFA yet may still call (QA issue 8).
+_MFA_SETUP_PATHS = {
+    "/api/v1/auth/session", "/api/v1/auth/whoami", "/api/v1/auth/logout",
+    "/api/v1/auth/mfa/status", "/api/v1/auth/mfa/enroll", "/api/v1/auth/mfa/activate",
+}
+
+
+def session_token(request: Request) -> tuple[str | None, bool]:
+    """The session token and whether it came from the HttpOnly cookie."""
+    bearer = _bearer(request)
+    if bearer:
+        return bearer, False
+    cookie = request.cookies.get(settings().cookie_name)
+    return (cookie, True) if cookie else (None, False)
+
+
+def _parse(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
 def current_actor(request: Request) -> Actor:
-    token = _bearer(request)
+    token, from_cookie = session_token(request)
     if not token:
         raise ApiError(401, "No session. Sign in first.")
+    if from_cookie and request.method not in _SAFE_METHODS and not request.headers.get(CLIENT_HEADER):
+        raise ApiError(403, "This request is missing the ESAP client header.")
 
     row = db.connect().execute(
-        "SELECT s.token, s.user_id, s.role, s.tenant_id, s.expires_at, s.elevation, c.email"
+        "SELECT s.token, s.user_id, s.role, s.tenant_id, s.expires_at, s.elevation, s.last_seen,"
+        " s.mfa_setup, s.issued_at, c.email"
         " FROM sessions s LEFT JOIN credentials c ON c.user_id = s.user_id"
         " WHERE s.token = ?",
         (token,),
@@ -100,10 +131,28 @@ def current_actor(request: Request) -> Actor:
     if row is None:
         raise ApiError(401, "Session not recognised.")
 
-    if datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00")) <= utcnow():
+    now = utcnow()
+    if _parse(row["expires_at"]) <= now:
         db.connect().execute("DELETE FROM sessions WHERE token=?", (token,))
         db.connect().commit()
         raise ApiError(401, "Session expired. Sign in again.")
+
+    # Idle timeout (QA issue 8): a session unused for this long is ended, so an
+    # unattended workstation does not stay signed in for the whole shift.
+    idle = settings().idle_timeout_minutes
+    last = _parse(row["last_seen"] or row["issued_at"])
+    if idle > 0 and (now - last).total_seconds() > idle * 60:
+        db.connect().execute("DELETE FROM sessions WHERE token=?", (token,))
+        db.connect().commit()
+        raise ApiError(401, f"You were signed out after {idle} minutes without activity. Sign in again.")
+    if (now - last).total_seconds() > 30:
+        db.connect().execute("UPDATE sessions SET last_seen=? WHERE token=?",
+                             (now.isoformat().replace("+00:00", "Z"), token))
+        db.connect().commit()
+
+    if row["mfa_setup"] and request.url.path not in _MFA_SETUP_PATHS:
+        raise ApiError(403, "Set up two-factor sign-in before using this console. "
+                            "Administrator accounts must have it.", code="MFA_SETUP_REQUIRED")
 
     elevation = json.loads(row["elevation"]) if row["elevation"] else None
     if elevation and datetime.fromisoformat(elevation["expiresAt"].replace("Z", "+00:00")) <= utcnow():
@@ -121,8 +170,29 @@ def current_actor(request: Request) -> Actor:
         token=token,
         elevation=elevation,
         all_access=is_superuser(row["email"] or ""),
+        via_cookie=from_cookie,
     )
     request.state.actor = actor
+    return actor
+
+
+def staff_only(actor: Actor = Depends(current_actor)) -> Actor:
+    """For clinical-side routes: patients and carers never reach them, whatever
+    their permission grades say."""
+    if actor.role in {"patient", "guest"}:
+        raise ApiError(403, "This is for hospital staff.")
+    return actor
+
+
+#: The roles whose home is the hospital admin or platform console.
+ADMIN_ROLES = {"tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor", "super_admin"}
+
+
+def admin_only(actor: Actor = Depends(current_actor)) -> Actor:
+    """For every /admin route (QA issue 25). A clinician who needs part of this
+    data has a route of their own, such as /transfers."""
+    if actor.role not in ADMIN_ROLES and not actor.all_access:
+        raise ApiError(403, "The hospital admin console is for administrators.")
     return actor
 
 

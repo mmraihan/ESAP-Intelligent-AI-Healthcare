@@ -9,9 +9,13 @@
  * the pricing page describes. Colours are tokens, so both themes follow.
  * Motion is CSS-only (styles/public.css, `.art-*`): transform and opacity,
  * frozen under prefers-reduced-motion.
+ *
+ * Labels are English keys for t(), so the art follows the page language
+ * (QA issue 14).
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { MODELS } from "@/mock/db";
+import { t } from "@/i18n";
 import { BuildingIcon, ClipboardIcon, EyeOffIcon, KeyIcon, LockIcon, ScaleIcon } from "@/components/ui/icons";
 import "@/styles/site-art.css";
 
@@ -33,7 +37,7 @@ export function SecurityArt() {
           {layers.map((l, i) => (
             <g key={l.r} className="art-layer" style={d(i)}>
               <circle r={l.r} className={`art-ring art-ring-${i}`} />
-              <text y={-l.r + 17} textAnchor="middle" className="art-ring-label">{l.label}</text>
+              <text y={-l.r + 17} textAnchor="middle" className="art-ring-label">{t(l.label)}</text>
             </g>
           ))}
           {/* The shield + lock at the centre. */}
@@ -99,7 +103,7 @@ export function EvidenceArt() {
   const m01 = MODELS.find((m) => m.id === "M-01");
   const pooled = Number(m01?.headline[0]?.value) || 0;
   if (!m01 || !pooled) return null;
-  const rows = [{ label: "Pooled", value: pooled }, ...m01.strata.map((s) => ({ label: s.label, value: s.value }))];
+  const rows = [{ key: "pooled", label: t("Pooled"), value: pooled }, ...m01.strata.map((s) => ({ key: s.label, label: t(s.label), value: s.value }))];
   const CEIL = 0.6;
   const scale = (v: number) => (v / 0.8) * 100; // axis 0 → 0.8
   const tiltRef = usePointerTilt<HTMLElement>();
@@ -114,14 +118,14 @@ export function EvidenceArt() {
       <div className="art-panel">
         <p className="art-panel-head">
           <strong>M-01 · Recall@20</strong>
-          <span>held-out test set</span>
+          <span>{t("held-out test set")}</span>
         </p>
         <div className="art-bars">
           {rows.map((r, i) => (
-            <div key={r.label} className="art-bar-row">
+            <div key={r.key} className="art-bar-row">
               <span className="art-bar-label" style={{ gridRow: i + 1 }}>{r.label}</span>
               <span className="art-bar-track" style={{ gridRow: i + 1 }}>
-                <span className={`art-bar-fill${/cold/i.test(r.label) ? " is-weak" : ""}`} style={{ width: `${scale(r.value)}%`, ...d(i) }} />
+                <span className={`art-bar-fill${/cold/i.test(r.key) ? " is-weak" : ""}`} style={{ width: `${scale(r.value)}%`, ...d(i) }} />
               </span>
               <span className="art-bar-value tnum" style={{ gridRow: i + 1 }}>{r.value.toFixed(3)}</span>
             </div>
@@ -129,13 +133,12 @@ export function EvidenceArt() {
           {/* Spans the track column over every row; the line sits at the ceiling. */}
           <span className="art-ceiling" style={{ gridRow: `1 / span ${rows.length}` }}>
             <span className="art-ceiling-line" style={{ insetInlineStart: `${scale(CEIL)}%` }}>
-              <span>leakage alarm · {CEIL.toFixed(2)}</span>
+              <span>{t("leakage alarm")} · {CEIL.toFixed(2)}</span>
             </span>
           </span>
         </div>
         <p className="art-panel-foot">
-          The weakest stratum is shown, not averaged away. Above the ceiling, a score is not trusted until a
-          negative control has run.
+          {t("The weakest stratum is shown, not averaged away. Above the ceiling, a score is not trusted until a negative control has run.")}
         </p>
       </div>
       </div>
@@ -176,7 +179,7 @@ export function PricingArt() {
             (bottom edge y=290) so the spike's peak (y≈298) never crosses the door. */}
         <path className="art-ecg" pathLength={1} d="M20 324 H230 l10 -14 l10 26 l9 -38 l10 38 l8 -12 H380" />
       </svg>
-      <figcaption className="art-caption">Priced per bed — every clinician on the ward is included.</figcaption>
+      <figcaption className="art-caption">{t("Priced per bed — every clinician on the ward is included.")}</figcaption>
     </figure>
   );
 }
@@ -195,8 +198,8 @@ export function WaitlistPath() {
         {steps.map((st, i) => (
           <li key={st.t} style={d(i)}>
             <span className="art-path-dot">{i + 1}</span>
-            <strong>{st.t}</strong>
-            <span>{st.s}</span>
+            <strong>{t(st.t)}</strong>
+            <span>{t(st.s)}</span>
           </li>
         ))}
       </ol>
@@ -346,12 +349,12 @@ export function LegalArt({ title, lines, signed = false }: { title: string; line
  * request crosses. The cube spins on its own; the stage leans to the pointer.
  */
 const CUBE_FACES = [
-  { icon: <LockIcon size={26} />, label: "Encrypted at rest" },
+  { icon: <LockIcon size={26} />, label: "Role-based access" },
   { icon: <EyeOffIcon size={26} />, label: "Never sold" },
   { icon: <ClipboardIcon size={26} />, label: "Every read logged" },
   { icon: <BuildingIcon size={26} />, label: "Hospital-owned" },
-  { icon: <ScaleIcon size={26} />, label: "Fairness audited" },
-  { icon: <KeyIcon size={26} />, label: "Tenant-scoped keys" },
+  { icon: <ScaleIcon size={26} />, label: "Consent per purpose" },
+  { icon: <KeyIcon size={26} />, label: "Your rights, on request" },
 ];
 
 export function PrivacyArt() {
@@ -365,7 +368,7 @@ export function PrivacyArt() {
             {CUBE_FACES.map((f, i) => (
               <span key={f.label} className={`art-cube-face art-cube-face-${i}`}>
                 {f.icon}
-                <span>{f.label}</span>
+                <span>{t(f.label)}</span>
               </span>
             ))}
           </div>

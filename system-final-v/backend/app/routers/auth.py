@@ -12,8 +12,11 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, npi, rbac, settings_store, sso
-from ..deps import Actor, current_actor, display_name
+import os
+from datetime import timedelta
+
+from .. import audit, db, mailer, npi, rbac, session_cookie, settings_store, sso
+from ..deps import Actor, current_actor, display_name, end_sessions
 from ..errors import ApiError
 from ..security import (
     expiry, hash_password, iso, new_token, new_totp_secret, totp_uri, utcnow,
@@ -100,17 +103,106 @@ class ForgotPasswordRequest(Strict):
     email: str = Field(min_length=3, max_length=200)
 
 
+class ResetPasswordRequest(Strict):
+    token: str = Field(min_length=16, max_length=200)
+    new_password: str = Field(min_length=8, max_length=200)
+
+
+# --- lockout (QA issue 8) ----------------------------------------------------
+# Counted per email address whether or not it has an account, and the lockout
+# message is the same either way, so it does not reveal who is registered.
+
+def _throttle_check(email: str) -> None:
+    row = db.connect().execute("SELECT locked_until FROM login_throttle WHERE email=?", (email,)).fetchone()
+    if row and row["locked_until"]:
+        until = datetime.fromisoformat(row["locked_until"].replace("Z", "+00:00"))
+        if until > utcnow():
+            minutes = max(1, int((until - utcnow()).total_seconds() // 60) + 1)
+            plural = "s" if minutes != 1 else ""
+            raise ApiError(429, f"Too many wrong attempts. Sign-in for this address is locked for "
+                                f"{minutes} more minute{plural}. You can reset your password instead.",
+                           code="ACCOUNT_LOCKED")
+
+
+def _throttle_fail(email: str) -> bool:
+    """Count a failure. True when this failure locked the address."""
+    cfg = settings()
+    conn = db.connect()
+    row = conn.execute("SELECT failures, first_at, locked_until FROM login_throttle WHERE email=?",
+                       (email,)).fetchone()
+    now = utcnow()
+    window = timedelta(minutes=cfg.lockout_minutes)
+    failures, first_at = 1, now
+    if row:
+        expired_lock = bool(row["locked_until"]) and datetime.fromisoformat(
+            row["locked_until"].replace("Z", "+00:00")) <= now
+        # Failures only add up inside one window: four typos last month and
+        # one today are not five in a row.
+        stale = not row["first_at"] or datetime.fromisoformat(
+            row["first_at"].replace("Z", "+00:00")) <= now - window
+        if not (expired_lock or stale):
+            failures = row["failures"] + 1
+            first_at = datetime.fromisoformat(row["first_at"].replace("Z", "+00:00"))
+    locked = failures >= cfg.lockout_threshold
+    conn.execute(
+        "INSERT INTO login_throttle (email, failures, first_at, locked_until) VALUES (?,?,?,?)"
+        " ON CONFLICT(email) DO UPDATE SET failures=excluded.failures, first_at=excluded.first_at,"
+        " locked_until=excluded.locked_until",
+        (email, failures, iso(first_at), iso(now + window) if locked else None),
+    )
+    conn.commit()
+    return locked
+
+
+def _throttle_clear(email: str) -> None:
+    conn = db.connect()
+    conn.execute("DELETE FROM login_throttle WHERE email=?", (email,))
+    conn.commit()
+
+
+def _demo_picker_on() -> bool:
+    return os.environ.get("ESAP_DEMO_PICKER", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _needs_mfa_setup(user_id: str, email: str, role: str) -> bool:
+    """Admin and platform accounts must enrol MFA (QA issue 8).
+
+    The shared demo accounts are exempt only while the demo picker is switched
+    on (ESAP_DEMO_PICKER), by product decision; turning the picker off removes
+    the exemption.
+    """
+    if not mfa_mandatory(email, role):
+        return False
+    row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?", (user_id,)).fetchone()
+    return not (row and row["mfa_enabled"])
+
+
+def mfa_mandatory(email: str, role: str) -> bool:
+    if not settings().require_admin_mfa:
+        return False
+    if rbac.roles().get(role, {}).get("surface") not in {"admin", "ops"}:
+        return False
+    if _demo_picker_on():
+        demo = {(v or {}).get("email", "").lower() for v in (db.document("demo_identity") or {}).values()}
+        if email.lower() in demo:
+            return False
+    return True
+
+
 def _identity(role: str) -> dict:
     return (db.document("demo_identity") or {}).get(role, {})
 
 
-def _session_payload(actor_row: dict, token: str, expires: str) -> dict:
+def _session_payload(actor_row: dict, token: str, expires: str, mfa_setup: bool = False) -> dict:
     role = actor_row["role"]
     meta = rbac.roles().get(role, {})
     ident = _identity(role)
     return {
         "token": token,
         "expires_at": expires,
+        "idle_timeout_minutes": settings().idle_timeout_minutes,
+        # An admin without MFA gets a session that can only enrol it.
+        "mfa_setup_required": mfa_setup,
         "user": {
             "id": actor_row["user_id"],
             "email": actor_row["email"],
@@ -132,25 +224,31 @@ def _session_payload(actor_row: dict, token: str, expires: str) -> dict:
 
 def _mint(user_id: str, email: str, role: str, tenant_id: str, name: str | None = None) -> dict:
     token = new_token()
-    exp = expiry(settings().session_ttl_hours)
+    ttl_h = settings().session_ttl_hours
+    exp = expiry(ttl_h)
+    mfa_setup = _needs_mfa_setup(user_id, email, role)
     conn = db.connect()
     conn.execute(
-        "INSERT INTO sessions (token, user_id, role, tenant_id, issued_at, expires_at, elevation)"
-        " VALUES (?,?,?,?,?,?,NULL)",
-        (token, user_id, role, tenant_id, iso(utcnow()), iso(exp)),
+        "INSERT INTO sessions (token, user_id, role, tenant_id, issued_at, expires_at, elevation,"
+        " last_seen, mfa_setup) VALUES (?,?,?,?,?,?,NULL,?,?)",
+        (token, user_id, role, tenant_id, iso(utcnow()), iso(exp), iso(utcnow()), int(mfa_setup)),
     )
     conn.commit()
+    session_cookie.remember(token, int(ttl_h * 3600))
+    _throttle_clear(email.strip().lower())
     return _session_payload(
         {"user_id": user_id, "email": email, "role": role, "tenant_id": tenant_id, "name": name},
-        token, iso(exp),
+        token, iso(exp), mfa_setup,
     )
 
 
 @router.post("/auth/login")
 def login(body: LoginRequest, request: Request):
+    email = body.email.strip().lower()
+    _throttle_check(email)
     row = db.connect().execute(
         "SELECT user_id, email, password_hash, role, tenant_id, mfa_enabled FROM credentials WHERE email = ?",
-        (body.email.strip().lower(),),
+        (email,),
     ).fetchone()
 
     # Same message and same work either way: a "no such account" that is
@@ -161,6 +259,11 @@ def login(body: LoginRequest, request: Request):
             "login.failed", body.email, outcome="error",
             ip=request.client.host if request.client else "unknown",
         )
+        if _throttle_fail(email):
+            audit.record(Actor("anonymous", body.email, "guest", "t_yves", ""),
+                         "login.locked", body.email, outcome="denied",
+                         ip=request.client.host if request.client else "unknown")
+            _throttle_check(email)
         raise ApiError(401, "Email or password is incorrect.")
 
     # Checked only after the password, so a suspension is not disclosed to
@@ -217,14 +320,23 @@ def mfa_verify(body: MfaVerifyRequest, request: Request):
         " FROM credentials WHERE user_id=?", (user_id,)).fetchone()
     if row is None or not row["mfa_enabled"]:
         raise ApiError(401, "This sign-in step is no longer valid.")
+    # Wrong codes count toward the same lockout as wrong passwords; without
+    # this one challenge token allows unlimited guesses at a 6-digit code.
+    _throttle_check(row["email"])
     if not verify_totp(row["mfa_secret"] or "", body.code):
         audit.record(
             Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
             "login.mfa_failed", row["email"], outcome="error",
             ip=request.client.host if request.client else "unknown",
         )
+        if _throttle_fail(row["email"]):
+            _throttle_check(row["email"])
         raise ApiError(401, "That verification code is not correct.")
-    user = db.connect().execute("SELECT name FROM users WHERE email=?", (row["email"],)).fetchone()
+    user = db.connect().execute("SELECT name, status FROM users WHERE email=?", (row["email"],)).fetchone()
+    tenant = db.connect().execute("SELECT status FROM tenants WHERE id=?", (row["tenant_id"],)).fetchone()
+    if (user and user["status"] == "suspended") or (tenant and tenant["status"] == "suspended"):
+        # Suspended between the password step and the code.
+        raise ApiError(403, "This account is suspended. Contact your administrator.")
     payload = _mint(row["user_id"], row["email"], row["role"], row["tenant_id"],
                     user["name"] if user else None)
     audit.record(
@@ -309,6 +421,12 @@ def mfa_status(actor: Actor = Depends(current_actor)):
 def mfa_enroll(actor: Actor = Depends(current_actor)):
     """Begin MFA enrolment: mint a secret and return the otpauth URI to add to an
     authenticator app. Not active until confirmed with a code at /auth/mfa/activate."""
+    # Re-enrolling would clear mfa_enabled, which would let any open session
+    # switch someone's second factor off without a code. Disable first.
+    row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?",
+                               (actor.user_id,)).fetchone()
+    if row and row["mfa_enabled"]:
+        raise ApiError(409, "Two-factor sign-in is already on. Turn it off with a code first to start again.")
     secret = new_totp_secret()
     conn = db.connect()
     conn.execute("UPDATE credentials SET mfa_secret=?, mfa_enabled=0 WHERE user_id=?",
@@ -329,6 +447,8 @@ def mfa_activate(body: MfaActivateRequest, request: Request, actor: Actor = Depe
         raise ApiError(400, "That code is not correct. Check your authenticator and try again.")
     conn = db.connect()
     conn.execute("UPDATE credentials SET mfa_enabled=1 WHERE user_id=?", (actor.user_id,))
+    conn.execute("UPDATE sessions SET mfa_setup=0 WHERE user_id=?", (actor.user_id,))
+    conn.execute("UPDATE users SET doc=json_set(doc, '$.mfa', 'totp') WHERE email=?", (actor.email,))
     conn.commit()
     audit.record(actor, "user.mfa_enabled", actor.email,
                  ip=request.client.host if request.client else "unknown")
@@ -343,10 +463,13 @@ def mfa_disable(body: MfaActivateRequest, request: Request, actor: Actor = Depen
                                (actor.user_id,)).fetchone()
     if not row or not row["mfa_enabled"]:
         return {"activated": False}
+    if mfa_mandatory(actor.email, actor.role):
+        raise ApiError(403, "Administrator accounts must keep two-factor sign-in on.")
     if not verify_totp(row["mfa_secret"] or "", body.code):
         raise ApiError(400, "That code is not correct.")
     conn = db.connect()
     conn.execute("UPDATE credentials SET mfa_enabled=0, mfa_secret=NULL WHERE user_id=?", (actor.user_id,))
+    conn.execute("UPDATE users SET doc=json_set(doc, '$.mfa', 'none') WHERE email=?", (actor.email,))
     conn.commit()
     audit.record(actor, "user.mfa_disabled", actor.email,
                  ip=request.client.host if request.client else "unknown")
@@ -538,14 +661,33 @@ def accept_invite(body: AcceptInviteRequest):
 @router.get("/auth/session")
 def session(actor: Actor = Depends(current_actor)):
     user = db.connect().execute("SELECT name FROM users WHERE email=?", (actor.email,)).fetchone()
-    row = db.connect().execute("SELECT expires_at FROM sessions WHERE token=?", (actor.token,)).fetchone()
+    row = db.connect().execute("SELECT expires_at, mfa_setup FROM sessions WHERE token=?",
+                               (actor.token,)).fetchone()
     payload = _session_payload(
         {"user_id": actor.user_id, "email": actor.email, "role": actor.role,
          "tenant_id": actor.tenant_id, "name": user["name"] if user else None},
-        actor.token, row["expires_at"],
+        actor.token, row["expires_at"], bool(row["mfa_setup"]),
     )
     payload["elevation"] = actor.elevation
+    if actor.via_cookie:
+        # The cookie is HttpOnly so page scripts cannot read the session; do
+        # not hand the same secret back in a response body (QA issue 13).
+        payload["token"] = None
     return payload
+
+
+@router.get("/auth/whoami")
+def whoami(request: Request):
+    """The boot check: the current session if there is one, else
+    ``{"authenticated": false}`` with a 200, so a signed-out visitor's first
+    page load does not log a failed request."""
+    try:
+        actor = current_actor(request)
+    except ApiError as exc:
+        if exc.status == 401:
+            return {"authenticated": False}
+        raise
+    return {"authenticated": True, **session(actor)}
 
 
 @router.post("/auth/password")
@@ -567,19 +709,57 @@ def change_password(body: PasswordChangeRequest, request: Request, actor: Actor 
     return {"changed": True, "other_sessions_ended": True}
 
 
+_RESET_TTL_MINUTES = 60
+
+FORGOT_MESSAGE = ("If that address has an account, we have emailed it a link to choose a new password. "
+                  "The link works for 60 minutes. Hospital staff accounts are reset by the hospital's "
+                  "administrator, who has been told.")
+
+
+def _self_service_reset(role: str, tenant_id: str) -> bool:
+    """Patients and self-serve clinicians have no administrator (QA issue 17)."""
+    return role == "patient" or tenant_id == "t_solo"
+
+
+def issue_reset_link(user_id: str, email: str) -> str:
+    """Create a one-time reset token and email the link. Returns the link."""
+    raw = new_token()
+    now = utcnow()
+    conn = db.connect()
+    conn.execute("UPDATE password_resets SET used_at=? WHERE user_id=? AND used_at IS NULL",
+                 (iso(now), user_id))
+    conn.execute(
+        "INSERT INTO password_resets (token_hash, user_id, email, created_at, expires_at) VALUES (?,?,?,?,?)",
+        (hashlib.sha256(raw.encode()).hexdigest(), user_id, email, iso(now),
+         iso(now + timedelta(minutes=_RESET_TTL_MINUTES))),
+    )
+    conn.commit()
+    link = f"{settings().public_url}/reset-password?token={raw}"
+    mailer.send(email, "Reset your ESAP password",
+                "Someone asked to reset the password for this ESAP account.\n\n"
+                f"Choose a new password here (the link works for {_RESET_TTL_MINUTES} minutes):\n{link}\n\n"
+                "If you did not ask for this, you can ignore this email. Your password has not changed.")
+    return link
+
+
 @router.post("/auth/password/forgot", status_code=202)
 def forgot_password(body: ForgotPasswordRequest, request: Request):
-    """Ask the hospital admin for a password reset.
+    """Start a password reset.
 
-    There is no email service, so the request goes to the admin's request
-    queue, where **Send reset** on the roster issues the link. The answer is
-    the same whether or not the address has an account: a different reply
-    for a known address would enumerate staff emails.
+    Patients and self-serve clinicians get a reset link by email straight away.
+    Hospital staff are reset by their administrator, so the request goes to
+    the admin's queue. The answer is the same whether or not the address has
+    an account: a different reply for a known address would enumerate emails.
     """
     email = body.email.strip().lower()
     row = db.connect().execute(
         "SELECT user_id, role, tenant_id FROM credentials WHERE email=?", (email,)).fetchone()
-    if row is not None:
+    if row is not None and _self_service_reset(row["role"], row["tenant_id"]):
+        issue_reset_link(row["user_id"], email)
+        audit.record(Actor(row["user_id"], email, row["role"], row["tenant_id"], ""),
+                     "user.password_reset_link", email, tenant_id=row["tenant_id"],
+                     ip=request.client.host if request.client else "unknown")
+    elif row is not None:
         conn = db.connect()
         open_already = conn.execute(
             "SELECT 1 FROM service_requests WHERE requester=? AND kind='password_reset_request'"
@@ -600,8 +780,33 @@ def forgot_password(body: ForgotPasswordRequest, request: Request):
             audit.record(Actor(row["user_id"], email, row["role"], row["tenant_id"], ""),
                          "user.password_reset_request", email, tenant_id=row["tenant_id"],
                          ip=request.client.host if request.client else "unknown")
-    return {"message": "If that address has an account, your administrator has been asked to "
-                       "send you a reset link."}
+    return {"message": FORGOT_MESSAGE}
+
+
+@router.post("/auth/password/reset")
+def reset_password_with_token(body: ResetPasswordRequest, request: Request):
+    """Choose a new password from an emailed reset link. One use, 60 minutes.
+    Every session is ended and any lockout on the address is lifted."""
+    digest = hashlib.sha256(body.token.encode()).hexdigest()
+    conn = db.connect()
+    row = conn.execute("SELECT user_id, email, expires_at, used_at FROM password_resets WHERE token_hash=?",
+                       (digest,)).fetchone()
+    expired = row is None or bool(row["used_at"]) or datetime.fromisoformat(
+        row["expires_at"].replace("Z", "+00:00")) <= utcnow()
+    cred = None if expired else conn.execute(
+        "SELECT role, tenant_id FROM credentials WHERE user_id=?", (row["user_id"],)).fetchone()
+    if cred is None:
+        raise ApiError(400, "This reset link has expired or has already been used. Ask for a new one.")
+    conn.execute("UPDATE credentials SET password_hash=? WHERE user_id=?",
+                 (hash_password(body.new_password), row["user_id"]))
+    conn.execute("UPDATE password_resets SET used_at=? WHERE token_hash=?", (iso(utcnow()), digest))
+    conn.commit()
+    end_sessions(row["email"])
+    _throttle_clear(row["email"])
+    audit.record(Actor(row["user_id"], row["email"], cred["role"], cred["tenant_id"], ""),
+                 "user.password_reset_done", row["email"], tenant_id=cred["tenant_id"],
+                 ip=request.client.host if request.client else "unknown")
+    return {"reset": True, "message": "Your password has been changed. Sign in with the new one."}
 
 
 @router.post("/auth/logout", status_code=204)
@@ -609,6 +814,7 @@ def logout(actor: Actor = Depends(current_actor)):
     conn = db.connect()
     conn.execute("DELETE FROM sessions WHERE token=?", (actor.token,))
     conn.commit()
+    session_cookie.forget()
 
 
 @router.post("/auth/elevate")

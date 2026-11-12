@@ -9,7 +9,9 @@
 # (MODEL_MODE=real) additionally needs the pinned scientific stack that the
 # artifacts were trained under — see README "Real mode".
 
-fastapi==0.115.6
+fastapi==0.162.4
+# Pinned above the releases with known advisories; fastapi alone allows older ones.
+starlette==1.10.0
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
 # The code uses PEP 604 unions (`str | None`). Native on Python 3.10+; on 3.9
@@ -18,5 +20,5 @@ pydantic==2.10.4
 eval_type_backport==0.2.0
 
 # tests
-pytest==8.3.4
+pytest==9.2.0
 httpx==0.28.1

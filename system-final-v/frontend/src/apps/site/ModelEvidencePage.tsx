@@ -4,15 +4,24 @@
  * The page a sceptical CMIO is sent to. It leads with the weakest number rather
  * than the strongest, because that is the one they will find anyway, and a
  * vendor who volunteered it is a vendor worth a second meeting.
+ *
+ * English and Arabic (QA issue 14). Model records from the server (names,
+ * outcomes, strata, negative controls) are translated with t() at render; a
+ * record with no Arabic entry falls back to its English text.
  */
 import { MODELS, SUBGROUP_FAIRNESS } from "@/mock/db";
-import { isEvaluated } from "@/lib/evidence";
+import { formatEce, isEvaluated } from "@/lib/evidence";
 import { num } from "@/lib/format";
 import { BarRows } from "@/components/ui/charts";
 import { Badge, Banner, Card } from "@/components/ui/primitives";
+import { t, tr } from "@/i18n";
 import { SiteLayout } from "./SiteLayout";
 import { EvidenceArt } from "./SiteArt";
 import { AlertIcon, CheckIcon, FlaskIcon, ScaleIcon, XIcon } from "@/components/ui/icons";
+
+const STATUS: Record<string, string> = {
+  live: "live", degraded: "degraded", not_ready: "not evaluated", shadow: "shadow", retired: "retired",
+};
 
 export function ModelEvidencePage() {
   const m01 = MODELS.find((m) => m.id === "M-01");
@@ -25,7 +34,7 @@ export function ModelEvidencePage() {
   if (!m01) {
     return (
       <SiteLayout>
-        <section className="hero"><h1>Evidence</h1><p className="hero-lede">The model evaluation is not available from this server.</p></section>
+        <section className="hero"><h1>{t("Evidence")}</h1><p className="hero-lede">{t("The model evaluation is not available from this server.")}</p></section>
       </SiteLayout>
     );
   }
@@ -34,11 +43,10 @@ export function ModelEvidencePage() {
     <SiteLayout>
       <section className="hero hero-split" style={{ paddingBottom: 0 }}>
         <div className="hero-copy">
-          <span className="hero-eyebrow"><FlaskIcon size={14} /> Evidence</span>
-          <h1>The weakest number first.</h1>
+          <span className="hero-eyebrow"><FlaskIcon size={14} /> {t("Evidence")}</span>
+          <h1>{t("The weakest number first.")}</h1>
           <p className="hero-lede">
-            Every vendor leads with their best metric. Here is ours going the other way, because you
-            will find it in the pilot anyway and it is better that you hear it now.
+            {t("Every vendor leads with their best metric. Here is ours going the other way, because you will find it in the pilot anyway and it is better that you hear it now.")}
           </p>
         </div>
         <EvidenceArt />
@@ -46,53 +54,53 @@ export function ModelEvidencePage() {
 
       {!MODELS.some(isEvaluated) && (
         <section>
-          <Banner tone="warning" icon={<AlertIcon size={18} />} title="No model evaluation is published on this server">
-            The evaluation files are not on this server, so no performance figures are shown. Estimates
-            in the hosted demo come from placeholder models and are not validated.
+          <Banner tone="warning" icon={<AlertIcon size={18} />} title={t("No model evaluation is published on this server")}>
+            {t("The evaluation files are not on this server, so no performance figures are shown. Estimates in the hosted demo come from placeholder models and are not validated.")}
           </Banner>
         </section>
       )}
 
       <section className="grid grid-2">
         {!m01Ready ? (
-          <Card title="M-01 differential — pooled vs. stratified" subtitle="Not evaluated on this server">
-            <p className="muted" style={{ margin: 0, fontSize: 14 }}>No results are available to show.</p>
+          <Card title={t("M-01 differential — pooled vs. stratified")} subtitle={t("Not evaluated on this server")}>
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t("No results are available to show.")}</p>
           </Card>
         ) : (
         <Card
-          title="M-01 differential — pooled vs. stratified"
-          subtitle={`Recall@20 · ${m01.headline.find((h) => /labels/i.test(h.label))?.value ?? "—"} CCSR categories scored`}
-          footnote={`Cohort n = ${num(m01.cohortN)}. The pooled figure is the one that would go on a slide; the split is the one that determines whether it helps with your patient.`}
+          title={t("M-01 differential — pooled vs. stratified")}
+          subtitle={t("Recall@20 · {n} CCSR categories scored", { n: m01.headline.find((h) => /labels/i.test(h.label))?.value ?? "—" })}
+          footnote={t("Cohort n = {n}. The pooled figure is the one that would go on a slide; the split is the one that determines whether it helps with your patient.", { n: num(m01.cohortN) })}
         >
           <BarRows
             rows={[
-              { key: "pooled", label: "Pooled", value: m01Recall, meta: "all admissions" },
-              ...m01.strata.map((s) => ({ key: s.label, label: s.label, value: s.value, meta: `n = ${num(s.n)}` })),
+              { key: "pooled", label: t("Pooled"), value: m01Recall, meta: t("all admissions") },
+              ...m01.strata.map((s) => ({ key: s.label, label: t(s.label), value: s.value, meta: `n = ${num(s.n)}` })),
             ]}
             max={Math.max(0.6, m01Recall, ...m01.strata.map((x) => x.value))}
             format={(v) => v.toFixed(3)}
           />
           <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
-            A cold-start patient — no coded history on file — gets materially worse performance.
-            {coldShare !== null && <> {Math.round(coldShare * 100)}% of the held-out admissions are in that group,</>} and
-            the product labels them rather than averaging them away.
+            {coldShare !== null
+              ? t("A cold-start patient — no coded history on file — gets materially worse performance. {pct}% of the held-out admissions are in that group, and the product labels them rather than averaging them away.", { pct: Math.round(coldShare * 100) })
+              : t("A cold-start patient — no coded history on file — gets materially worse performance, and the product labels them rather than averaging them away.")}
           </p>
         </Card>
         )}
 
-        <Card title="Calibration" subtitle="Expected calibration error on the held-out test set">
+        <Card title={t("Calibration")} subtitle={t("Expected calibration error on the held-out test set")}>
           {withEce.length === 0 ? (
-            <p className="muted" style={{ margin: 0, fontSize: 14 }}>No calibration has been measured on this server.</p>
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>{t("No calibration has been measured on this server.")}</p>
           ) : (
             <>
               <BarRows
-                rows={withEce.map((m) => ({ key: m.id, label: `${m.id} ${m.name}`, value: m.ece, meta: m.calibrationMethod }))}
+                rows={withEce.map((m) => ({ key: m.id, label: `${m.id} ${t(m.name)}`, value: m.ece, meta: t(m.calibrationMethod) }))}
                 max={0.05}
                 format={(v) => v.toFixed(4)}
               />
               <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
-                Lower is better; 0.05 is the action threshold. {m02 && isEvaluated(m02) ? `M-02 is ${m02.ece.toFixed(4)}.` : ""} The per-bin
-                reliability curves are not stored with the evaluation, so they are not drawn here.
+                {t("Lower is better; 0.05 is the action threshold.")}{" "}
+                {m02 && isEvaluated(m02) ? t("M-02 is {v}.", { v: m02.ece.toFixed(4) }) + " " : ""}
+                {t("The per-bin reliability curves are not stored with the evaluation, so they are not drawn here.")}
               </p>
             </>
           )}
@@ -101,41 +109,40 @@ export function ModelEvidencePage() {
 
       <section>
         <Card
-          title={<span className="row" style={{ gap: 8 }}><ScaleIcon size={18} /> Performance by subgroup</span>}
-          subtitle="Published, not asserted"
-          footnote="Race and insurance are recorded solely so this table can exist. They are never model inputs, and they never appear on a clinical screen."
+          title={<span className="row" style={{ gap: 8 }}><ScaleIcon size={18} /> {t("Performance by subgroup")}</span>}
+          subtitle={t("Published, not asserted")}
+          footnote={t("Race and insurance are recorded solely so this table can exist. They are never model inputs, and they never appear on a clinical screen.")}
           padded={false}
         >
           <div className="scroll-x">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Subgroup</th>
-                  <th style={{ textAlign: "right" }}>n</th>
-                  <th style={{ textAlign: "right" }}>AUROC</th>
-                  <th style={{ textAlign: "right" }}>ECE</th>
-                  <th>Assessment</th>
+                  <th>{t("Subgroup")}</th>
+                  <th style={{ textAlign: "end" }}>{t("n")}</th>
+                  <th style={{ textAlign: "end" }} lang="en">AUROC</th>
+                  <th style={{ textAlign: "end" }} lang="en">ECE</th>
+                  <th>{t("Assessment")}</th>
                 </tr>
               </thead>
               <tbody>
                 {SUBGROUP_FAIRNESS.length === 0 && (
                   <tr><td colSpan={5} className="muted">
-                    No subgroup evaluation has been run on these models yet. When it has, every group and every
-                    metric will be published here — including the ones that look bad.
+                    {t("No subgroup evaluation has been run on these models yet. When it has, every group and every metric will be published here — including the ones that look bad.")}
                   </td></tr>
                 )}
                 {SUBGROUP_FAIRNESS.map((s) => {
                   const weak = s.auroc < 0.84 || s.ece > 0.03;
                   return (
                     <tr key={s.subgroup}>
-                      <td><strong>{s.subgroup}</strong></td>
-                      <td style={{ textAlign: "right" }} className="tnum">{num(s.n)}</td>
-                      <td style={{ textAlign: "right" }} className="tnum">{s.auroc.toFixed(3)}</td>
-                      <td style={{ textAlign: "right" }} className="tnum">{s.ece.toFixed(3)}</td>
+                      <td><strong>{t(s.subgroup)}</strong></td>
+                      <td style={{ textAlign: "end" }} className="tnum">{num(s.n)}</td>
+                      <td style={{ textAlign: "end" }} className="tnum">{s.auroc.toFixed(3)}</td>
+                      <td style={{ textAlign: "end" }} className="tnum">{s.ece.toFixed(3)}</td>
                       <td>
                         <span className={weak ? "pill pill-warning" : "pill pill-good"}>
                           {weak ? <AlertIcon size={12} /> : <CheckIcon size={12} />}
-                          {weak ? "Investigate" : "Within tolerance"}
+                          {weak ? t("Investigate") : t("Within tolerance")}
                         </span>
                       </td>
                     </tr>
@@ -148,45 +155,41 @@ export function ModelEvidencePage() {
       </section>
 
       <section className="grid grid-2">
-        <Card title="How we handled class imbalance" subtitle="And what we deliberately did not do">
+        <Card title={t("How we handled class imbalance")} subtitle={t("And what we deliberately did not do")}>
           <ul className="caveat-list">
-            <li><XIcon size={14} /> <strong>No SMOTE, no oversampling.</strong> Synthetic minority sampling improves a confusion matrix and wrecks calibration — and calibration is what makes a probability mean anything to a clinician.</li>
-            <li><CheckIcon size={14} /> Class weights during training.</li>
-            <li><CheckIcon size={14} /> Ranking metrics and reliability curves for evaluation, not accuracy.</li>
-            <li><CheckIcon size={14} /> Per-label isotonic calibration fitted on a held-out split; conformal intervals for length of stay.</li>
+            <li><XIcon size={14} /> <span>{tr("**No SMOTE, no oversampling.** Synthetic minority sampling improves a confusion matrix and wrecks calibration — and calibration is what makes a probability mean anything to a clinician.")}</span></li>
+            <li><CheckIcon size={14} /> {t("Class weights during training.")}</li>
+            <li><CheckIcon size={14} /> {t("Ranking metrics and reliability curves for evaluation, not accuracy.")}</li>
+            <li><CheckIcon size={14} /> {t("Per-label isotonic calibration fitted on a held-out split; conformal intervals for length of stay.")}</li>
           </ul>
           <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
-            If you are comparing vendors, ask each of them this question and ask to see the reliability
-            curve. A model balanced into a good-looking AUROC has one it will not want to show you.
+            {t("If you are comparing vendors, ask each of them this question and ask to see the reliability curve. A model balanced into a good-looking AUROC has one it will not want to show you.")}
           </p>
         </Card>
 
-        <Card title="How we know it is not cheating" subtitle="The leakage alarm and its negative control">
+        <Card title={t("How we know it is not cheating")} subtitle={t("The leakage alarm and its negative control")}>
           <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.7 }}>
-            An intake-only model that scores too well is almost always a model that saw something from
-            during the stay. So there is a hard ceiling: if pooled Recall@20 goes above 0.60, an alarm
-            fires and the number is not trusted until a negative control has been run and recorded.
+            {t("An intake-only model that scores too well is almost always a model that saw something from during the stay. So there is a hard ceiling: if pooled Recall@20 goes above 0.60, an alarm fires and the number is not trusted until a negative control has been run and recorded.")}
           </p>
           <div className="note-block">
-            <strong>M-01 negative control:</strong> {m01.negativeControl}
+            <strong>{t("M-01 negative control:")}</strong> {t(m01.negativeControl)}
           </div>
           <p className="muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.6 }}>
-            The alarm cannot be silenced from any screen in the product. It can be explained and
-            resolved; it cannot be dismissed.
+            {t("The alarm cannot be silenced from any screen in the product. It can be explained and resolved; it cannot be dismissed.")}
           </p>
         </Card>
       </section>
 
       <section>
-        <Card title="Every model, every headline number" padded={false}>
+        <Card title={t("Every model, every headline number")} padded={false}>
           <div className="scroll-x">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Model</th><th>Outcome</th><th>Status</th>
-                  <th style={{ textAlign: "right" }}>Headline</th>
-                  <th style={{ textAlign: "right" }}>ECE</th>
-                  <th>Weakest stratum</th>
+                  <th>{t("Model")}</th><th>{t("Outcome")}</th><th>{t("Status")}</th>
+                  <th style={{ textAlign: "end" }}>{t("Headline")}</th>
+                  <th style={{ textAlign: "end" }} lang="en">ECE</th>
+                  <th>{t("Weakest stratum")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,19 +200,19 @@ export function ModelEvidencePage() {
                       <td><strong>{m.id}</strong></td>
                       <td>
                         <div className="cell-stack">
-                          <span>{m.name}</span>
-                          <span className="muted">{m.outcome}</span>
+                          <span>{t(m.name)}</span>
+                          <span className="muted">{t(m.outcome)}</span>
                         </div>
                       </td>
-                      <td><Badge tone={m.status === "live" ? "good" : "warning"}>{m.status === "not_ready" ? "not evaluated" : m.status}</Badge></td>
-                      <td style={{ textAlign: "right" }} className="tnum">
-                        {isEvaluated(m) ? <>{m.headline[0]?.value ?? "—"} <span className="muted">{m.headline[0]?.label ?? ""}</span></> : "—"}
+                      <td><Badge tone={m.status === "live" ? "good" : "warning"}>{t(STATUS[m.status] ?? m.status)}</Badge></td>
+                      <td style={{ textAlign: "end" }} className="tnum">
+                        {isEvaluated(m) ? <>{m.headline[0]?.value ?? "—"} <span className="muted">{t(m.headline[0]?.label ?? "")}</span></> : "—"}
                       </td>
-                      <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : m.ece.toFixed(3)}</td>
+                      <td style={{ textAlign: "end" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : formatEce(m.ece)}</td>
                       <td>
                         <div className="cell-stack">
-                          <span>{weakest.label}</span>
-                          {m.strata.length > 0 && <span className="muted tnum">{weakest.metric} {weakest.value.toFixed(3)}</span>}
+                          <span>{t(weakest.label)}</span>
+                          {m.strata.length > 0 && <span className="muted tnum">{t(weakest.metric)} {weakest.value.toFixed(3)}</span>}
                         </div>
                       </td>
                     </tr>
@@ -222,10 +225,8 @@ export function ModelEvidencePage() {
       </section>
 
       <section>
-        <Banner tone="accent" title="What we do not have">
-          No controlled outcome study. No published peer-reviewed trial of this system. No claim that
-          using ESAP reduces mortality, length of stay or readmission. When those exist, they will be
-          pre-registered and they will be linked here whichever way they come out.
+        <Banner tone="accent" title={t("What we do not have")}>
+          {t("No controlled outcome study. No published peer-reviewed trial of this system. No claim that using ESAP reduces mortality, length of stay or readmission. When those exist, they will be pre-registered and they will be linked here whichever way they come out.")}
         </Banner>
       </section>
     </SiteLayout>

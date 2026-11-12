@@ -233,6 +233,7 @@
   gap: 0.25rem;
 }
 .pub-link {
+  white-space: nowrap;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -328,10 +329,23 @@
   min-height: 44px;
   justify-content: center;
 }
-/* Six links plus the actions need ~1020px; below that the bar collapses to the menu. */
-@media (max-width: 1080px) {
+/*
+ * Six links, the demo badge and the actions (language, theme, sign in, try)
+ * need ~1250px with the short badge, a little more in Arabic. Below 1260px the
+ * bar collapses to the menu; below 1520px the badge shows its short form (the
+ * full text stays in its tooltip).
+ */
+.pub-nav-lang {
+  display: contents;
+}
+@media (max-width: 1519px) {
+  .pub-nav .demo-badge-full { display: none; }
+  .pub-nav .demo-badge-short { display: inline; }
+}
+@media (max-width: 1259px) {
   .pub-nav-links,
   .pub-nav-actions > .theme-toggle,
+  .pub-nav-lang > .theme-toggle,
   .pub-nav-signin {
     display: none;
   }
@@ -342,7 +356,14 @@
     min-height: 44px;
   }
 }
-@media (min-width: 1081px) {
+/* On the narrowest phones the call to action moves into the menu, so the menu
+   button itself stays on screen. */
+@media (max-width: 400px) {
+  .pub-nav-actions .pub-btn-primary {
+    display: none;
+  }
+}
+@media (min-width: 1260px) {
   .pub-mobile {
     display: none;
   }

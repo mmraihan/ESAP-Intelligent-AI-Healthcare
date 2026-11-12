@@ -25,11 +25,12 @@ import {
 import { act, isLive } from "@/api/actions";
 import { api } from "@/api/client";
 import { hydrateFromApi } from "@/api/bootstrap";
-import { EMPTY_INTAKE, SAMPLE_PROFILES, toFeatures, type IntakeValues, type VitalKey } from "./intakeForm";
+import { EMPTY_INTAKE, RANGES, SAMPLE_PROFILES, formErrors, rangeError, toFeatures, type IntakeValues, type VitalKey } from "./intakeForm";
 import { useAssessments } from "@/hooks/useAssessments";
 import { useSession } from "@/lib/session";
 import { can } from "@/lib/rbac";
 import { myUnitId } from "@/lib/scope";
+import { dateTimeLabel } from "@/lib/format";
 
 const VITALS: { key: VitalKey; label: string; unit: string }[] = [
   { key: "bp_sys", label: "Systolic BP", unit: "mmHg" },
@@ -239,7 +240,12 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
 
   function saveDraft() {
     if (!enc) {
-      setToast(`A draft is kept on the encounter — ${mayAssess ? "run the assessment" : "choose Admit patient"} to admit this patient first.`);
+      // Not admitted yet: the draft is kept on the server under this clinician
+      // and offered back next time they open New encounter (QA issue 15).
+      void act(
+        () => api.put<{ savedAt: string }>("/api/v1/intake-drafts/new", { draft: form, admit }),
+        (r) => `Draft saved at ${new Date(r.savedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}. Only you can see it. Nothing has been sent to a model, and the patient is not admitted yet.`,
+      ).then(setToast);
       return;
     }
     void act(
@@ -247,6 +253,30 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
       () => "Draft saved on the encounter. Nothing has been sent to a model yet.",
     ).then(setToast);
   }
+
+  // Offer back a draft saved before admission.
+  const [newDraftChecked, setNewDraftChecked] = useState(false);
+  const [newDraftAt, setNewDraftAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isNew || newDraftChecked || !canWrite || !isLive()) return;
+    setNewDraftChecked(true);
+    api.get<{ saved: { draft: IntakeValues; admit: typeof admit; savedAt: string } | null }>("/api/v1/intake-drafts/new")
+      .then((r) => {
+        if (!r.saved) return;
+        setForm({ ...EMPTY_INTAKE, ...r.saved.draft });
+        setAdmit((a) => ({ ...a, ...r.saved!.admit }));
+        setNewDraftAt(r.saved.savedAt);
+      })
+      .catch(() => undefined);
+  }, [isNew, newDraftChecked, canWrite]);
+
+  function discardNewDraft() {
+    void act(() => api.del("/api/v1/intake-drafts/new"), () => "Saved draft discarded").then(setToast);
+    setNewDraftAt(null);
+    clearForm();
+  }
+
+  const errors = formErrors(form);
 
   function extract() {
     void act(
@@ -306,6 +336,10 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
       setToast("Fill in the patient's name, MRN, unit and age to admit them first.");
       return;
     }
+    if (errors.length) {
+      setToast(`Fix ${errors.length === 1 ? "this value" : `these ${errors.length} values`} first: ${errors.join(" ")}`);
+      return;
+    }
     setBusy(true);
     let encounterId = enc?.id ?? "";
     const message = await act(
@@ -318,6 +352,8 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
             race: covariates.race || null, insurance: covariates.insurance || null, marital_status: covariates.maritalStatus || null,
           });
           encounterId = created.id;
+          // Admitted: the pre-admission draft has done its job.
+          void api.del("/api/v1/intake-drafts/new").catch(() => undefined);
         }
         if (mayAssess) {
           await api.post(`/api/v1/assess?top_n=10`, buildCase(encounterId));
@@ -481,6 +517,16 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
         </Banner>
       )}
       {draftNote && <Banner tone="accent" title={draftNote}>The form below is the saved draft. Run the assessment when it is ready.</Banner>}
+      {newDraftAt && (
+        <Banner tone="accent" title={`Your draft from ${dateTimeLabel(newDraftAt)} is restored`}>
+          The patient is not admitted yet. <Button size="sm" variant="ghost" onClick={discardNewDraft}>Discard the draft</Button>
+        </Banner>
+      )}
+      {errors.length > 0 && (
+        <Banner tone="warning" title={`${errors.length} value${errors.length === 1 ? " is" : "s are"} out of range`}>
+          {errors.join(" ")} Fix {errors.length === 1 ? "it" : "them"} before running the assessment.
+        </Banner>
+      )}
 
       <div className="split split-sticky">
         <div className="stack" style={{ gap: 16 }}>
@@ -510,7 +556,7 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
             hint="Age and sex are the only demographic inputs any model receives."
           >
             <div className="grid grid-2">
-              <Field label="Age at admission" required><TextInput type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.currentTarget.value })} className="tnum" /></Field>
+              <Field label="Age at admission" required error={rangeError("age", form.age)}><TextInput type="number" min={RANGES.age.min} max={RANGES.age.max} value={form.age} onChange={(e) => setForm({ ...form, age: e.currentTarget.value })} className="tnum" aria-invalid={Boolean(rangeError("age", form.age))} /></Field>
               <Field label="Sex" required>
                 <Select value={form.sex} onChange={(e) => setForm({ ...form, sex: e.currentTarget.value as "F" | "M" })}>
                   <option value="F">Female</option>
@@ -547,10 +593,13 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
           >
             <div className="grid grid-3">
               {VITALS.map((f) => (
-                <Field key={f.key} label={`${f.label} (${f.unit})`}>
+                <Field key={f.key} label={`${f.label} (${f.unit})`} error={rangeError(f.key, form.vitals[f.key])}>
                   <TextInput
                     type="number"
                     className="tnum"
+                    min={RANGES[f.key]?.min}
+                    max={RANGES[f.key]?.max}
+                    aria-invalid={Boolean(rangeError(f.key, form.vitals[f.key]))}
                     value={form.vitals[f.key]}
                     onChange={(e) => setForm({ ...form, vitals: { ...form.vitals, [f.key]: e.currentTarget.value } })}
                   />
@@ -570,11 +619,17 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
                   <div className="cell-stack">
                     <strong>{l.name}</strong>
                     <span className="muted mono">{l.id} · ref {l.ref} {l.unit}</span>
+                    {rangeError(l.id, labValues[l.id] ?? "") && (
+                      <span className="field-error" role="alert">{rangeError(l.id, labValues[l.id] ?? "")}</span>
+                    )}
                   </div>
                   <TextInput
                     className="tnum"
                     style={{ width: 92 }}
                     placeholder="—"
+                    min={RANGES[l.id]?.min}
+                    max={RANGES[l.id]?.max}
+                    aria-invalid={Boolean(rangeError(l.id, labValues[l.id] ?? ""))}
                     value={labValues[l.id] ?? ""}
                     onChange={(e) => {
                       const value = e.currentTarget.value;
@@ -621,8 +676,8 @@ export function IntakePage({ isNew, nurseMode }: { isNew?: boolean; nurseMode?: 
               ))}
             </div>
             <div className="grid grid-2">
-              <Field label="Prior admissions (12 months)"><TextInput type="number" value={form.priorAdmissions} onChange={(e) => setForm({ ...form, priorAdmissions: e.currentTarget.value })} className="tnum" /></Field>
-              <Field label="Charlson comorbidity index" hint="Leave blank if not calculated — it is imputed, and the imputation is disclosed on the result.">
+              <Field label="Prior admissions (12 months)" error={rangeError("priorAdmissions", form.priorAdmissions)}><TextInput type="number" min={0} max={100} value={form.priorAdmissions} onChange={(e) => setForm({ ...form, priorAdmissions: e.currentTarget.value })} className="tnum" /></Field>
+              <Field label="Charlson comorbidity index" error={rangeError("charlson", form.charlson)} hint="Leave blank if not calculated — it is imputed, and the imputation is disclosed on the result.">
                 <TextInput
                   type="number"
                   className="tnum"

@@ -19,6 +19,7 @@ import { DEMO_IDENTITY, mergeDemoAccounts } from "@/mock/db";
 import { LanguageToggle, t } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { DemoBadge } from "@/components/ui/domain";
 import { Badge, Banner, Button } from "@/components/ui/primitives";
 import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, ShieldIcon } from "@/components/ui/icons";
 
@@ -62,6 +63,7 @@ export function DemoAccessPage() {
       <div className="auth-shell is-wide">
         <div className="auth-topline">
           <BrandMark />
+          <DemoBadge />
           <div className="row" style={{ gap: 8, marginInlineStart: "auto" }}>
             <LanguageToggle compact />
             <ThemeToggle compact />

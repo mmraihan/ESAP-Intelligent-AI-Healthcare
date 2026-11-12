@@ -71,7 +71,7 @@ export function PatientIntake() {
       before,
     ].filter(Boolean).join("\n");
     void act(
-      () => api.post<{ emergency?: boolean }>("/api/v1/patient/intake", {
+      () => api.post<{ emergency?: boolean; sharedWith?: string }>("/api/v1/patient/intake", {
         describe,
         since: when || null,
         severity: null,
@@ -84,7 +84,9 @@ export function PatientIntake() {
       }),
       (r) => {
         if (r.emergency) setServerUrgent(true);
-        return t("Sent to your care team");
+        return r.sharedWith === "nobody"
+          ? t("Saved to your account. You are not connected to a hospital yet, so no care team has received it.")
+          : t("Sent to your care team");
       },
     ).then(setToast);
   }

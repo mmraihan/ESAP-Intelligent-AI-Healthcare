@@ -110,6 +110,12 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
     draft = chat_extract.merge(body.draft or {}, result["delta"])
     captured = list(result["captured"])
     needs = set(result["needs_confirmation"])
+    # Numbers the extractor could not map this turn, kept across turns so the
+    # clinician sees them before running an assessment (QA issue 16).
+    not_captured = [x for x in [*(body.draft or {}).get("_not_captured", []), *result["not_captured"]]]
+    not_captured = list(dict.fromkeys(not_captured))[:12]
+    if not_captured:
+        draft["_not_captured"] = not_captured
 
     # Patient safety comes before data entry. This path is deterministic and
     # skips the language model on purpose: the advice must not depend on a
@@ -126,6 +132,7 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
             "draft": draft,
             "captured": captured,
             "needs_confirmation": sorted(needs),
+            "not_captured": not_captured,
             "ready": not missing,
             "can_run_assessment": False,
             "llm_used": False,
@@ -178,6 +185,7 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
         "draft": draft,
         "captured": captured,
         "needs_confirmation": sorted(needs),
+        "not_captured": not_captured,
         "ready": ready,
         "can_run_assessment": ready and rbac.can(actor.role, "assess:run"),
         "llm_used": llm.available(),

@@ -276,6 +276,21 @@ export interface Incident {
   openedAt: string;
   component: string;
   detail: string;
+  /** Set when personal data may have been exposed (QA issue 7). */
+  breach?: BreachInfo | null;
+}
+
+export type BreachClock = "controller" | "regulator" | "data_subjects";
+
+export interface BreachInfo {
+  awareAt: string;
+  dataCategories: string[];
+  affectedEstimate: number | null;
+  /** controller = 24 h after awareAt, regulator = 72 h, data_subjects = none. */
+  deadlines: Record<BreachClock, string | null>;
+  notifications: Partial<Record<BreachClock, {
+    sentAt: string; by: string; recipient: string; reference?: string | null; note?: string | null; late: boolean;
+  }>>;
 }
 
 // --- Billing (§17) ----------------------------------------------------------

@@ -10,7 +10,7 @@
  * live data and the writes, not the demo.
  */
 
-import { ApiError, NetworkError, api, getToken, setToken } from "./client";
+import { NetworkError, api, getToken, setToken } from "./client";
 import { SOURCE, applyDataset, applyPublic, notifyDataChanged } from "@/mock/db";
 import type { ModelCard, PlanDefinition } from "@/mock/types";
 import { API_BASE } from "./client";
@@ -25,8 +25,13 @@ export type BootResult = {
 };
 
 export type SessionPayload = {
-  token: string;
+  /** Null when the session rides on the HttpOnly cookie. */
+  token: string | null;
   expires_at: string;
+  /** Sign out after this many idle minutes (server-enforced too). */
+  idle_timeout_minutes?: number;
+  /** An admin without MFA: only enrolment is allowed until it is done. */
+  mfa_setup_required?: boolean;
   user: {
     id: string;
     email: string;
@@ -75,18 +80,18 @@ function offline(error: unknown): BootResult {
  * reached the app says so — it has no bundled dataset to fall back on.
  */
 export async function boot(): Promise<BootResult> {
-  const token = getToken();
   try {
-    if (token) {
-      try {
-        const session = await api.get<SessionPayload>("/api/v1/auth/session");
-        await hydrateFromApi();
-        return { source: "api", authenticated: true, session };
-      } catch (error) {
-        if (!(error instanceof ApiError && error.status === 401)) throw error;
-        setToken(null); // revoked or expired: continue as a visitor
-      }
+    // The session cookie is invisible to this page, so ask the server. It
+    // answers 200 either way, so a visitor's first load logs no failed request.
+    const who = await api.get<({ authenticated: true } & SessionPayload) | { authenticated: false }>(
+      "/api/v1/auth/whoami");
+    if (who.authenticated) {
+      const session = who as SessionPayload;
+      setToken(session.token);
+      if (!session.mfa_setup_required) await hydrateFromApi();
+      return { source: "api", authenticated: true, session };
     }
+    if (getToken()) setToken(null);
     await hydratePublic();
     return { source: "api", authenticated: false, session: null };
   } catch (error) {

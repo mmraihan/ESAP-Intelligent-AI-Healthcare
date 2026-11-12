@@ -337,7 +337,9 @@ def test_no_v1_route_is_unauthenticated(client):
                "/api/v1/auth/sso/dev-login"}
     # Someone who has lost their password has no session to present. It answers
     # identically for known and unknown addresses (test_workspace.py).
-    exempt |= {"/api/v1/auth/password/forgot"}
+    exempt |= {"/api/v1/auth/password/forgot", "/api/v1/auth/password/reset",
+               # Answers {"authenticated": false} with no session, by design.
+               "/api/v1/auth/whoami"}
     # The public website's model evidence and plans: no patient, tenant or usage data.
     exempt |= {"/api/v1/public/evidence", "/api/v1/public/demo-accounts"}
     # The early-access form: someone joining the waitlist has no account. It

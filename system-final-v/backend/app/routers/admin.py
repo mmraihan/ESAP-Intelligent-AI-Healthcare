@@ -15,11 +15,15 @@ from fastapi import APIRouter, Body, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, entitlements, evidence, rbac, settings_store
-from ..deps import Actor, current_actor, display_name, end_sessions, tenant_scope
+from ..deps import Actor, admin_only, current_actor, display_name, end_sessions, tenant_scope, staff_only
 from ..errors import ApiError
 from ..security import expiry, iso, utcnow
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(admin_only)])
+
+#: The same handlers for clinicians, who hold transfer and unit permissions but
+#: do not belong on an /admin path (QA issue 25). Each still names its permission.
+clinical_router = APIRouter(tags=["clinical"], dependencies=[Depends(staff_only)])
 
 
 class Strict(BaseModel):
@@ -148,6 +152,7 @@ def facilities(actor: Actor = Depends(current_actor), tenant_id: str = Depends(t
     return {"facilities": rows, "units": units}
 
 
+@clinical_router.get("/units")
 @router.get("/units")
 def units(actor: Actor = Depends(current_actor), tenant_id: str = Depends(tenant_scope)):
     """Flat unit list — the clinical rails need this without tenant:manage."""
@@ -439,6 +444,7 @@ def billing(actor: Actor = Depends(current_actor), tenant_id: str = Depends(tena
     }
 
 
+@clinical_router.get("/transfers")
 @router.get("/interop")
 def interop(actor: Actor = Depends(current_actor), tenant_id: str = Depends(tenant_scope)):
     # Whoever may start a transfer or decide one needs to see the queue.
@@ -449,6 +455,7 @@ def interop(actor: Actor = Depends(current_actor), tenant_id: str = Depends(tena
     return {"transfers": transfers}
 
 
+@clinical_router.post("/transfers", status_code=201)
 @router.post("/interop", status_code=201)
 def request_record(
     body: OutboundTransferRequest,
@@ -502,6 +509,7 @@ def request_record(
     return doc
 
 
+@clinical_router.post("/transfers/{transfer_id}/approve")
 @router.post("/interop/{transfer_id}/approve")
 def approve_transfer(
     transfer_id: str,

@@ -9,7 +9,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL_UNITS, ENCOUNTERS } from "@/mock/db";
 import { ago, dateTimeLabel, pct } from "@/lib/format";
-import { NOW } from "@/mock/db";
 import { useSession } from "@/lib/session";
 import { myUnitId } from "@/lib/scope";
 import { Banner, Button, Card, PageHeader, Select, StatTile, TextArea, cx } from "@/components/ui/primitives";
@@ -91,7 +90,7 @@ export function HandoffPage() {
       <PageHeader
         eyebrow="Shift change"
         title="Handoff summary"
-        lede={`${unit.name} · prepared by ${name} · ${dateTimeLabel(NOW.toISOString())}`}
+        lede={`${unit.name} · prepared by ${name} · ${dateTimeLabel(new Date().toISOString())}`}
         actions={
           <>
             <Button icon={<DownloadIcon size={15} />} onClick={() => void requestExport("handoff", "Shift handover export", { notes }).then(setToast)}>Export</Button>

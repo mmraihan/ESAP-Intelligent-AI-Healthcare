@@ -154,17 +154,16 @@ export function requestExport(kind: ExportKind, reason?: string, scope: object =
  * Ask another hospital for this patient's record (§7.3/§7.5 outbound transfer).
  *
  * `transfer:initiate` is granted to physicians, NP/PAs and case managers, but
- * the only screen that reaches `POST /admin/interop` used to be the Hospital
- * Admin console — unreachable from the clinician surface these roles are on.
- * This is the clinician-side entry point to the same endpoint, scoped to the
- * patient already open. It lands in the admin's Interop & transfer queue for
- * identity confirmation, same as a request raised from that console.
+ * `/admin/*` is for administrators only. This is the clinician-side route,
+ * `POST /transfers`, scoped to the patient already open. It lands in the
+ * admin's Interop & transfer queue for identity confirmation, same as a
+ * request raised from that console.
  */
 export function requestRecordTransfer(
   mrn: string, patientDisplay: string, counterparty: string, consentBasis: string, note: string,
 ) {
   return act(
-    () => api.post("/api/v1/admin/interop", {
+    () => api.post("/api/v1/transfers", {
       mrn, patient_display: patientDisplay, counterparty,
       consent_basis: consentBasis || "treatment", note: note || null,
     }),

@@ -14,7 +14,7 @@ import { useSession } from "@/lib/session";
 import { LanguageToggle, t } from "@/i18n";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
-import { RoleBadge, ScopeChip } from "@/components/ui/domain";
+import { DemoBadge, RoleBadge, ScopeChip } from "@/components/ui/domain";
 import { Banner, Button, Card, Field, TextInput, cx } from "@/components/ui/primitives";
 import { AlertIcon, CheckIcon, LockIcon, ShieldIcon } from "@/components/ui/icons";
 import { ApiError, NetworkError, api } from "@/api/client";
@@ -86,8 +86,8 @@ export function InviteAcceptPage() {
   return (
     <div className="pub auth-page">
       <div className="stack" style={{ gap: 18, width: "100%", maxWidth: 560, alignItems: "center" }}>
-        <div className="row" style={{ justifyContent: "space-between", width: "100%", gap: 10 }}>
-          <BrandMark />
+        <div className="row" style={{ justifyContent: "space-between", width: "100%", gap: 10, flexWrap: "wrap" }}>
+          <span className="row" style={{ gap: 10 }}><BrandMark /><DemoBadge /></span>
           <div className="row" style={{ gap: 8 }}>
             <LanguageToggle compact />
             <ThemeToggle compact />

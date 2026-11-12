@@ -18,10 +18,12 @@
  * overlays stand on depth layers, and each scene moves the camera to a new
  * angle. Reduced motion keeps one fixed angle and no transitions.
  * Styles: styles/care-story.css (scoped under `.cs`).
+ * Text is English keys for t(), so the story follows the page language.
  */
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import "@/styles/care-story.css";
 import { CheckIcon, ChevronLeft, ChevronRight, ClockIcon, InfoIcon } from "@/components/ui/icons";
+import { t } from "@/i18n";
 
 const SCENES = [
   {
@@ -143,7 +145,7 @@ export function CareStory() {
       onBlur={() => setHold(false)}
     >
       {/* ---- the scene picker ---- */}
-      <div className="cs-tabs" role="tablist" aria-label="One admission, step by step" onKeyDown={onTabKey}>
+      <div className="cs-tabs" role="tablist" aria-label={t("One admission, step by step")} onKeyDown={onTabKey}>
         {SCENES.map((s, i) => (
           <button
             key={s.id}
@@ -157,7 +159,7 @@ export function CareStory() {
             onClick={() => setScene(i)}
           >
             <span className="cs-tab-n">{String(i + 1).padStart(2, "0")}</span>
-            <span className="cs-tab-t">{s.title}</span>
+            <span className="cs-tab-t">{t(s.title)}</span>
             {i === scene && (
               <span
                 key={s.id}
@@ -174,22 +176,22 @@ export function CareStory() {
         {/* ---- the caption ---- */}
         <div id="cs-panel" className="cs-caption" role="tabpanel" aria-labelledby={`cs-tab-${cur.id}`}>
           <div key={cur.id} className="cs-caption-in">
-            <span className="cs-time"><ClockIcon size={13} /> {cur.time}</span>
-            <h3>{cur.title}</h3>
-            <p>{cur.body}</p>
-            <p className="cs-rule"><CheckIcon size={14} /> {cur.rule}</p>
+            <span className="cs-time"><ClockIcon size={13} /> {t(cur.time)}</span>
+            <h3>{t(cur.title)}</h3>
+            <p>{t(cur.body)}</p>
+            <p className="cs-rule"><CheckIcon size={14} /> {t(cur.rule)}</p>
           </div>
           <div className="cs-controls">
-            <button type="button" className="cs-ctl" onClick={() => go(scene - 1)} aria-label="Previous scene">
+            <button type="button" className="cs-ctl" onClick={() => go(scene - 1)} aria-label={t("Previous scene")}>
               <ChevronLeft size={16} />
             </button>
             {!still && (
               <button type="button" className="cs-ctl cs-play" onClick={() => setPlaying((p) => !p)} aria-pressed={!playing}>
                 {playing ? <PauseGlyph /> : <PlayGlyph />}
-                <span>{playing ? "Pause" : "Play"}</span>
+                <span>{playing ? t("Pause") : t("Play")}</span>
               </button>
             )}
-            <button type="button" className="cs-ctl" onClick={() => go(scene + 1)} aria-label="Next scene">
+            <button type="button" className="cs-ctl" onClick={() => go(scene + 1)} aria-label={t("Next scene")}>
               <ChevronRight size={16} />
             </button>
             <span className="cs-count tnum" aria-hidden="true">{scene + 1} / {SCENES.length}</span>
@@ -224,44 +226,44 @@ export function CareStory() {
                 </svg>
                 <div className="cs-layer cs-l-ui">
                   {/* HTML overlays, positioned in stage-width units so they scale with it. */}
-                  <span className="cs-t0"><ClockIcon size={12} /> t₀ 08:14 · admitted</span>
+                  <span className="cs-t0"><ClockIcon size={12} /> t₀ 08:14 · {t("admitted")}</span>
 
           <div className="cs-chips">
             {CHIPS.map((c, i) => (
-              <span key={c} className="cs-chip" style={{ "--i": i } as CSSProperties}>{c}</span>
+              <span key={c} className="cs-chip" style={{ "--i": i } as CSSProperties}>{t(c)}</span>
             ))}
           </div>
 
           <div className="cs-card">
             <div className="cs-card-head">
-              <strong>ESAP · intake estimate</strong>
-              <span className="cs-illus">Illustrative</span>
+              <strong>ESAP · {t("intake estimate")}</strong>
+              <span className="cs-illus">{t("Illustrative")}</span>
             </div>
             {EST.map((e, i) => (
               <div key={e.k} className="cs-meter" style={{ "--i": i } as CSSProperties}>
-                <span>{e.k}</span>
+                <span>{t(e.k)}</span>
                 <span className="cs-meter-track"><span className="cs-meter-fill" style={{ width: `${e.v * 100}%` }} /></span>
                 <strong className="tnum">{Math.round(e.v * 100)}%</strong>
               </div>
             ))}
             <div className="cs-why">
-              <span className="cs-why-k">Why</span>
-              <span>SpO₂ 91% at arrival</span>
-              <span>Prior heart failure</span>
+              <span className="cs-why-k">{t("Why")}</span>
+              <span>{t("SpO₂ 91% at arrival")}</span>
+              <span>{t("Prior heart failure")}</span>
             </div>
-            <span className="cs-stamp"><CheckIcon size={12} /> Reviewed · clinician&rsquo;s own judgement</span>
+            <span className="cs-stamp"><CheckIcon size={12} /> {t("Reviewed · clinician’s own judgement")}</span>
           </div>
 
           <div className="cs-phone">
             <span className="cs-phone-notch" />
-            <strong>From your care team</strong>
+            <strong>{t("From your care team")}</strong>
             <span className="cs-phone-line" />
             <span className="cs-phone-line" />
             <span className="cs-phone-line is-short" />
-            <span className="cs-phone-tag"><CheckIcon size={10} /> Written by a person · no score shown</span>
+            <span className="cs-phone-tag"><CheckIcon size={10} /> {t("Written by a person · no score shown")}</span>
           </div>
 
-          <span className="cs-bubble">Here&rsquo;s what we found, and what happens next.</span>
+          <span className="cs-bubble">{t("Here’s what we found, and what happens next.")}</span>
                 </div>
               </div>
             </div>
@@ -269,7 +271,7 @@ export function CareStory() {
         </div>
       </div>
 
-      <p className="cs-note"><InfoIcon size={13} /> An illustrated walk-through. Values are illustrative demo values, not a patient-specific prediction.</p>
+      <p className="cs-note"><InfoIcon size={13} /> {t("An illustrated walk-through. Values are illustrative demo values, not a patient-specific prediction.")}</p>
     </div>
   );
 }

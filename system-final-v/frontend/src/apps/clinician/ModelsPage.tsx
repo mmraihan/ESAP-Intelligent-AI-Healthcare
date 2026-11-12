@@ -10,7 +10,7 @@
  */
 import { useState } from "react";
 import { DRIFT, MODELS } from "@/mock/db";
-import { isEvaluated } from "@/lib/evidence";
+import { formatEce, isEvaluated } from "@/lib/evidence";
 import { dateLabel, num } from "@/lib/format";
 import type { ModelCard } from "@/mock/types";
 import { LeakageAlarm } from "@/components/clinical";
@@ -42,7 +42,7 @@ function modelCardMarkdown(m: ModelCard): string {
     "",
     "## Calibration",
     "",
-    `${m.calibrationMethod}. Expected calibration error: ${!isEvaluated(m) ? "not evaluated on this server" : m.id === "M-05" ? "n/a (interval model — see coverage)" : m.ece.toFixed(3)}.`,
+    `${m.calibrationMethod}. Expected calibration error: ${!isEvaluated(m) ? "not evaluated on this server" : m.id === "M-05" ? "n/a (interval model — see coverage)" : formatEce(m.ece)}.`,
     "",
     "## Performance by subgroup",
     "",
@@ -170,7 +170,7 @@ export function ModelsPage() {
         <div className="stack" style={{ gap: 18 }}>
           <Card
             title="Calibration"
-            subtitle={evaluated ? `${model.calibrationMethod} · ECE ${model.ece.toFixed(3)}` : "Not evaluated on this server"}
+            subtitle={!evaluated ? "Not evaluated on this server" : model.id === "M-05" ? model.calibrationMethod : `${model.calibrationMethod} · ECE ${formatEce(model.ece)}`}
             footnote="Calibration is what makes a probability mean what it says: of the cases the model called 30%, close to 30% should actually have the outcome. Without it a well-ranked model still misleads."
           >
             {!evaluated ? (
@@ -255,7 +255,7 @@ export function ModelsPage() {
                     <Badge tone={m.status === "live" ? "good" : m.status === "degraded" ? "warning" : "neutral"}>{m.status}</Badge>
                   </td>
                   <td style={{ textAlign: "right" }} className="tnum">{isEvaluated(m) ? <>{m.headline[0].value} <span className="muted">{m.headline[0].label}</span></> : "—"}</td>
-                  <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : m.ece.toFixed(3)}</td>
+                  <td style={{ textAlign: "right" }} className="tnum">{m.id === "M-05" || !isEvaluated(m) ? "—" : formatEce(m.ece)}</td>
                   <td><FusionPill status={m.fusion} /></td>
                 </tr>
               ))}

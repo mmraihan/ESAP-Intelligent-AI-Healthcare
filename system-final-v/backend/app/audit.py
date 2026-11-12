@@ -122,3 +122,19 @@ def record(
     )
     conn.commit()
     return event
+
+
+def patient_history(email: str, patient_id: str, limit: int | None = None) -> list[dict]:
+    """Audit rows by this patient, or about exactly this patient's record.
+
+    Targets are ``patient:<id>`` or ``patient:<id> <detail>``. Matched exactly,
+    not by prefix: a LIKE 'patient:pat_1%' would also return pat_12's rows,
+    and '_' is itself a LIKE wildcard.
+    """
+    target = f"patient:{patient_id}"
+    escaped = target.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+    sql = ("SELECT doc FROM audit_events WHERE actor=? OR json_extract(doc, '$.target') = ?"
+           " OR json_extract(doc, '$.target') LIKE ? ESCAPE '!' ORDER BY at DESC")
+    if limit:
+        sql += f" LIMIT {int(limit)}"
+    return db.docs(sql, (email, target, escaped + " %"))

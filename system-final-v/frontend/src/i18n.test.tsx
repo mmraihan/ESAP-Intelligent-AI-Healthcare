@@ -35,13 +35,18 @@ const LOCALISED_FILES = [
   join(SRC, "components/ui/domain.tsx"),
   join(SRC, "components/ui/overlays.tsx"),
   join(SRC, "components/ui/primitives.tsx"),
+  // The patient half of this file renders inside the portal (QA issue 25).
+  join(SRC, "components/clinical/ConnectFeature.tsx"),
+  // The public website (QA issue 14).
+  ...["LandingPage", "CareStory", "ProductExplode", "SiteArt", "SiteLayout", "PricingPage", "SecurityPage",
+    "ModelEvidencePage", "FaqPage", "WaitlistPage"].map((f) => join(SRC, `apps/site/${f}.tsx`)),
 ];
 
 function literalKeys(): string[] {
   const out = new Set<string>();
   for (const f of LOCALISED_FILES) {
     const s = readFileSync(f, "utf8");
-    for (const m of s.matchAll(/\btr?\(\s*"((?:[^"\\]|\\.)*)"/g)) out.add(JSON.parse(`"${m[1]}"`));
+    for (const m of s.matchAll(/\bt[rml]?\(\s*"((?:[^"\\]|\\.)*)"/g)) out.add(JSON.parse(`"${m[1]}"`));
   }
   return [...out];
 }
@@ -96,6 +101,13 @@ const ALLOWED = new Set<string>([
   ...RELEASED_RESULTS.flatMap((r) => r.releasedBy.replace(/[,.]/g, " ").split(/\s+/)),
   "Delia", "Salib", "Marek", "Amara", "Lucas", "Beaulieu", "Noor", "Haddad", "Iben", "Sørensen",
   "Mira", "Novak", "Elin", "Bergström",
+  // Fixed technical, regulatory and model names that Arabic writing keeps in
+  // Latin script (public website, QA issue 14).
+  "CCSR", "AUROC", "AUPRC", "ECE", "Recall", "Brier", "Platt", "Isotonic", "isotonic", "Conformal", "conformal",
+  "SMOTE", "MIMIC", "IV", "SpO", "FDA", "SFDA", "PDPL", "HIPAA", "GDPR", "SOC", "HITRUST", "FHIR", "HL", "TLS",
+  "OIDC", "SAML", "SCIM", "PBKDF", "HMAC", "SHA", "HTTPS", "HttpOnly", "TEFCA", "ICU",
+  // The product name, and names the legal pages cite.
+  "Clinical", "AI", "IP", "Vercel",
 ]);
 
 function strayEnglish(root: HTMLElement): string[] {
@@ -103,7 +115,8 @@ function strayEnglish(root: HTMLElement): string[] {
   // Identifiers, codes and blueprint references are deliberately left-to-right and untranslated.
   // Avatars hold initials, which would otherwise fuse with the adjacent name in textContent.
   clone.querySelectorAll(".mono, .rail-ref, .inline-code, code, [lang='en'], .visually-hidden, .avatar").forEach((n) => n.remove());
-  const text = clone.textContent ?? "";
+  // Email addresses and the standard name "SMART on FHIR" are written as-is in Arabic text.
+  const text = (clone.textContent ?? "").replace(/\S+@\S+\.\w+/g, " ").replace(/SMART on FHIR/g, " ");
   const words = text.match(/[A-Za-zÀ-ÿ]{2,}/g) ?? [];
   return [...new Set(words.filter((w) => !ALLOWED.has(w)))];
 }
@@ -123,6 +136,15 @@ const LOCALISED_ROUTES: { path: string; role: RoleCode }[] = [
   { path: "/login", role: "guest" },
   { path: "/signup", role: "guest" },
   { path: "/invite/inv_demo_token", role: "guest" },
+  // The public website (QA issue 14).
+  { path: "/product", role: "guest" },
+  { path: "/pricing", role: "guest" },
+  { path: "/security", role: "guest" },
+  { path: "/evidence", role: "guest" },
+  { path: "/faq", role: "guest" },
+  { path: "/waitlist", role: "guest" },
+  { path: "/privacy", role: "guest" },
+  { path: "/terms", role: "guest" },
 ];
 
 function renderAt(path: string, role: RoleCode) {

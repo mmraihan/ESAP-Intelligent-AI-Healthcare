@@ -27,6 +27,55 @@ export type IntakeValues = {
   notes: { chiefComplaint: string; hpi: string; pmh: string; exam: string };
 };
 
+/**
+ * Plausible ranges, checked as the clinician types (QA issue 15). The server
+ * enforces the contract's own limits too; these catch a typo before submit.
+ */
+export const RANGES: Record<string, { min: number; max: number; label: string }> = {
+  age: { min: 0, max: 120, label: "Age" },
+  bp_sys: { min: 40, max: 300, label: "Systolic BP" },
+  bp_dia: { min: 20, max: 200, label: "Diastolic BP" },
+  heart_rate: { min: 20, max: 250, label: "Heart rate" },
+  resp_rate: { min: 4, max: 70, label: "Respiratory rate" },
+  temp_c: { min: 30, max: 45, label: "Temperature" },
+  spo2: { min: 50, max: 100, label: "SpO₂" },
+  weight_kg: { min: 20, max: 300, label: "Weight" },
+  height_cm: { min: 120, max: 230, label: "Height" },
+  priorAdmissions: { min: 0, max: 100, label: "Prior admissions" },
+  charlson: { min: 0, max: 37, label: "Charlson index" },
+  // Labs by itemid: wide enough for real extremes, narrow enough to catch a slip.
+  "50912": { min: 0.1, max: 25, label: "Creatinine" },
+  "50971": { min: 1, max: 10, label: "Potassium" },
+  "50983": { min: 100, max: 185, label: "Sodium" },
+  "51222": { min: 2, max: 25, label: "Haemoglobin" },
+  "51301": { min: 0.1, max: 300, label: "White blood cells" },
+  "50813": { min: 0.1, max: 30, label: "Lactate" },
+  "50862": { min: 0.5, max: 7, label: "Albumin" },
+  "51006": { min: 1, max: 250, label: "Urea nitrogen" },
+};
+
+/** The message to show under a field, or undefined when it is blank or fine. */
+export function rangeError(key: string, raw: string): string | undefined {
+  const r = RANGES[key];
+  if (!r || !raw.trim()) return undefined;
+  const n = Number(raw);
+  if (Number.isNaN(n)) return "Enter a number.";
+  if (n < r.min || n > r.max) return `${r.label} must be between ${r.min} and ${r.max}.`;
+  return undefined;
+}
+
+/** Every out-of-range value on the form, as messages. Empty when all is well. */
+export function formErrors(form: IntakeValues): string[] {
+  const out: string[] = [];
+  const check = (k: string, v: string) => { const e = rangeError(k, v); if (e) out.push(e); };
+  check("age", form.age);
+  for (const [k, v] of Object.entries(form.vitals)) check(k, v);
+  for (const [k, v] of Object.entries(form.labs)) check(k, v);
+  check("priorAdmissions", form.priorAdmissions);
+  check("charlson", form.charlson);
+  return out;
+}
+
 /** A number the server will accept, or undefined for blank / garbage. */
 function num(raw: string): number | undefined {
   const n = Number(raw);

@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { dateLabel } from "@/lib/format";
-import { t } from "@/i18n";
+import { currentLang, t } from "@/i18n";
 import { Badge, Banner, Button, Card, PageHeader, Toggle } from "@/components/ui/primitives";
 import { Toast } from "@/components/ui/overlays";
 import { CheckIcon, DownloadIcon, FileIcon, PillIcon, SendIcon, ShieldIcon } from "@/components/ui/icons";
@@ -64,6 +64,26 @@ function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * The summary is stored in English for the care team. On screen, the parts the
+ * form wrote (labels and symptom chips) are shown in the patient's language;
+ * what the patient typed stays exactly as typed (QA issue 25).
+ */
+const LABELLED = ["Bothering me", "Other changes", "Better or worse with"];
+function localiseLine(line: string): string {
+  for (const label of LABELLED) {
+    const prefix = `${label}: `;
+    if (line.startsWith(prefix)) {
+      const rest = line.slice(prefix.length);
+      const body = label === "Bothering me"
+        ? rest.split(", ").map((x) => t(x)).join(currentLang() === "ar" ? "، " : ", ")
+        : rest;
+      return `${t(label)}: ${body}`;
+    }
+  }
+  return t(line);
+}
+
 export function PatientPreVisit() {
   const nav = useNavigate();
   const { name } = useSession();
@@ -86,7 +106,7 @@ export function PatientPreVisit() {
   useEffect(load, []);
 
   const today = dateLabel(new Date().toISOString());
-  const changes = latest ? lines(latest.describe) : [];
+  const changes = latest ? lines(latest.describe).map(localiseLine) : [];
   const started = latest
     ? [
         `${t("Started")}: ${latest.since ? t(SINCE[latest.since] ?? latest.since) : t("Not answered")}.`,
@@ -123,13 +143,13 @@ export function PatientPreVisit() {
     if (include.meds && meds.length) changed.push(`${t("What I am taking")}: ${meds.join("; ")}`);
     setSending(true);
     const message = await act(
-      () => api.post("/api/v1/patient/previsit", {
+      () => api.post<{ sharedWith?: string }>("/api/v1/patient/previsit", {
         visit_with: t("My care team"),
         questions: include.questions ? questions : [],
         changes_since_last: changed.filter(Boolean).join("\n").slice(0, 2000) || null,
         medications_changed: Boolean(latest?.missedDoses),
       }),
-      () => t("Sent to your care team"),
+      (r) => (r.sharedWith === "nobody" ? t("Saved to your account. You are not connected to a hospital yet, so no care team has received it.") : t("Sent to your care team")),
     );
     setSending(false);
     setToast(message);

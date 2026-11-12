@@ -158,7 +158,7 @@ export function PatientRecords() {
             }
             subtitle={`${t(KIND_META[r.kind].label)} · ${t(r.facility)} · ${dateLabel(r.date)}`}
             actions={
-              <div className="row" style={{ gap: 8 }}>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 <Badge tone={SOURCE_META[r.source].tone} icon={r.source === "local" ? <BuildingIcon size={11} /> : <GlobeIcon size={11} />}>
                   {t(SOURCE_META[r.source].label)}
                 </Badge>
@@ -209,7 +209,7 @@ export function PatientRecords() {
           </li>
           <li>
             <GlobeIcon size={16} />
-            <span>{tr("**A structured file** — a standard format another hospital’s computer system can read directly, so nothing has to be typed in again.")}</span>
+            <span>{tr("**A structured file** — everything we hold about you in one JSON file: your record, what you told us in your forms, your requests, your consent choices and who looked at your record. It is ESAP’s own layout, not yet the FHIR standard, so another hospital may need help importing it.")}</span>
           </li>
         </ul>
       </Card>

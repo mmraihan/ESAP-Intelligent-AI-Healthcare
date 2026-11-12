@@ -72,9 +72,9 @@ export function OpsAudit() {
       </div>
 
       <Banner tone="accent" title="This log cannot be edited or pruned by anyone here">
-        Append-only, hash-chained daily, retained for six years. There is no delete path from this
-        console, from the database console, or from a support escalation. A vendor that can quietly
-        edit its own audit log does not have an audit log.
+        The API has no route to edit or delete audit entries, and entries are kept for six years
+        before the retention purge removes them. Tamper-evident (hash-chained) storage is planned,
+        not built yet, so someone with direct database access could still change this log.
       </Banner>
 
       <DataTable

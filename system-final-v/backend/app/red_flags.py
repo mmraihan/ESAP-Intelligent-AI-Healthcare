@@ -39,33 +39,55 @@ _NOTED_AR = "لقد دوّنت ما ذكرته."
 _PRONOUN = r"(?:my\s+|the\s+|his\s+|her\s+|their\s+)?"
 _CANNOT = r"(?:can't|cant|cannot|can\s+not|couldn't|unable\s+to)"
 _WEAK = r"(?:numb|numbness|weak|weakness|paraly[sz]ed|paralysis)"
+_LIMB = r"(?:left\s+|right\s+)?(?:arm|leg|hand|foot)"
+_ADVERB = r"(?:very\s+|really\s+|so\s+|suddenly\s+|completely\s+|totally\s+|just\s+)?"
 
 _EN_RULES: list[tuple[str, list[str]]] = [
     ("Chest pain", [
-        r"\bchest\s+(?:pains?|pressure|tightness|discomfort|aches?|hurts?|hurting)\b",
-        rf"\b(?:pain|pressure|tightness|discomfort|ache)\s+in\s+{_PRONOUN}chest\b",
+        r"\bchest\s+(?:is\s+|keeps\s+|has\s+been\s+|started\s+)?"
+        r"(?:pains?|pressure|tightness|heaviness|discomfort|aches?|aching|hurts?|hurting)\b",
+        rf"\b(?:pains?|pressure|tightness|heaviness|discomfort|aches?|squeezing)\s+"
+        rf"(?:in|on|across|around|over)\s+{_PRONOUN}chest\b",
         r"\b(?:tight|heavy|crushing)\s+chest\b",
         r"\bchest\s+(?:is|feels)\s+(?:very\s+|really\s+|so\s+)?(?:tight|heavy|sore)\b",
         r"\bheart\s+attack\b",
     ]),
     ("Trouble breathing", [
-        r"\bshort(?:ness)?\s+of\s+breath\b",
+        r"\bshort(?:ness)?\s+of\s+(?:breath|air)\b",
         r"\bout\s+of\s+breath\b",
         r"\bbreathless(?:ness)?\b",
-        r"\b(?:trouble|difficulty|problems?|struggling|hard|difficult)\s+(?:with\s+|to\s+|in\s+)?breath(?:e|ing)\b",
-        rf"\b{_CANNOT}\s+(?:breathe?|catch\s+{_PRONOUN}breath)\b",
+        r"\b(?:trouble|difficulty|difficulties|problems?|issues?|struggling|struggle|hard\s+time|tough\s+time|hard|difficult)"
+        r"\s+(?:with\s+|to\s+|in\s+)?breath(?:e|ing)\b",
+        r"\bbreathing\s+(?:trouble|troubles|problems?|issues?|difficulty|difficulties)\b",
+        r"\bbreathing\s+(?:is|has\s+been|feels|got|became|is\s+getting)\s+(?:\w+\s+){0,2}"
+        r"(?:difficult|hard|bad|worse|laboured|labored|shallow)\b",
+        rf"\b{_CANNOT}\s+(?:breathe?|(?:catch|get)\s+{_PRONOUN}breath|get\s+(?:enough\s+|any\s+)?air)\b",
+        rf"\bstruggling\s+(?:for|to\s+get)\s+(?:air|{_PRONOUN}breath)\b",
+        r"\bwheez(?:e|es|ing)\b",
         r"\bgasping\b",
         r"\bchoking\b",
     ]),
     ("Possible stroke signs", [
         r"\bstroke\b",
-        r"\b(?:face|mouth|smile)\s+(?:is\s+|has\s+)?(?:drooping|droopy|drooped|droops)\b",
+        rf"\b(?:face|mouth|smile)\s+(?:is\s+|has\s+|went\s+|feels\s+|looks\s+)?{_ADVERB}"
+        r"(?:drooping|droopy|drooped|droops|numb|lopsided|crooked|slack|twisted)\b",
         r"\b(?:drooping|droopy)\s+(?:face|mouth|smile)\b",
         r"\bslurr(?:ed|ing)\b",
+        r"\bspeech\s+(?:is\s+|has\s+been\s+|sounds\s+)?(?:garbled|strange|weird|gone)\b",
         rf"\b(?:{_CANNOT}|trouble|difficulty)\s+(?:speak|speaking|talk|talking)\b",
+        r"\bwords\s+(?:won't|wont|will\s+not|aren't|are\s+not)\s+com(?:e|ing)\s+out\b",
         rf"\bsudden(?:ly)?\s+(?:\w+\s+)?(?:{_WEAK}|confused|confusion)\b",
         rf"\b{_WEAK}\b[^.?!]{{0,30}}\bone\s+side\b",
         rf"\bone\s+side\b[^.?!]{{0,30}}\b(?:{_WEAK}|droop\w*)\b",
+        rf"\b(?:half|side)\s+of\s+{_PRONOUN}(?:face|body)\b[^.?!]{{0,30}}\b(?:{_WEAK}|droop\w*)\b",
+        rf"\b{_WEAK}\b[^.?!]{{0,30}}\b(?:half|side)\s+of\s+{_PRONOUN}(?:face|body)\b",
+        rf"\b{_CANNOT}\s+(?:move|feel|lift|raise)\s+{_PRONOUN}(?:{_LIMB}|face|side)\b",
+        rf"\b{_LIMB}\s+(?:is|went|has\s+gone|feels|has\s+become)\s+{_ADVERB}(?:{_WEAK}|dead|limp)\b",
+        rf"\b{_WEAK}\s+in\s+{_PRONOUN}(?:{_LIMB}|face)\b",
+        rf"\bsudden(?:ly)?\s+(?:{_CANNOT}\s+see|blind|lost\s+{_PRONOUN}(?:vision|sight)|(?:vision|sight)\s+loss|double\s+vision)\b",
+        rf"\b(?:lost|losing)\s+{_PRONOUN}(?:vision|sight)\b",
+        r"\b(?:worst|thunderclap)\s+headache\b",
+        r"\bsudden\s+(?:severe|bad|terrible)\s+headache\b",
     ]),
 ]
 
@@ -81,31 +103,48 @@ _EN_ASSOCIATED: list[tuple[str, list[str]]] = [
     ]),
 ]
 
+_EN_STRONG_NEG = (r"(?:\bno|\bwithout|\bdenies|\bdenied|\bdeny|\bdon't\s+have|\bdont\s+have|\bdo\s+not\s+have"
+                  r"|\bhaven't\s+had|\bhave\s+not\s+had|\bnever\s+had|\bnot\s+having|\bhas\s+no|\bhave\s+no)")
+_ARTICLE = r"(?:any\s+|a\s+|an\s+)?"
 _EN_NEGATED = re.compile(
-    r"(?:\bno|\bwithout|\bdenies|\bdeny|\bdon't\s+have|\bdont\s+have|\bdo\s+not\s+have"
-    r"|\bhaven't\s+had|\bhave\s+not\s+had|\bnever\s+had|\bnot\s+having)\s+(?:any\s+)?$"
+    # "no chest pain", "never had a stroke", "I am not short of breath"
+    rf"(?:{_EN_STRONG_NEG}|\bnot)\s+{_ARTICLE}$"
+    # "no chest pain or shortness of breath": a strong negation carries across
+    # or/nor over at most three words. Never across "idea/sure/whether/if", so
+    # "no idea if it's heartburn or chest pain" still raises the flag.
+    rf"|{_EN_STRONG_NEG}\s+{_ARTICLE}"
+    r"(?:(?!(?:idea|sure|clue|if|whether|know|but|now|then)\b)[a-z']+\s+){1,3}(?:or|nor)\s+" + _ARTICLE + "$"
 )
 
 # Arabic patterns are written against `_normalise_ar` output: no diacritics,
 # one alef, ى as ي and ة as ه — people type all of these variants.
+_AR_CANNOT = r"(?:لا\s+استطيع|لا\s+اقدر|ما\s+اقدر|ماقدر|مو\s+قادر|ما\s+قادر|ما\s+استطيع)"
+
 _AR_RULES: list[tuple[str, list[str]]] = [
     ("Chest pain", [
-        r"(?:الم|وجع|ضغط|ضيق)\s+(?:في\s+|ب)?(?:ال)?صدر",
+        r"(?:الم|وجع|ضغط|ضيق|ضيقه|كتمه|ثقل)\s+(?:في\s+|ب)?(?:ال)?صدر",
+        r"صدري\s+(?:يوجعني|يالمني|ضايق|ضيق|مكتوم)",
+        r"يوجعني\s+صدري",
         r"(?:نوبه|جلطه|ازمه)\s+قلبيه",
     ]),
     ("Trouble breathing", [
-        r"ضيق\s+(?:في\s+)?(?:ال)?(?:تنفس|نفس)",
-        r"صعوبه\s+(?:في\s+)?(?:ال)?تنفس",
-        r"(?:لا\s+استطيع|ما\s+اقدر|مو\s+قادر|ما\s+قادر)\s+(?:ان\s+)?(?:ا)?تنفس",
+        r"(?:ضيق|ضيقه)\s+(?:في\s+|ب)?(?:ال)?(?:تنفس|نفس)",
+        r"صعوبه\s+(?:في\s+|ب)?(?:ال)?تنفس",
+        rf"{_AR_CANNOT}\s+(?:ان\s+)?(?:ا)?تنفس",
+        r"نفسي\s+(?:ضايق|ضيق|مقطوع|يضيق)",
         r"اختناق",
     ]),
     ("Possible stroke signs", [
         r"جلطه",
         r"سكته\s+دماغيه",
-        r"(?:تدلي|ارتخاء|ميلان)\s+(?:في\s+)?(?:ال)?(?:وجه|فم)",
-        r"(?:خدر|تنميل|ضعف|شلل)\s+(?:في\s+)?(?:جانب|جهه|نصف|طرف)",
-        r"صعوبه\s+(?:في\s+)?(?:ال)?(?:كلام|نطق)",
-        r"ثقل\s+(?:في\s+)?(?:ال)?لسان",
+        r"(?:تدلي|ارتخاء|ميلان)\s+(?:في\s+|ب)?(?:ال)?(?:وجه|فم)",
+        r"(?:وجهي|فمي)\s+(?:مايل|مائل|معوج|متدلي|مرتخي|منمل|خدران)",
+        r"(?:خدر|تنميل|ضعف|شلل)\s+(?:في\s+|ب)?(?:ال)?(?:جانب|جهه|نصف|طرف|وجه|يد|ذراع|رجل|ساق)",
+        r"صعوبه\s+(?:في\s+|ب)?(?:ال)?(?:كلام|نطق)",
+        rf"{_AR_CANNOT}\s+(?:ان\s+)?(?:ا)?(?:تكلم|نطق)",
+        rf"{_AR_CANNOT}\s+(?:ان\s+)?(?:ا)?حرك",
+        r"ثقل\s+(?:في\s+|ب)?(?:ال)?لسان",
+        r"(?:لساني|كلامي)\s+ثقيل",
     ]),
 ]
 

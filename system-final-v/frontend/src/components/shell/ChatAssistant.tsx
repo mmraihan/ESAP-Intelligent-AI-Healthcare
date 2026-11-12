@@ -40,6 +40,7 @@ type ChatResponse = {
   draft: Record<string, unknown>;
   captured: string[];
   needs_confirmation: string[];
+  not_captured?: string[];
   ready: boolean;
   can_run_assessment: boolean;
   llm_used: boolean;
@@ -98,6 +99,7 @@ export function ChatAssistant() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [captured, setCaptured] = useState<string[]>([]);
+  const [notCaptured, setNotCaptured] = useState<string[]>([]);
   const [needs, setNeeds] = useState<string[]>([]);
   const [canRun, setCanRun] = useState(false);
   const [llmUsed, setLlmUsed] = useState<boolean | null>(null);
@@ -149,6 +151,7 @@ export function ChatAssistant() {
       setDraft(res.draft);
       setCaptured(res.captured);
       setNeeds(res.needs_confirmation);
+      setNotCaptured(res.not_captured ?? []);
       setCanRun(res.can_run_assessment);
       setLlmUsed(res.llm_used);
       setMsgs((m) => [...m, { role: "assistant", content: res.reply, emergency: res.emergency }]);
@@ -164,8 +167,12 @@ export function ChatAssistant() {
     if (busy) return;
     setBusy(true);
     try {
-      const features = (draft as { features?: Record<string, unknown> }).features ?? {};
+      const d = draft as { features?: Record<string, unknown>; notes?: Record<string, unknown> };
       const audit = (draft as { audit_covariates?: Record<string, unknown> }).audit_covariates ?? {};
+      // The extractor files symptoms and the bedside vitals the models do not
+      // use under notes; send them with the case so nothing typed is dropped.
+      const notes = { ...(d.notes ?? {}), ...((d.features?.notes as Record<string, unknown>) ?? {}) };
+      const features = { ...(d.features ?? {}), ...(Object.keys(notes).length ? { notes } : {}) };
       const req = {
         features,
         audit_covariates: audit,
@@ -244,8 +251,18 @@ export function ChatAssistant() {
             <div>
               <p className="assist-label">{t("Captured so far")} · <span className="tnum">{captured.length}</span></p>
               <div className="assist-chips">
-                {captured.slice(0, 10).map((c, i) => (
+                {captured.slice(0, 24).map((c, i) => (
                   <span key={i} className="assist-chip"><CheckIcon size={11} />{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {notCaptured.length > 0 && (
+            <div>
+              <p className="assist-label">{t("Not captured — add these by hand if they matter")}</p>
+              <div className="assist-chips">
+                {notCaptured.map((c, i) => (
+                  <span key={i} className="assist-chip is-confirm"><AlertIcon size={11} />{c}</span>
                 ))}
               </div>
             </div>
@@ -265,9 +282,13 @@ export function ChatAssistant() {
 
       {canRun && (
         <div className="assist-ready">
-          <span>{t("Enough is captured to run the five models.")}</span>
+          <span>
+            {notCaptured.length > 0
+              ? t("{n} values above were not captured and will not be in this assessment.", { n: notCaptured.length })
+              : t("Enough is captured to run the five models.")}
+          </span>
           <Button size="sm" variant="primary" disabled={busy} onClick={() => void runAssessment()}>
-            {t("Run assessment from this")}
+            {notCaptured.length > 0 ? t("Run without them") : t("Run assessment from this")}
           </Button>
         </div>
       )}

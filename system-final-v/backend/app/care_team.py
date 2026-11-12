@@ -68,3 +68,18 @@ def for_patient(portal_id: str) -> list[dict]:
             continue
         team.append({**m, "primary": bool(m.get("primary")) and not team, "source": "external"})
     return team
+
+
+def has_care_team(portal_id: str, email: str) -> bool:
+    """Is anyone at a hospital actually going to read what this patient sends?
+
+    True when an encounter or an outside clinician names a care team, or a
+    hospital has accepted this patient's connection request. A self-registered
+    patient with none of these has nobody on the other end, and the portal must
+    not say "sent to your care team" to them (QA issue 23).
+    """
+    if for_patient(portal_id):
+        return True
+    return db.connect().execute(
+        "SELECT 1 FROM service_requests WHERE requester=? AND kind='connection_request'"
+        " AND status='accepted'", (email,)).fetchone() is not None

@@ -15,6 +15,7 @@ import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { can, ROLES, type RoleCode } from "@/lib/rbac";
 import { AppShell, BrandMark } from "@/components/shell/AppShell";
+import { DemoBadge } from "@/components/ui/domain";
 import { RefreshIcon, ServerIcon } from "@/components/ui/icons";
 import {
   ADMIN_NAV, DESIGN_NAV, DOCTOR_NAV, NURSE_NAV, OPS_NAV, PATIENT_NAV, type NavGroup,
@@ -33,6 +34,8 @@ import { LoginPage } from "@/apps/auth/LoginPage";
 import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
 import { CaregiverAcceptPage } from "@/apps/auth/CaregiverAcceptPage";
+import { ResetPasswordPage } from "@/apps/auth/ResetPasswordPage";
+import { MfaSetupPage } from "@/apps/auth/TwoFactor";
 
 /**
  * The demo role picker's route. Set VITE_DEMO_ACCESS_PATH in a gitignored
@@ -69,6 +72,7 @@ function OfflineScreen() {
     <div className="pub pub-offline">
       <main className="pub-offline-card">
         <BrandMark />
+        <DemoBadge />
         <span className="pub-offline-icon"><ServerIcon size={20} /></span>
         <h1>Cannot reach the ESAP server</h1>
         <p>
@@ -157,6 +161,7 @@ const OpsAnnouncements = lazyNamed(() => import("@/apps/ops/OpsAnnouncements"), 
 
 // Help & support (every signed-in surface)
 const SupportPage = lazyNamed(() => import("@/apps/support/SupportPage"), "SupportPage");
+const AccountPage = lazyNamed(() => import("@/apps/auth/AccountPage"), "AccountPage");
 
 // Patient portal
 const PatientWelcome = lazyNamed(() => import("@/apps/patient/PatientWelcome"), "PatientWelcome");
@@ -217,6 +222,10 @@ function Clinician({ children }: { children: JSX.Element }) {
   const nav = nurseSurface ? NURSE_NAV : DOCTOR_NAV;
   const to = guardRedirect(authenticated, role, "clinician", pathname, nav);
   if (to) return <Navigate to={to} replace />;
+  // The nurse screens (charge-nurse roster, triage, handoff) belong to the
+  // nursing roles. A physician typing /nurse/roster used to get the page
+  // (QA issue 18); send them to their own home instead.
+  if (pathname.startsWith("/nurse/") && !nurseSurface) return <Navigate to={ROLES[role].home} replace />;
   return <AppShell surface="clinician" nav={nav}><Page>{children}</Page></AppShell>;
 }
 
@@ -244,9 +253,31 @@ function Patient({ children }: { children: JSX.Element }) {
   return <AppShell surface="patient" nav={PATIENT_NAV}><Page>{children}</Page></AppShell>;
 }
 
+/**
+ * The design system and its permissions matrix are internal reference pages.
+ * They used to open for anyone, including signed-out visitors who got a blank
+ * page (QA issues 18 and 26). Now: hospital admin and platform staff only.
+ */
 function Design({ children }: { children: JSX.Element }) {
-  const { role } = useSession();
-  return <AppShell surface={ROLES[role].surface} nav={DESIGN_NAV}><Page>{children}</Page></AppShell>;
+  const { authenticated, role } = useSession();
+  const { pathname } = useLocation();
+  if (!authenticated) return <Navigate to={`/login?next=${encodeURIComponent(pathname)}`} replace />;
+  const surface = ROLES[role].surface;
+  if (surface !== "admin" && surface !== "ops") return <Navigate to={ROLES[role].home} replace />;
+  return <AppShell surface={surface} nav={DESIGN_NAV}><Page>{children}</Page></AppShell>;
+}
+
+/** /account renders inside the signed-in person's own shell, like /support. */
+function Account({ children }: { children: JSX.Element }) {
+  const { authenticated, role } = useSession();
+  const { pathname } = useLocation();
+  if (!authenticated) return <Navigate to={`/login?next=${encodeURIComponent(pathname)}`} replace />;
+  const surface = ROLES[role].surface;
+  if (surface === "patient") return <Navigate to="/patient/settings" replace />;
+  const nav = surface === "admin" ? ADMIN_NAV
+    : surface === "ops" ? OPS_NAV
+    : role === "charge_nurse" || role === "staff_nurse" ? NURSE_NAV : DOCTOR_NAV;
+  return <AppShell surface={surface} nav={nav}><Page>{children}</Page></AppShell>;
 }
 
 /**
@@ -271,6 +302,7 @@ function NotFound() {
   const { role, authenticated } = useSession();
   return (
     <div className="main" style={{ margin: "0 auto", maxWidth: 560, paddingTop: 80 }}>
+      <div><DemoBadge /></div>
       <h1 className="page-title">This screen does not exist</h1>
       <p className="page-lede">
         Nothing is routed at <code className="inline-code">{pathname}</code>.
@@ -288,6 +320,7 @@ export function App() {
   // version remounts the current screen when fresh data lands, which is what
   // makes a saved change show up without a manual refresh.
   const version = useDataVersion();
+  const { authenticated, mfaSetupRequired } = useSession();
 
   // Offline, the static marketing pages still render (they carry no live data
   // and fall back gracefully on an empty store); everything else — sign-in and
@@ -309,6 +342,10 @@ export function App() {
     );
   }
 
+  // An admin who signed in without two-factor sign-in sees only the set-up
+  // screen until it is on; the server refuses everything else meanwhile.
+  if (authenticated && mfaSetupRequired) return <MfaSetupPage />;
+
   return (
     <Routes key={version}>
       {/* Public */}
@@ -328,6 +365,8 @@ export function App() {
       {DEMO_ACCESS_PATH && (
         <Route path={DEMO_ACCESS_PATH} element={<Suspense fallback={null}><DemoAccessPage /></Suspense>} />
       )}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/account" element={<Account><AccountPage /></Account>} />
       <Route path="/invite/:token" element={<InviteAcceptPage />} />
       <Route path="/caregiver/accept/:token" element={<CaregiverAcceptPage />} />
       <Route path="/welcome" element={<Page><PatientWelcome /></Page>} />

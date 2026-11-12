@@ -108,7 +108,7 @@ export function OpsProvision() {
                     {(Object.keys(MODE_LABEL) as DeploymentMode[]).map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
                   </Select>
                 </Field>
-                <Field label="Isolation tier" required hint="Shared row-level security is a policy boundary; the higher tiers are physical ones. Anything with a negotiated BAA usually wants database-per-tenant or above.">
+                <Field label="Isolation tier" required hint="Shared row-level security is a policy boundary; the higher tiers are physical ones. Anything with a negotiated data processing agreement usually wants database-per-tenant or above.">
                   <Select value={form.isolation} onChange={(e) => setForm({ ...form, isolation: e.target.value as IsolationTier })}>
                     {(Object.keys(ISOLATION_LABEL) as IsolationTier[]).map((i) => <option key={i} value={i}>{ISOLATION_LABEL[i]}</option>)}
                   </Select>

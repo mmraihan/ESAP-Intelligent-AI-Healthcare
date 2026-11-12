@@ -81,7 +81,8 @@ function toRuns(list: StoredAssessment[]): Run[] {
       readmission: num(r.readmission.result?.probability),
       losLow: num(los.interval_low),
       losHigh: num(los.interval_high),
-      calibrated: Boolean(r.mortality.result?.calibrated ?? true),
+      // No result (a suppressed model) is not a calibrated one.
+      calibrated: Boolean(r.mortality.result?.calibrated ?? false),
       modelVersions: (["differential", "mortality", "icu", "readmission", "los"] as const)
         .map((key, i) => `M-0${i + 1} ${r[key].model_version}`).join(" · "),
     };

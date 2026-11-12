@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { DemoBadge } from "@/components/ui/domain";
 import { t, tr, useLangStore, type Lang } from "@/i18n";
 import { Banner, Button, Card, cx } from "@/components/ui/primitives";
 import { BookIcon, CheckIcon, GlobeIcon, HeartPulseIcon, ShieldIcon, UsersIcon } from "@/components/ui/icons";
@@ -33,8 +34,8 @@ export function PatientWelcome() {
 
   return (
     <div className="site plain">
-      <header className="site-nav">
-        <BrandMark />
+      <header className="site-nav" style={{ flexWrap: "wrap", height: "auto", rowGap: 8 }}>
+        <span className="row" style={{ gap: 10 }}><BrandMark /><DemoBadge /></span>
         <ThemeToggle />
       </header>
 

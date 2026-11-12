@@ -12,6 +12,7 @@
  *  - Every plot has a hover layer; a table view is reachable where it matters.
  */
 import { useId, useMemo, useState, type ReactNode } from "react";
+import { formatEce } from "@/lib/evidence";
 import { pct, percentilePhrase, seqToken } from "@/lib/format";
 
 const AXIS = "var(--grid)";
@@ -303,9 +304,9 @@ export function ReliabilityPlot({
     <figure className="chart-panel">
       <figcaption>
         <span className="chart-title">Reliability — predicted vs. observed</span>
-        <span className="chart-readout tnum">ECE {ece.toFixed(3)}</span>
+        <span className="chart-readout tnum">ECE {formatEce(ece)}</span>
       </figcaption>
-      <svg width="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Calibration plot, expected calibration error ${ece.toFixed(3)}`}>
+      <svg width="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Calibration plot, expected calibration error ${formatEce(ece)}`}>
         <rect x={pad} y={pad} width={size - pad * 2} height={size - pad * 2} fill="none" stroke={AXIS} strokeWidth={1} />
         {[0.25, 0.5, 0.75].map((g) => (
           <g key={g}>

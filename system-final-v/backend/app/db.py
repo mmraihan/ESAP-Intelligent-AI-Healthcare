@@ -213,6 +213,41 @@ CREATE TABLE IF NOT EXISTS billing_events (
 CREATE TABLE IF NOT EXISTS documents (
   key TEXT PRIMARY KEY, doc TEXT NOT NULL
 );
+
+-- Failed sign-ins per email address, known or not, so a lockout does not
+-- reveal which addresses have accounts (QA issue 8).
+CREATE TABLE IF NOT EXISTS login_throttle (
+  email TEXT PRIMARY KEY, failures INTEGER NOT NULL DEFAULT 0,
+  first_at TEXT, locked_until TEXT
+);
+
+-- Self-service password reset links. Only a hash of the token is stored.
+CREATE TABLE IF NOT EXISTS password_resets (
+  token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, email TEXT NOT NULL,
+  created_at TEXT NOT NULL, expires_at TEXT NOT NULL, used_at TEXT
+);
+
+-- Email the server would send. Kept so a deployment without SMTP still has a
+-- record, and so platform staff can see what went out.
+CREATE TABLE IF NOT EXISTS mail_outbox (
+  id TEXT PRIMARY KEY, to_addr TEXT NOT NULL, created_at TEXT NOT NULL,
+  status TEXT NOT NULL, doc TEXT NOT NULL
+);
+
+-- Consent to processing, per patient, purpose and policy version (QA issue 9).
+-- A new policy version needs a new decision; a withdrawal keeps the row and
+-- stamps when it happened.
+CREATE TABLE IF NOT EXISTS processing_consents (
+  id TEXT PRIMARY KEY, patient_id TEXT NOT NULL, purpose TEXT NOT NULL,
+  version TEXT NOT NULL, status TEXT NOT NULL, given_at TEXT, withdrawn_at TEXT,
+  doc TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_pconsent_patient ON processing_consents(patient_id);
+
+-- One row per retention purge run: what was deleted, by rule (QA issue 9).
+CREATE TABLE IF NOT EXISTS retention_reports (
+  id TEXT PRIMARY KEY, tenant_id TEXT, run_at TEXT NOT NULL, doc TEXT NOT NULL
+);
 """
 
 
@@ -240,6 +275,10 @@ _ADDED_COLUMNS = (
     # sets mfa_enabled, after which login requires a second factor.
     ("credentials", "mfa_secret", "TEXT"),
     ("credentials", "mfa_enabled", "INTEGER NOT NULL DEFAULT 0"),
+    # Idle timeout: the last time this session made a request (QA issue 8).
+    ("sessions", "last_seen", "TEXT"),
+    # 1 = an admin signed in without MFA; only enrolment is allowed until done.
+    ("sessions", "mfa_setup", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 

@@ -182,6 +182,46 @@ def save_draft(
     return saved
 
 
+class NewIntakeDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    draft: dict
+    #: The admit fields (name, MRN, unit, bed) typed so far.
+    admit: dict = Field(default_factory=dict)
+
+
+def _new_draft_key(actor: Actor) -> str:
+    return f"intake_draft_new:{actor.tenant_id}:{actor.user_id}"
+
+
+@router.put("/intake-drafts/new")
+def save_new_draft(body: NewIntakeDraft, request: Request, actor: Actor = Depends(current_actor)):
+    """Save an intake for a patient not admitted yet (QA issue 15). One per
+    clinician, private to them, never sent to a model."""
+    rbac.require(actor, "patient:write")
+    if len(json.dumps(body.model_dump())) > 50_000:
+        raise ApiError(413, "That draft is too large to save.")
+    saved = {"draft": body.draft, "admit": body.admit, "savedAt": iso(utcnow())}
+    db.put_document(_new_draft_key(actor), saved)
+    audit.record(actor, "encounter.draft_save", "new intake (not admitted yet)",
+                 tenant_id=actor.tenant_id, ip=_ip(request))
+    return saved
+
+
+@router.get("/intake-drafts/new")
+def get_new_draft(actor: Actor = Depends(current_actor)):
+    rbac.require(actor, "patient:write")
+    return {"saved": db.document(_new_draft_key(actor))}
+
+
+@router.delete("/intake-drafts/new")
+def discard_new_draft(actor: Actor = Depends(current_actor)):
+    rbac.require(actor, "patient:write")
+    conn = db.connect()
+    conn.execute("DELETE FROM documents WHERE key=?", (_new_draft_key(actor),))
+    conn.commit()
+    return {"discarded": True}
+
+
 # --- vitals -----------------------------------------------------------------
 
 

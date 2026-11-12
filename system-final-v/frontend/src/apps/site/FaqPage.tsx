@@ -6,17 +6,22 @@
  * to the same rules as the product: decision support, not diagnosis; numbers
  * on the demo are illustrative; patients never see a raw score. The billing
  * answers come from the Pricing page so the two cannot drift apart.
+ *
+ * English and Arabic (QA issue 14). Questions and answers are English keys,
+ * translated at render; answers with links render through tl() so the link
+ * sits where the Arabic sentence needs it. Search runs on the translated text.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cx, EmptyState } from "@/components/ui/primitives";
 import { ChevronDown, LinkIcon, MailIcon, SearchIcon, SparkIcon, XIcon } from "@/components/ui/icons";
+import { t, tl } from "@/i18n";
 import { SiteLayout } from "./SiteLayout";
 import { FaqArt } from "./SiteArt";
 import { PRICING_FAQ } from "./PricingPage";
 
 type Category = "product" | "accuracy" | "privacy" | "patients" | "billing" | "demo";
-type Item = { id: string; cat: Category; q: string; a: ReactNode; text: string };
+type Item = { id: string; cat: Category; q: string; a: () => ReactNode; text: string };
 
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: "product", label: "Product & clinical use" },
@@ -28,7 +33,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 /** `text` is the plain-text answer used for search; `a` overrides it when the answer needs links. */
-const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }[] = [
+const RAW: { id: string; cat: Category; q: string; text: string; a?: () => ReactNode }[] = [
   // Product & clinical use
   {
     id: "what-is-esap", cat: "product",
@@ -61,13 +66,7 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
     id: "how-accurate", cat: "accuracy",
     q: "How accurate are the models?",
     text: "The hosted demo serves placeholder models, so its estimates are not accurate predictions and there is no validated performance to report. Measured results appear on the Evidence page only when an evaluation is available on the server.",
-    a: (
-      <p>
-        The hosted demo serves <strong>placeholder models</strong>, so its estimates are not accurate
-        predictions and there is no validated performance to report. Measured results appear on the{" "}
-        <Link to="/evidence">Evidence page</Link> only when an evaluation is available on the server.
-      </p>
-    ),
+    a: () => <p>{tl("The hosted demo serves **placeholder models**, so its estimates are not accurate predictions and there is no validated performance to report. Measured results appear on the {evidence} only when an evaluation is available on the server.", { evidence: <Link to="/evidence">{t("Evidence page")}</Link> })}</p>,
   },
   {
     id: "calibration", cat: "accuracy",
@@ -95,25 +94,13 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
     id: "who-owns-data", cat: "privacy",
     q: "Who owns the patient data?",
     text: "The hospital does. Before any pilot with real patients, the terms would be set in a data processing agreement. No such agreement is in place for this demo, which holds synthetic data only. See our Privacy Policy.",
-    a: (
-      <p>
-        The hospital does. Before any pilot with real patients, the terms would be set in a data
-        processing agreement. No such agreement is in place for this demo, which holds synthetic data
-        only. See our <Link to="/privacy">Privacy Policy</Link>.
-      </p>
-    ),
+    a: () => <p>{tl("The hospital does. Before any pilot with real patients, the terms would be set in a data processing agreement. No such agreement is in place for this demo, which holds synthetic data only. See our {privacy}.", { privacy: <Link to="/privacy">{t("Privacy Policy")}</Link> })}</p>,
   },
   {
     id: "hipaa-gdpr", cat: "privacy",
     q: "Is ESAP Clinical AI HIPAA and GDPR compliant?",
     text: "No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work, and no certification is held. This demo must only be used with synthetic data. See the Security page for what is built and what is planned.",
-    a: (
-      <p>
-        No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work,
-        and no certification is held. This demo must only be used with synthetic data. See the{" "}
-        <Link to="/security">Security page</Link> for what is built and what is planned.
-      </p>
-    ),
+    a: () => <p>{tl("No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work, and no certification is held. This demo must only be used with synthetic data. See the {security} for what is built and what is planned.", { security: <Link to="/security">{t("Security page")}</Link> })}</p>,
   },
   {
     id: "who-can-see", cat: "privacy",
@@ -123,20 +110,14 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
   {
     id: "audit-log", cat: "privacy",
     q: "Is every access to a record logged?",
-    text: "Reads of patient records and consequential changes are recorded, and the application has no screen or API that edits or deletes an entry. Tamper-evident storage and a fixed retention period are planned.",
+    text: "Reads of patient records and consequential changes are recorded, and the application has no screen or API that edits an entry. Entries are kept for six years, then removed by the retention purge. Tamper-evident storage is planned.",
   },
 
   {
     id: "planned-security", cat: "privacy",
     q: "Which security controls are still planned?",
-    text: "Encryption at rest, hospital single sign-on, required multi-factor sign-in for administrators, tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi Arabia are among the items not built yet. The Security page has the full list.",
-    a: (
-      <p>
-        Encryption at rest, hospital single sign-on, required multi-factor sign-in for administrators,
-        tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi
-        Arabia are among the items not built yet. The <Link to="/security">Security page</Link> has the full list.
-      </p>
-    ),
+    text: "Encryption at rest, hospital single sign-on, tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi Arabia are among the items not built yet. The Security page has the full list.",
+    a: () => <p>{tl("Encryption at rest, hospital single sign-on, tamper-evident audit storage, automated backups, a penetration test and hosting inside Saudi Arabia are among the items not built yet. The {security} has the full list.", { security: <Link to="/security">{t("Security page")}</Link> })}</p>,
   },
 
   // Patients & carers
@@ -157,8 +138,8 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
   },
   {
     id: "languages", cat: "patients",
-    q: "Is the patient portal available in other languages?",
-    text: "The patient portal is available in English and Arabic, including right-to-left layout. You can switch language at any time from the portal.",
+    q: "Is ESAP available in Arabic?",
+    text: "The patient portal, sign-in and this public website are available in English and Arabic, with right-to-left layout. Switch language with the language control at the top of the page. The clinical workspace is in English for now.",
   },
 
   // This demo
@@ -171,24 +152,23 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: ReactNode }
     id: "try-it", cat: "demo",
     q: "How do I try it?",
     text: "Sign in with any demo account on the login page using the password esap-demo, or create a free individual account. Hospitals can join the early-access waitlist.",
-    a: (
-      <p>
-        <Link to="/login">Sign in</Link> with any demo account using the password{" "}
-        <code>esap-demo</code>, or <Link to="/signup">create a free individual account</Link>.
-        Hospitals can join the <Link to="/waitlist">early-access waitlist</Link>.
-      </p>
-    ),
+    a: () => <p>{tl("{signin} with any demo account using the password {password}, or {signup}. Hospitals can join the {waitlist}.", {
+      signin: <Link to="/login">{t("Sign in")}</Link>,
+      password: <code>esap-demo</code>,
+      signup: <Link to="/signup">{t("create a free individual account")}</Link>,
+      waitlist: <Link to="/waitlist">{t("early-access waitlist")}</Link>,
+    })}</p>,
   },
 ];
 
 const ITEMS: Item[] = [
-  ...RAW.map((r) => ({ ...r, a: r.a ?? <p>{r.text}</p> })),
+  ...RAW.map((r) => ({ ...r, a: r.a ?? (() => <p>{t(r.text)}</p>) })),
   ...PRICING_FAQ.map((f, i) => ({
-    id: `billing-${i + 1}`, cat: "billing" as const, q: f.q, text: f.a, a: <p>{f.a}</p>,
+    id: `billing-${i + 1}`, cat: "billing" as const, q: f.q, text: f.a, a: () => <p>{t(f.a)}</p>,
   })),
 ];
 
-/** The three cards in the hero art: real questions from this page. */
+/** The three cards in the hero art: real questions from this page (English keys). */
 const HERO_QUESTIONS = ["does-it-diagnose", "calibration", "who-owns-data"]
   .map((id) => ITEMS.find((i) => i.id === id)?.q)
   .filter((q): q is string => Boolean(q));
@@ -215,7 +195,7 @@ export function FaqPage() {
     const words = normalise(query).split(/\s+/).filter(Boolean);
     return ITEMS.filter((i) => {
       if (cat !== "all" && i.cat !== cat) return false;
-      const hay = normalise(`${i.q} ${i.text}`);
+      const hay = normalise(`${t(i.q)} ${t(i.text)}`);
       return words.every((w) => hay.includes(w));
     });
   }, [query, cat]);
@@ -250,11 +230,10 @@ export function FaqPage() {
     <SiteLayout>
       <section className="hero hero-split faq-hero">
         <div className="hero-copy">
-        <span className="hero-eyebrow"><SparkIcon size={14} /> Frequently asked questions</span>
-        <h1>Answers, without the sales pitch.</h1>
+        <span className="hero-eyebrow"><SparkIcon size={14} /> {t("Frequently asked questions")}</span>
+        <h1>{t("Answers, without the sales pitch.")}</h1>
         <p className="hero-lede">
-          What ESAP Clinical AI does and does not do, how far to trust its numbers, and what happens to the data.
-          Can&rsquo;t find your question? Ask us directly.
+          {t("What ESAP Clinical AI does and does not do, how far to trust its numbers, and what happens to the data. Can’t find your question? Ask us directly.")}
         </p>
 
         <div className="faq-search" role="search">
@@ -262,23 +241,23 @@ export function FaqPage() {
           <input
             type="search"
             className="faq-search-input"
-            placeholder="Search questions — e.g. calibration, HIPAA, carer"
-            aria-label="Search frequently asked questions"
+            placeholder={t("Search questions — e.g. calibration, HIPAA, carer")}
+            aria-label={t("Search frequently asked questions")}
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
           {query && (
-            <button type="button" className="faq-search-clear" aria-label="Clear search" onClick={() => setQuery("")}>
+            <button type="button" className="faq-search-clear" aria-label={t("Clear search")} onClick={() => setQuery("")}>
               <XIcon size={16} />
             </button>
           )}
         </div>
         </div>
-        <FaqArt questions={HERO_QUESTIONS} />
+        <FaqArt questions={HERO_QUESTIONS.map((q) => t(q))} />
       </section>
 
       <div className="faq-layout">
-        <div className="faq-chips" role="group" aria-label="Filter by topic">
+        <div className="faq-chips" role="group" aria-label={t("Filter by topic")}>
           {[{ value: "all" as const, label: "All topics" }, ...CATEGORIES].map((c) => {
             const count = c.value === "all" ? ITEMS.length : ITEMS.filter((i) => i.cat === c.value).length;
             return (
@@ -289,7 +268,7 @@ export function FaqPage() {
                 aria-pressed={cat === c.value}
                 onClick={() => setCat(c.value)}
               >
-                {c.label} <span className="tnum">{count}</span>
+                {t(c.label)} <span className="tnum">{count}</span>
               </button>
             );
           })}
@@ -297,21 +276,23 @@ export function FaqPage() {
 
         <p className="faq-count" aria-live="polite">
           {searching || cat !== "all"
-            ? `${results.length} ${results.length === 1 ? "answer" : "answers"}${searching ? ` for “${query.trim()}”` : ""}`
+            ? searching
+              ? t(results.length === 1 ? "{n} answer for “{q}”" : "{n} answers for “{q}”", { n: results.length, q: query.trim() })
+              : t(results.length === 1 ? "{n} answer" : "{n} answers", { n: results.length })
             : ""}
         </p>
 
         {groups.length === 0 ? (
           <EmptyState
             icon={<SearchIcon size={22} />}
-            title="No answers match that"
-            message="Try a shorter or different word, or browse all topics. If it still isn't here, ask us directly."
-            action={<button type="button" className="pub-btn pub-btn-outline" onClick={reset}>Show all questions</button>}
+            title={t("No answers match that")}
+            message={t("Try a shorter or different word, or browse all topics. If it still isn't here, ask us directly.")}
+            action={<button type="button" className="pub-btn pub-btn-outline" onClick={reset}>{t("Show all questions")}</button>}
           />
         ) : (
           groups.map((g) => (
             <section key={g.value} className="faq-group" aria-labelledby={`faq-h-${g.value}`}>
-              <h2 id={`faq-h-${g.value}`}>{g.label}</h2>
+              <h2 id={`faq-h-${g.value}`}>{t(g.label)}</h2>
               <div className="faq-list">
                 {g.items.map((i) => {
                   // While searching, every match opens so the answer is visible straight away.
@@ -325,13 +306,13 @@ export function FaqPage() {
                       onToggle={(e) => !searching && toggle(i.id, e.currentTarget.open)}
                     >
                       <summary>
-                        <span>{i.q}</span>
+                        <span>{t(i.q)}</span>
                         <ChevronDown size={18} className="faq-chevron" />
                       </summary>
                       <div className="faq-answer">
-                        {i.a}
+                        {i.a()}
                         <button type="button" className="faq-copy" onClick={() => copyLink(i.id)}>
-                          <LinkIcon size={13} /> {copied === i.id ? "Link copied" : "Copy link to this answer"}
+                          <LinkIcon size={13} /> {copied === i.id ? t("Link copied") : t("Copy link to this answer")}
                         </button>
                       </div>
                     </details>
@@ -345,11 +326,13 @@ export function FaqPage() {
         <div className="faq-cta">
           <MailIcon size={20} />
           <div>
-            <strong>Still have a question?</strong>
+            <strong>{t("Still have a question?")}</strong>
             <p>
-              Hospitals can <Link to="/waitlist">talk to our team through the waitlist</Link>; anyone can
-              email <a href="mailto:support@esap.ai">support@esap.ai</a>. Signed-in users can open a
-              ticket from <Link to="/support">Help &amp; support</Link>.
+              {tl("Hospitals can {waitlist}; anyone can email {email}. Signed-in users can open a ticket from {support}.", {
+                waitlist: <Link to="/waitlist">{t("talk to our team through the waitlist")}</Link>,
+                email: <a href="mailto:support@esap.ai" lang="en" dir="ltr">support@esap.ai</a>,
+                support: <Link to="/support">{t("Help & support")}</Link>,
+              })}
             </p>
           </div>
         </div>

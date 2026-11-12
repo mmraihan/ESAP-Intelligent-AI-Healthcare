@@ -13,11 +13,14 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, rbac, settings_store
-from ..deps import Actor, current_actor, end_sessions, tenant_scope
+from ..deps import Actor, admin_only, current_actor, end_sessions, tenant_scope, staff_only
 from ..errors import ApiError
 from ..security import iso, utcnow
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(admin_only)])
+
+#: A case manager may decide a transfer but does not belong on an /admin path.
+clinical_router = APIRouter(tags=["clinical"], dependencies=[Depends(staff_only)])
 
 
 class Strict(BaseModel):
@@ -191,9 +194,18 @@ def reset_password(
         raise ApiError(404, "No such user in this tenant.")
 
     end_sessions(user["email"])
+    cred = db.connect().execute("SELECT user_id FROM credentials WHERE email=?", (user["email"],)).fetchone()
+    if cred is not None:
+        from .auth import issue_reset_link
+        issue_reset_link(cred["user_id"], user["email"])
+    # Any open "I forgot my password" request from this person is now handled.
+    conn = db.connect()
+    for r in conn.execute("SELECT id FROM service_requests WHERE requester=? AND kind='password_reset_request'"
+                          " AND status='open'", (user["email"],)).fetchall():
+        db.patch_doc("service_requests", r["id"], {"status": "closed"}, {"status": "closed"})
     audit.record(actor, "user.password_reset", user["email"], tenant_id=tenant_id, ip=_ip(request))
-    return {"user": user, "sessions_ended": True,
-            "note": "A reset link would be emailed here. Existing sessions have been ended."}
+    return {"user": user, "sessions_ended": True, "link_sent": cred is not None,
+            "note": "A reset link valid for 60 minutes has been emailed. Existing sessions have been ended."}
 
 
 # --- integrations -----------------------------------------------------------
@@ -233,6 +245,7 @@ def test_integration(
 # --- interop: the refusal side ---------------------------------------------
 
 
+@clinical_router.post("/transfers/{transfer_id}/reject")
 @router.post("/interop/{transfer_id}/reject")
 def reject_transfer(
     transfer_id: str,

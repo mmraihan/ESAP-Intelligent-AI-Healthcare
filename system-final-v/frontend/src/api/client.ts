@@ -16,7 +16,13 @@ export const API_BASE =
   ((import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_BASE ??
     "http://localhost:8000").replace(/\/$/, "");
 
-const TOKEN_KEY = "esap.token";
+/** Where older builds kept the token. Cleared on load so none is left behind. */
+const LEGACY_TOKEN_KEY = "esap.token";
+try {
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
+} catch {
+  /* storage blocked: nothing to clear */
+}
 
 export class ApiError extends Error {
   constructor(
@@ -50,26 +56,19 @@ export function setUnauthorizedHandler(fn: (() => void) | null): void {
   onUnauthorized = fn;
 }
 
+/**
+ * The session lives in an HttpOnly cookie the server sets at sign-in, which no
+ * script on the page can read (QA issue 13). The token is also held here, in
+ * memory only, as a fallback for browsers that refuse the cookie because the
+ * API is on another site; it is gone on reload, and never written to storage.
+ */
 let token: string | null = null;
 
 export function setToken(next: string | null): void {
   token = next;
-  try {
-    if (next) localStorage.setItem(TOKEN_KEY, next);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // Private browsing or blocked storage: the session still works for this
-    // tab, it just will not survive a reload.
-  }
 }
 
 export function getToken(): string | null {
-  if (token) return token;
-  try {
-    token = localStorage.getItem(TOKEN_KEY);
-  } catch {
-    token = null;
-  }
   return token;
 }
 
@@ -83,7 +82,9 @@ type Options = {
 
 export async function request<T>(path: string, options: Options = {}): Promise<T> {
   const { method = "GET", body, anonymous = false, signal } = options;
-  const headers: Record<string, string> = { Accept: "application/json" };
+  // The client header lets the server refuse a cross-site forged request that
+  // rides on the cookie: a plain form cannot set it.
+  const headers: Record<string, string> = { Accept: "application/json", "X-ESAP-Client": "web" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const bearer = anonymous ? null : getToken();
   if (bearer) headers.Authorization = `Bearer ${bearer}`;
@@ -94,6 +95,7 @@ export async function request<T>(path: string, options: Options = {}): Promise<T
       method,
       headers,
       signal,
+      credentials: "include",
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (cause) {

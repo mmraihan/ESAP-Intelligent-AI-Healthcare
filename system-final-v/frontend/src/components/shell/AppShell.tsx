@@ -12,7 +12,7 @@ import { ROLES, can } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
 import { TENANTS } from "@/mock/db";
 import { initials } from "@/lib/format";
-import { AssistiveLine, PlaceholderModelBanner, RoleBadge } from "@/components/ui/domain";
+import { AssistiveLine, PlaceholderModelBanner, RoleBadge, DemoBadge } from "@/components/ui/domain";
 import { Badge, Button, cx } from "@/components/ui/primitives";
 import {
   ChevronDown, CreditCardIcon, LogoutIcon, MailIcon, MenuIcon, PaletteIcon, UnlockIcon, XIcon,
@@ -66,6 +66,9 @@ function RoleSwitcher() {
       {open && (
         <div className="menu" role="menu">
           <p className="menu-note">{email}</p>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); nav(ROLES[role].surface === "patient" ? "/patient/settings" : "/account"); }}>
+            <span className="menu-item-title">{t("Account and security")}</span>
+          </button>
           <div className="menu-foot">
             <Button size="sm" icon={<LogoutIcon size={14} />} onClick={() => { signOut(); nav("/"); }}>
               {t("Sign out")}
@@ -184,6 +187,7 @@ export function AppShell({
           <NavLink to={ROLES[role].home} className="brand-link"><BrandMark /></NavLink>
           <span className="topbar-divider" aria-hidden="true" />
           <span className="surface-tag">{surfaceLabel}</span>
+          <DemoBadge />
           <TenantSwitcher />
         </div>
         <div className="topbar-right">
@@ -237,10 +241,13 @@ export function AppShell({
                 <span className="rail-label">{t("Help & support")}</span>
               </NavLink>
             )}
-            <NavLink to="/design" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
-              <span className="rail-icon"><PaletteIcon size={17} /></span>
-              <span className="rail-label">{t("Design system")}</span>
-            </NavLink>
+            {/* Internal reference pages: hospital admin and platform staff only (QA issue 18). */}
+            {(surface === "admin" || surface === "ops") && (
+              <NavLink to="/design" className={({ isActive }) => cx("rail-item", isActive && "is-active")}>
+                <span className="rail-icon"><PaletteIcon size={17} /></span>
+                <span className="rail-label">{t("Design system")}</span>
+              </NavLink>
+            )}
             <AssistiveLine compact />
           </div>
         </nav>

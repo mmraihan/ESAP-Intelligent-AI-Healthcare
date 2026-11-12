@@ -4,11 +4,10 @@ needed; the production RS256/JWKS path is a drop-in for `sso._verify_oidc`."""
 
 from __future__ import annotations
 
-import os
 
 import pytest
 
-from app import db, sso
+from app import db
 
 DOMAIN = "ssotest.example"
 

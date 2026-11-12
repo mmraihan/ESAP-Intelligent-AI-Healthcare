@@ -7,6 +7,7 @@ import { I18nProvider } from "./i18n";
 import { boot } from "./api/bootstrap";
 import { useSession } from "./lib/session";
 import { installPointerGlow } from "./theme/interactions";
+import { PageMeta } from "./lib/pageMeta";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./styles/app.css";
@@ -37,6 +38,7 @@ boot()
         <ThemeProvider>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <I18nProvider>
+              <PageMeta />
               <App />
             </I18nProvider>
           </BrowserRouter>

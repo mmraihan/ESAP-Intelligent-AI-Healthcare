@@ -17,6 +17,7 @@ import { OutcomeTag, RoleBadge, ScopeChip, SeverityTag } from "@/components/ui/d
 import { AlertIcon, DownloadIcon, LockIcon, ShieldIcon, UnlockIcon } from "@/components/ui/icons";
 import { act, requestExport } from "@/api/actions";
 import { api } from "@/api/client";
+import { RetentionCard } from "./RetentionCard";
 
 export function AdminAudit() {
   const [severity, setSeverity] = useState("all");
@@ -100,7 +101,7 @@ export function AdminAudit() {
       <PageHeader
         eyebrow="Compliance & privacy"
         title="Audit log"
-        lede="Every access, every action, every denial. This log is append-only and covers your tenant — including what ESAP's own staff did here, if they were ever granted emergency access."
+        lede="Every access, every action, every denial. This log covers your tenant — including what ESAP's own staff did here, if they were ever granted emergency access. The app has no way to edit an entry; old entries are removed only by the retention purge."
         actions={<Button icon={<DownloadIcon size={15} />} onClick={() => void requestExport("audit_log").then(setToast)}>Export</Button>}
       />
 
@@ -165,13 +166,15 @@ export function AdminAudit() {
       <div className="split">
         <Card title="Retention & integrity" subtitle="§15.8">
           <dl className="kv">
-            <dt>Retention</dt><dd>6 years, matching the HIPAA documentation requirement</dd>
-            <dt>Mutability</dt><dd>Append-only. There is no delete path, including for administrators.</dd>
-            <dt>Integrity</dt><dd>Each day&rsquo;s entries are hash-chained; a gap or an edit is detectable</dd>
+            <dt>Retention</dt><dd>6 years, then removed by the retention purge, which reports what it deleted</dd>
+            <dt>Mutability</dt><dd>No screen or API edits or deletes an entry, including for administrators</dd>
+            <dt>Integrity</dt><dd>Tamper-evident (hash-chained) storage is planned, not built yet</dd>
             <dt>Coverage</dt><dd>Reads as well as writes — a chart opened and closed is an event</dd>
             <dt>Export format</dt><dd>CSV and JSON, both including the reason field</dd>
           </dl>
         </Card>
+
+        <RetentionCard />
 
         <Card title="Build a report" subtitle="For a DSAR, an incident, or a board pack">
           <Field label="Date range">

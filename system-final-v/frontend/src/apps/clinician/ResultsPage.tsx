@@ -40,6 +40,9 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
   const [toast, setToast] = useState<string | null>(null);
   const [nbt, setNbt] = useState(false);
   const [releasing, setReleasing] = useState(false);
+  // The refresh after a review remounts the screen, which would close a release
+  // dialog opened in the meantime and lose what was typed.
+  const [ackBusy, setAckBusy] = useState(false);
   const [release, setRelease] = useState({ headline: "", plain: "", means: "", questions: "" });
   const [transferring, setTransferring] = useState(false);
   const [transfer, setTransfer] = useState({ counterparty: "", consentBasis: "treatment", note: "" });
@@ -94,6 +97,7 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
       setToast("Not saved — the ESAP server cannot be reached");
       return;
     }
+    setAckBusy(true);
     try {
       const result = await api.post<{ requires_cosign: boolean }>(
         `/api/v1/encounters/${enc.id}/acknowledge`,
@@ -108,6 +112,8 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
       await hydrateFromApi().catch(() => undefined);
     } catch (error) {
       setToast(error instanceof ApiError ? error.message : "Could not reach the ESAP API.");
+    } finally {
+      setAckBusy(false);
     }
   }
 
@@ -136,7 +142,7 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
         actions={
           <div className="row" style={{ gap: 8 }}>
             {enc.releasedToPatient && <Badge tone="good" icon={<CheckIcon size={11} />}>Released to patient</Badge>}
-            {canRelease && <Button size="sm" icon={<SendIcon size={14} />} onClick={() => setReleasing(true)}>Release to patient</Button>}
+            {canRelease && <Button size="sm" icon={<SendIcon size={14} />} disabled={ackBusy} onClick={() => setReleasing(true)}>Release to patient</Button>}
             {can(role, "chat:use") && <Button size="sm" icon={<SparkIcon size={14} />} onClick={() => setChat(true)}>Ask</Button>}
             {can(role, "transfer:initiate") && <Button size="sm" icon={<GlobeIcon size={14} />} onClick={() => setTransferring(true)}>Request record from elsewhere</Button>}
             {can(role, "export:phi") && <Button size="sm" icon={<DownloadIcon size={14} />} onClick={() => void requestExport("encounter_summary", "Clinical review export from the results screen", { encounter_id: enc.id }).then(setToast)}>Export</Button>}

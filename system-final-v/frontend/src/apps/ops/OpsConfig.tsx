@@ -75,7 +75,7 @@ export function OpsConfig() {
       () => api.post("/api/v1/requests", {
         kind: "subprocessor_review",
         ref: r.vendor.trim(),
-        detail: `${r.purpose.trim()}${r.phi ? " — will process PHI (BAA required)" : " — no PHI"}`,
+        detail: `${r.purpose.trim()}${r.phi ? " — will process PHI (data processing agreement required)" : " — no PHI"}`,
       }),
       () => `Review opened for ${r.vendor.trim()} — customers are notified before it goes live`,
     ).then((m) => { setToast(m); loadReviews(); });
@@ -204,7 +204,7 @@ export function OpsConfig() {
                       <td>
                         <span className={s.phi ? "pill pill-warning" : "pill pill-good"}>
                           {s.phi ? <ShieldIcon size={12} /> : <LockIcon size={12} />}
-                          {s.phi ? "Yes — under BAA" : "No"}
+                          {s.phi ? "Yes — agreement required" : "No"}
                         </span>
                       </td>
                       <td className="muted">{dateLabel(s.since)}</td>

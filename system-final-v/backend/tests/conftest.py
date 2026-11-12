@@ -35,6 +35,10 @@ def client():
 def _token(client: TestClient, email: str) -> str:
     r = client.post("/api/v1/auth/login", json={"email": email, "password": DEMO_PASSWORD})
     assert r.status_code == 200, r.text
+    # Sign-in also sets the HttpOnly session cookie. These tests authenticate
+    # with explicit Bearer headers, so drop it: a later "no session" request
+    # must really carry none.
+    client.cookies.clear()
     return r.json()["token"]
 
 

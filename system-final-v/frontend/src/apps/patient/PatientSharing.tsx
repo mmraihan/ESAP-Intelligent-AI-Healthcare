@@ -47,6 +47,17 @@ const ACTION_LABEL: Record<string, string> = {
   "user.password_change": "Changed the password",
 };
 
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
+
+/** Who may receive access: a person by email, a hospital from the list (QA issue 21). */
+function recipientError(who: string, type: string, hospitals: string[]): string | undefined {
+  const v = who.trim();
+  if (!v) return undefined;
+  if (type === "caregiver" || type === "clinician") return EMAIL_RE.test(v) ? undefined : t("Enter their email address, for example name@example.com.");
+  if (type === "hospital") return hospitals.includes(v) ? undefined : t("Choose a hospital from the list.");
+  return v.length >= 2 && /[A-Za-z\u0600-\u06FF]/.test(v) ? undefined : t("Enter the name of the health app.");
+}
+
 export function PatientSharing() {
   const [revoking, setRevoking] = useState<ConsentGrant | null>(null);
   const [adding, setAdding] = useState(false);
@@ -54,6 +65,14 @@ export function PatientSharing() {
   const { email } = useSession();
   const [history, setHistory] = useState<AccessEvent[] | null>(null);
   const [grant, setGrant] = useState({ who: "", type: "caregiver", level: "summaries", until: "none" });
+  const [hospitals, setHospitals] = useState<string[]>([]);
+  useEffect(() => {
+    if (!isLive()) return;
+    api.get<{ hospitals: { name: string }[] }>("/api/v1/patient/hospitals")
+      .then((r) => setHospitals(r.hospitals.map((h) => h.name)))
+      .catch(() => undefined);
+  }, []);
+  const whoError = recipientError(grant.who, grant.type, hospitals);
 
   function giveAccess() {
     const g = grant;
@@ -203,22 +222,40 @@ export function PatientSharing() {
         footer={
           <>
             <Button onClick={() => setAdding(false)}>{t("Cancel")}</Button>
-            <Button variant="primary" disabled={grant.who.trim().length < 2} onClick={giveAccess}>{t("Give access")}</Button>
+            <Button variant="primary" disabled={grant.who.trim().length < 2 || Boolean(whoError)} onClick={giveAccess}>{t("Give access")}</Button>
           </>
         }
       >
         <div className="stack" style={{ gap: 14 }}>
-          <Field label={t("Who?")} required hint={t("An email address, or search for a hospital or clinic.")}>
-            <TextInput placeholder="their.name@example.com" style={{ fontSize: 16 }} value={grant.who} onChange={(e) => setGrant({ ...grant, who: e.currentTarget.value })} />
-          </Field>
           <Field label={t("What kind of access?")} required>
-            <Select value={grant.type} onChange={(e) => setGrant({ ...grant, type: e.currentTarget.value })} style={{ fontSize: 16 }}>
+            <Select value={grant.type} onChange={(e) => setGrant({ ...grant, type: e.currentTarget.value, who: "" })} style={{ fontSize: 16 }}>
               <option value="caregiver">{t("A family member or carer")}</option>
               <option value="clinician">{t("A doctor or nurse somewhere else")}</option>
               <option value="hospital">{t("Another hospital or clinic")}</option>
               <option value="app">{t("A health app")}</option>
             </Select>
           </Field>
+          {grant.type === "hospital" ? (
+            <Field label={t("Which hospital?")} required hint={t("Demo build: these are sample hospitals, not real ones.")}>
+              <Select value={grant.who} onChange={(e) => setGrant({ ...grant, who: e.currentTarget.value })} style={{ fontSize: 16 }}>
+                <option value="">{t("Choose a hospital")}</option>
+                {hospitals.map((h) => <option key={h} value={h}>{h}</option>)}
+              </Select>
+            </Field>
+          ) : (
+            <Field
+              label={grant.type === "app" ? t("Which app?") : t("Their email address")}
+              required
+              error={whoError}
+            >
+              <TextInput
+                type={grant.type === "app" ? "text" : "email"}
+                placeholder={grant.type === "app" ? "" : "their.name@example.com"}
+                style={{ fontSize: 16 }} value={grant.who} dir="ltr"
+                onChange={(e) => setGrant({ ...grant, who: e.currentTarget.value })}
+              />
+            </Field>
+          )}
           <Field label={t("How much can they see?")} required>
             <Select value={grant.level} onChange={(e) => setGrant({ ...grant, level: e.currentTarget.value })} style={{ fontSize: 16 }}>
               <option value="summaries">{t("Visit summaries only")}</option>

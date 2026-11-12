@@ -23,6 +23,7 @@ from fastapi import APIRouter, Depends
 from ..care_team import for_patient as care_team_for
 from .. import db, evidence, predictors, rbac, settings_store
 from ..deps import Actor, current_actor
+from ..security import iso, utcnow
 from .clinical import scope_encounters
 
 router = APIRouter(tags=["bootstrap"])
@@ -104,7 +105,9 @@ def bootstrap(actor: Actor = Depends(current_actor)):
     return {
         "generated_by": "backend/app/routers/bootstrap.py",
         "seed_note": "Synthetic demo data. No PHI, no MIMIC-IV records.",
-        "now": db.document("now"),
+        # The real time. The seed's fixed demo date made the app show today's
+        # events as "in 47 d" (QA issue 24).
+        "now": iso(utcnow()),
         "active_tenant_id": tenant_id,
         "source": {"kind": "api", "role": actor.role, "elevated": bool(actor.elevation)},
         "patient_portal_enabled": portal_enabled,

@@ -18,6 +18,8 @@ import {
 import { act } from "@/api/actions";
 import { api } from "@/api/client";
 import { useSettings } from "@/hooks/useSettings";
+import { TwoFactorPanel } from "@/apps/auth/TwoFactor";
+import { ProcessingConsentCard } from "./ProcessingConsentCard";
 
 type Prefs = {
   language: string;
@@ -80,15 +82,19 @@ export function PatientSettings() {
     ).then(setToast);
   }
 
+  /**
+   * Closes the account for real: sign-in removed, sharing and consents
+   * withdrawn, form answers and settings deleted. It used to file a request
+   * and sign out, leaving the account working.
+   */
   async function closeAccount() {
+    let closed = false;
     const message = await act(
-      () => api.post("/api/v1/requests", {
-        kind: "account_closure", detail: "Close my ESAP account. I understand my hospital record is kept by the hospital.",
-      }),
-      () => t("Account closure requested"),
+      () => api.post("/api/v1/patient/account/close", { confirm: "CLOSE" }),
+      () => { closed = true; return t("Your ESAP account is closed"); },
     );
     setToast(message);
-    if (message === t("Account closure requested")) { signOut(); nav("/"); }
+    if (closed) { signOut(); nav("/"); }
   }
 
   return (
@@ -166,7 +172,7 @@ export function PatientSettings() {
       </Card>
 
       <Card title={t("Your account")}>
-        <Field label={t("Name")} hint={t("To change your name or email, ask your care team — it has to match your hospital record.")}>
+        <Field label={t("Name")} hint={t("To change your name or email, send a request from Help & support. If a hospital treats you, it has to match your hospital record.")}>
           <TextInput value={name} readOnly style={{ fontSize: 16 }} />
         </Field>
         <Field label={t("Email")}><TextInput value={email} readOnly type="email" style={{ fontSize: 16 }} /></Field>
@@ -174,6 +180,10 @@ export function PatientSettings() {
           <Button icon={<ShieldIcon size={15} />} onClick={() => setPassword({ current: "", next: "", again: "" })}>{t("Change my password")}</Button>
         </div>
       </Card>
+
+      <TwoFactorPanel />
+
+      <ProcessingConsentCard />
 
       <Card title={<span className="row" style={{ gap: 8 }}><DownloadIcon size={18} /> {t("Your data")}</span>}>
         <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
@@ -207,7 +217,7 @@ export function PatientSettings() {
         title={t("Close your ESAP account")}
         confirmWord={t("CLOSE")}
         actionLabel={t("Close my account")}
-        body={t("You will no longer be able to sign in here.")}
+        body={t("Your sign-in, your form answers and your settings are deleted, and you will no longer be able to sign in here.")}
         consequences={[
           t("Your hospital medical record is NOT deleted — hospitals must keep it by law."),
           t("Anyone you gave access to loses it immediately."),

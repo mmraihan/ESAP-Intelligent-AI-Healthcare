@@ -49,8 +49,10 @@ export function RequestDialog({
     if (!spec) return;
     setSending(true);
     const message = await act(
-      () => api.post("/api/v1/requests", { kind: spec.kind, detail: detail.trim(), ref: spec.ref ?? null }),
-      () => spec.done,
+      () => api.post<{ routedTo?: string }>("/api/v1/requests", { kind: spec.kind, detail: detail.trim(), ref: spec.ref ?? null }),
+      // A patient with no hospital behind them has no care team; the server
+      // sends it to ESAP support, and the message must say so (QA issue 23).
+      (r) => (r.routedTo === "esap_support" ? t("You are not connected to a hospital yet, so this went to ESAP support instead of a care team. They will reply to you here.") : spec.done),
     );
     setSending(false);
     onClose();

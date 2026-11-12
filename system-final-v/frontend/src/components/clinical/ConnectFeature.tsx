@@ -15,6 +15,7 @@ import { Badge, Button, Card, Field, Select, TextInput } from "@/components/ui/p
 import { Toast } from "@/components/ui/overlays";
 import { useSession } from "@/lib/session";
 import { can } from "@/lib/rbac";
+import { t } from "@/i18n";
 
 /** Patient side: request to connect with a hospital, and see request status. */
 export function PatientConnectCard() {
@@ -42,7 +43,7 @@ export function PatientConnectCard() {
     if (!hospitalId || !age) return;
     setBusy(true);
     const msg = await requestConnect(hospitalId, Number(age), sex, reason.trim());
-    setToast(msg);
+    setToast(t(msg));
     setReason("");
     await load();
     setBusy(false);
@@ -50,8 +51,8 @@ export function PatientConnectCard() {
 
   return (
     <Card
-      title="Connect with a hospital"
-      subtitle="Ask a hospital to take you on. A clinician there accepts, and then you can share information both ways."
+      title={t("Connect with a hospital")}
+      subtitle={t("Ask a hospital to take you on. A clinician there accepts, and then you can share information both ways.")}
     >
       {requests.length > 0 && (
         <div className="stack" style={{ gap: 6, marginBottom: 12 }}>
@@ -61,7 +62,7 @@ export function PatientConnectCard() {
               <div key={r.id} className="row" style={{ justifyContent: "space-between", gap: 8 }}>
                 <span>{h ? h.name : r.tenantId}</span>
                 <Badge tone={r.status === "accepted" ? "good" : r.status === "open" ? "neutral" : "warning"}>
-                  {r.status === "open" ? "pending" : r.status}
+                  {t(r.status === "open" ? "pending" : r.status)}
                 </Badge>
               </div>
             );
@@ -69,27 +70,27 @@ export function PatientConnectCard() {
         </div>
       )}
 
-      <Field label="Hospital">
+      <Field label={t("Hospital")} hint={t("Demo build: these are sample hospitals, not real ones.")}>
         <Select value={hospitalId} onChange={(e) => setHospitalId(e.currentTarget.value)}>
           {hospitals.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
         </Select>
       </Field>
       <div className="row" style={{ gap: 10 }}>
-        <Field label="Your age">
-          <TextInput inputMode="numeric" value={age} onChange={(e) => setAge(e.currentTarget.value)} placeholder="e.g. 62" />
+        <Field label={t("Your age")}>
+          <TextInput inputMode="numeric" value={age} onChange={(e) => setAge(e.currentTarget.value)} placeholder={t("e.g. 62")} />
         </Field>
-        <Field label="Sex">
+        <Field label={t("Sex")}>
           <Select value={sex} onChange={(e) => setSex(e.currentTarget.value)}>
-            <option value="F">Female</option>
-            <option value="M">Male</option>
+            <option value="F">{t("Female")}</option>
+            <option value="M">{t("Male")}</option>
           </Select>
         </Field>
       </div>
-      <Field label="Reason (optional)">
-        <TextInput value={reason} onChange={(e) => setReason(e.currentTarget.value)} placeholder="What brings you in?" />
+      <Field label={t("Reason (optional)")}>
+        <TextInput value={reason} onChange={(e) => setReason(e.currentTarget.value)} placeholder={t("What brings you in?")} />
       </Field>
       <Button variant="primary" disabled={busy || !hospitalId || !age} onClick={() => void submit()}>
-        {busy ? "Sending…" : "Request to connect"}
+        {busy ? t("Sending…") : t("Request to connect")}
       </Button>
       <Toast message={toast} onDone={() => setToast(null)} />
     </Card>

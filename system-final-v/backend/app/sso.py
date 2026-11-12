@@ -29,7 +29,7 @@ import uuid
 
 from . import db, rbac, settings_store
 from .config import settings
-from .security import expiry, hash_password, iso, utcnow
+from .security import hash_password, iso, utcnow
 
 _CLINICAL_ROLES = {"physician", "resident", "np_pa", "charge_nurse", "staff_nurse",
                    "case_manager", "pharmacist"}

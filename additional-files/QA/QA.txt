@@ -1,0 +1,26 @@
+Clinical AI QA report is ready: 26 issues (9 High, 15 Medium, 2 Low). Please fix all of them:
+https://docs.google.com/document/d/1BduNJaCL00IfWMsLBS-w3h6F1PF0bGQAYbXE4s3_D6w/edit?usp=sharing
+
+🔴 P1 – by Tue 10 Nov, 11:59 PM (pilot blockers)
+→ Remove + rotate the shared demo password, turn off the public demo-accounts list (Issue 1)
+→ Patient assistant: detect red flags (chest pain, breathing, stroke) + emergency message with 997 (Issue 19)
+→ Intake form: no pre-set answers, show "Not answered" for skipped (Issue 20)
+→ Stub models: "Placeholder, not for clinical use" banner, "AI-generated" label, no calibrated: true, hide 0.000 metrics (Issue 4)
+→ Default unit for solo/self-serve accounts so a patient can be admitted (Issue 5)
+→ Stop sending all users' names/emails to non-admins (Issue 6)
+→ Rewrite Security page + FAQ to list only what's built; rest under "Planned" (Issue 2)
+
+🟠 P2 – by Thu 12 Nov, 11:59 PM
+→ Privacy + Terms with Saudi content (PDPL, DPO, Saudi law) in EN + AR (Issue 3)
+→ Ops Incidents: breach flag + 24h/72h timers + notification templates (Issue 7)
+→ MFA for admins, account settings, lockout, 15–30 min idle timeout (Issue 8)
+→ Versioned processing consent + retention purge with reports (Issue 9)
+→ API on an ESAP domain (e.g. api.care.esap.ai) + Saudi hosting plan (Issue 10)
+→ "Demo · synthetic data only" badge on every page incl. app + login (Issue 11)
+→ Security headers (CSP, frame, nosniff, referrer) + token in HttpOnly cookie (Issue 13)
+→ Self-service password reset for solo clinicians + patients (Issue 17)
+
+🟡 P3 – by Sat 14 Nov, 11:59 PM
+→ Issues 12, 14–16, 18, 21–26: SEO + real 404, Arabic public pages, intake range checks + working Save draft, assistant captures all vitals/labs, sharing recipient validation, full patient export, requests routing when no care team, real clock (no "in 47 d"), Arabic gaps + /admin restricted to admins, remove "Design system" footer link, polish
+
+After each fix, mark it ✅ in the QA doc with a short note so Parbaz can retest. Send me a P1 update by Tue night.

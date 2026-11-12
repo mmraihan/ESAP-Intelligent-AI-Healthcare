@@ -157,7 +157,8 @@ export type Seed = typeof import("./seed.json");
 
 /** Load one dataset — from the API payload or the bundled seed — into the store. */
 export function applyDataset(data: Seed): void {
-  NOW = new Date(data.now);
+  // The real clock, never the seed's demo date (QA issue 24).
+  NOW = new Date();
   PATIENT_PORTAL_ENABLED = (data as { patient_portal_enabled?: boolean }).patient_portal_enabled ?? true;
   PLACEHOLDER_MODELS = (data as { model_mode?: string }).model_mode === "stub";
 

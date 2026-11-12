@@ -8,8 +8,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BrandMark } from "@/components/shell/AppShell";
+import { DemoBadge } from "@/components/ui/domain";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { cx } from "@/components/ui/primitives";
+import { LanguageToggle, t } from "@/i18n";
 import { MenuIcon, XIcon } from "@/components/ui/icons";
 import "@/styles/site-art.css";
 
@@ -56,23 +58,25 @@ export function SiteHeader() {
       className={className}
       aria-current={isCurrent(l.to, pathname) ? "page" : undefined}
     >
-      {l.label}
+      {t(l.label)}
     </Link>
   );
 
   return (
     <header className={cx("pub-nav", (scrolled || menuOpen) && "is-scrolled")}>
       <div className="pub-wrap pub-nav-inner">
-        <Link to="/product" className="brand-link" aria-label="ESAP Clinical AI — product home"><BrandMark /></Link>
+        <Link to="/product" className="brand-link" aria-label={t("ESAP Clinical AI — product home")}><BrandMark /></Link>
+        <DemoBadge />
         <nav className="pub-nav-links" aria-label="Main">{LINKS.map((l) => link(l, "pub-link"))}</nav>
         <div className="pub-nav-actions">
+          <span className="pub-nav-lang"><LanguageToggle compact /></span>
           <ThemeToggle compact />
-          <Link to="/login" className="pub-btn pub-btn-outline pub-btn-sm pub-nav-signin">Sign in</Link>
-          <Link to="/signup" className="pub-btn pub-btn-primary pub-btn-sm">Try it free</Link>
+          <Link to="/login" className="pub-btn pub-btn-outline pub-btn-sm pub-nav-signin">{t("Sign in")}</Link>
+          <Link to="/signup" className="pub-btn pub-btn-primary pub-btn-sm">{t("Try it free")}</Link>
           <button
             type="button"
             className="pub-menu-btn"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? t("Close menu") : t("Open menu")}
             aria-expanded={menuOpen}
             aria-controls="pub-mobile-menu"
             onClick={() => setMenuOpen((v) => !v)}
@@ -85,8 +89,10 @@ export function SiteHeader() {
         <nav id="pub-mobile-menu" className="pub-mobile" aria-label="Main">
           {LINKS.map((l) => link(l, ""))}
           <div className="pub-mobile-row">
+            <LanguageToggle compact />
             <ThemeToggle compact />
-            <Link to="/login" className="pub-btn pub-btn-outline">Sign in</Link>
+            <Link to="/login" className="pub-btn pub-btn-outline">{t("Sign in")}</Link>
+            <Link to="/signup" className="pub-btn pub-btn-primary">{t("Try it free")}</Link>
           </div>
         </nav>
       )}
@@ -102,47 +108,44 @@ export function SiteFooter() {
           <div className="pub-foot-brand">
             <BrandMark />
             <p>
-              ESAP is clinical decision support. It does not diagnose, and it does not make treatment
-              decisions. A qualified clinician reviews every estimate independently.
+              {t("ESAP is clinical decision support. It does not diagnose, and it does not make treatment decisions. A qualified clinician reviews every estimate independently.")}
             </p>
           </div>
           <div className="pub-foot-cols">
             <nav aria-label="Product">
-              <strong>Product</strong>
-              {LINKS.filter((l) => l.to !== "/faq").map((l) => <Link key={l.to} to={l.to}>{l.label}</Link>)}
+              <strong>{t("Product")}</strong>
+              {LINKS.filter((l) => l.to !== "/faq").map((l) => <Link key={l.to} to={l.to}>{t(l.label)}</Link>)}
             </nav>
             <nav aria-label="For clinicians">
-              <strong>For clinicians</strong>
-              <Link to="/help">How to read a result</Link>
-              <Link to="/models">Model basis</Link>
-              <Link to="/design">Design system</Link>
+              <strong>{t("For clinicians")}</strong>
+              <Link to="/help">{t("How to read a result")}</Link>
+              <Link to="/models">{t("Model basis")}</Link>
             </nav>
             <nav aria-label="For patients">
-              <strong>For patients</strong>
-              <Link to="/welcome">Patient portal</Link>
-              <Link to="/patient/sharing">Your data rights</Link>
+              <strong>{t("For patients")}</strong>
+              <Link to="/welcome">{t("Patient portal")}</Link>
+              <Link to="/patient/sharing">{t("Your data rights")}</Link>
             </nav>
             <nav aria-label="Help">
-              <strong>Help</strong>
-              <Link to="/faq">FAQ</Link>
-              <Link to="/waitlist">Talk to us</Link>
+              <strong>{t("Help")}</strong>
+              <Link to="/faq">{t("FAQ")}</Link>
+              <Link to="/waitlist">{t("Talk to us")}</Link>
             </nav>
             <nav aria-label="Legal">
-              <strong>Legal</strong>
-              <Link to="/privacy">Privacy Policy</Link>
-              <Link to="/terms">Terms &amp; Conditions</Link>
-              <Link to="/security">Security &amp; compliance</Link>
+              <strong>{t("Legal")}</strong>
+              <Link to="/privacy">{t("Privacy Policy")}</Link>
+              <Link to="/terms">{t("Terms & Conditions")}</Link>
+              <Link to="/security">{t("Security & compliance")}</Link>
             </nav>
           </div>
         </div>
         <div className="pub-foot-note">
           <p>
-            Demonstration build. All data shown is synthetic — no real patient information appears anywhere in
-            this application.
+            {t("Demonstration build. All data shown is synthetic — no real patient information appears anywhere in this application.")}
           </p>
           <span className="pub-foot-legal">
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/terms">Terms</Link>
+            <Link to="/privacy">{t("Privacy")}</Link>
+            <Link to="/terms">{t("Terms")}</Link>
           </span>
         </div>
       </div>

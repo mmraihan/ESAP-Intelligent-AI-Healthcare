@@ -147,8 +147,8 @@ export function AdminOrg() {
               <dt>Isolation</dt><dd>{ISOLATION_LABEL[tenant.isolation]}</dd>
               <dt>Region</dt><dd>{tenant.region}</dd>
               <dt>Data residency</dt><dd>{tenant.region === "eu-central" ? "European Union" : tenant.region === "on-site" ? "Your own data centre" : "United States"}</dd>
-              <dt>Encryption at rest</dt><dd>AES-256, tenant-scoped keys</dd>
-              <dt>Encryption in transit</dt><dd>TLS 1.3, mutual TLS on integration endpoints</dd>
+              <dt>Encryption at rest</dt><dd>Planned, not built yet</dd>
+              <dt>Encryption in transit</dt><dd>HTTPS. Mutual TLS on integration endpoints is planned</dd>
             </dl>
           </Card>
 

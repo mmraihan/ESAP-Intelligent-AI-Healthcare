@@ -12,6 +12,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "@/lib/session";
 import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { DemoBadge } from "@/components/ui/domain";
 import { Banner, Button, Card, Field, TextInput } from "@/components/ui/primitives";
 import { AlertIcon, CheckIcon, ShieldIcon } from "@/components/ui/icons";
 import { ApiError, NetworkError, api } from "@/api/client";
@@ -74,8 +75,8 @@ export function CaregiverAcceptPage() {
   return (
     <div className="pub auth-page">
       <div className="stack" style={{ gap: 18, width: "100%", maxWidth: 520, alignItems: "center" }}>
-        <div className="row" style={{ justifyContent: "space-between", width: "100%", gap: 10 }}>
-          <BrandMark />
+        <div className="row" style={{ justifyContent: "space-between", width: "100%", gap: 10, flexWrap: "wrap" }}>
+          <span className="row" style={{ gap: 10 }}><BrandMark /><DemoBadge /></span>
           <ThemeToggle compact />
         </div>
 

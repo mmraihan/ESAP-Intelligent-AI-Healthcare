@@ -17,16 +17,17 @@ import uuid
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, errors, predictors
+from . import db, errors, predictors, session_cookie
 from .deps import Actor, current_actor
 from .config import settings
 from .routers import (
     admin, admin_config, auth, billing, bootstrap, catalog, chat, clinical, clinical_ops,
-    exports, ops, ops_incidents, ops_people, patient, patient_ops, requests, settings as settings_router,
-    support, waitlist, workspace,
+    exports, ops, ops_incidents, ops_people, patient, patient_ops, privacy, requests,
+    settings as settings_router, support, waitlist, workspace,
 )
 from .assembler import PLACEHOLDER_DISCLAIMER
 from .seed import ensure_seeded
+from .security import iso, utcnow
 
 app = FastAPI(
     title="ESAP Intelligent AI Healthcare — API",
@@ -52,24 +53,63 @@ errors.install(app)
 
 @app.middleware("http")
 async def attach_request_id(request: Request, call_next):
-    """One id per request, echoed on the error envelope and the audit row."""
+    """One id per request, echoed on the error envelope and the audit row.
+
+    Also sets or clears the HttpOnly session cookie when a route issued or
+    ended a session, and adds the API's security headers (QA issue 13).
+    """
     request.state.request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    box = session_cookie.begin()
     response = await call_next(request)
     response.headers["x-request-id"] = request.state.request_id
+    session_cookie.apply(box, request, response)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Cache-Control", "no-store")
     return response
 
 
 @app.on_event("startup")
 def startup() -> None:
     ensure_seeded()
+    _schedule_retention()
+
+
+def _schedule_retention() -> None:
+    """Run the retention purge every ESAP_RETENTION_INTERVAL_HOURS (default 24;
+    0 turns it off). First run five minutes after start (QA issue 9)."""
+    import logging
+    import os
+    import threading
+
+    hours = float(os.environ.get("ESAP_RETENTION_INTERVAL_HOURS", "24") or 0)
+    if hours <= 0:
+        return
+
+    def tick(delay: float) -> None:
+        def run() -> None:
+            try:
+                db.reset_connection()
+                privacy.run_purge(None, "scheduler", "schedule")
+            except Exception:  # noqa: BLE001 - a failed run must not stop the next one
+                logging.getLogger("esap.retention").exception("retention purge failed")
+            tick(hours * 3600)
+        timer = threading.Timer(delay, run)
+        timer.daemon = True
+        timer.start()
+
+    tick(300)
 
 
 API = "/api/v1"
 for router in (auth.router, bootstrap.router, clinical.router, clinical_ops.router,
-               catalog.router, chat.router, admin.router, admin_config.router, ops.router,
+               catalog.router, chat.router, admin.router, admin.clinical_router,
+               admin_config.router, admin_config.clinical_router, ops.router,
                ops_incidents.router, patient.router, patient_ops.router,
                exports.router, settings_router.router, requests.router, workspace.router,
-               ops_people.router, support.router, waitlist.router, billing.router):
+               ops_people.router, support.router, waitlist.router, billing.router,
+               privacy.router):
     app.include_router(router, prefix=API)
 
 
@@ -132,6 +172,6 @@ def meta(actor: Actor = Depends(current_actor)):
             "patient_sees_raw_scores": False,
             "safety_features_gated_by_plan": False,
         },
-        "now": db.document("now"),
+        "now": iso(utcnow()),
         "active_tenant_id": actor.tenant_id,
     }

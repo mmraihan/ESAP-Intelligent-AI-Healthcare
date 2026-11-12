@@ -1,6 +1,5 @@
 /** Formatting helpers. Every number a clinician compares is rendered tabular. */
 
-import { NOW } from "@/mock/db";
 import { currentLang } from "@/i18n";
 
 export function pct(p: number | null | undefined, digits = 0): string {
@@ -40,10 +39,15 @@ function arCount(n: number, unit: keyof typeof AR_UNITS): string {
   return `${n} ${u.many}`;
 }
 
-/** "3 h ago" / "in 5 d" (or the Arabic equivalent) — relative to the demo's fixed NOW. */
+/**
+ * "3 h ago" / "in 5 d" (or the Arabic equivalent), relative to the real current
+ * time. It used to be relative to the seed's fixed demo date, which made today's
+ * events read "in 47 d" — wrong on an access history, which is a legal record
+ * (QA issue 24).
+ */
 export function ago(iso: string): string {
   const then = new Date(iso).getTime();
-  const diffMin = Math.round((NOW.getTime() - then) / 60_000);
+  const diffMin = Math.round((Date.now() - then) / 60_000);
   const future = diffMin < 0;
   const m = Math.abs(diffMin);
 

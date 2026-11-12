@@ -22,10 +22,19 @@ export type Lang = "en" | "ar";
 
 const STORAGE_KEY = "esap.lang";
 
-/** Route prefixes where the chosen language applies. Everything else is English. */
-export const LOCALISED_PREFIXES = ["/patient", "/welcome", "/login", "/signup", "/invite"];
+/**
+ * Route prefixes where the chosen language applies. Everything else is English.
+ * The public website (product, pricing, security, evidence, FAQ, waitlist and
+ * the legal pages) is localised too (QA issue 14).
+ */
+export const LOCALISED_PREFIXES = [
+  "/patient", "/welcome", "/login", "/signup", "/invite", "/reset-password", "/privacy", "/terms",
+  "/product", "/pricing", "/security", "/evidence", "/faq", "/waitlist",
+];
 
 export function isLocalisedPath(pathname: string): boolean {
+  // "/" is the product page for a signed-out visitor; matched exactly, never as a prefix.
+  if (pathname === "/") return true;
   return LOCALISED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
@@ -77,14 +86,32 @@ export function t(key: string, vars?: Record<string, string | number>): string {
  * between English and Arabic, so emphasis lives inside the translated sentence
  * rather than being stitched together from fragments.
  */
-export function rich(s: string): ReactNode {
+export function rich(s: string, Tag: "strong" | "mark" | "em" = "strong"): ReactNode {
   const parts = s.split("**");
-  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <Fragment key={i}>{p}</Fragment>));
+  return parts.map((p, i) => (i % 2 === 1 ? <Tag key={i}>{p}</Tag> : <Fragment key={i}>{p}</Fragment>));
 }
 
 /** `t()` then `rich()`. */
 export function tr(key: string, vars?: Record<string, string | number>): ReactNode {
   return rich(t(key, vars));
+}
+
+/** `t()` then `rich()` with the emphasis as <mark> (the landing page's highlighted drivers). */
+export function tm(key: string): ReactNode {
+  return rich(t(key), "mark");
+}
+
+/**
+ * Translate a sentence that carries links or other elements. The element goes
+ * in as a `{name}` placeholder, so the Arabic sentence can put it where Arabic
+ * word order needs it: tl("See the {faq}.", { faq: <Link to="/faq">{t("full FAQ")}</Link> }).
+ * Bold `**…**` spans in the surrounding text still work.
+ */
+export function tl(key: string, nodes: Record<string, ReactNode>): ReactNode {
+  return t(key).split(/(\{\w+\})/g).map((part, i) => {
+    const m = /^\{(\w+)\}$/.exec(part);
+    return <Fragment key={i}>{m && m[1] in nodes ? nodes[m[1]] : rich(part)}</Fragment>;
+  });
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {

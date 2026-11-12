@@ -70,7 +70,7 @@ export function GradeLegend() {
       {items.map((g) => (
         <li key={g}>
           <span className={cx("grade", `grade-${g}`)} aria-hidden="true">{GRADE_SYMBOL[g]}</span>
-          {GRADE_LABEL[g]}
+          {t(GRADE_LABEL[g])}
         </li>
       ))}
     </ul>
@@ -185,6 +185,21 @@ export function TransferStateTag({ state }: { state: TransferState }) {
  */
 export function AiGeneratedTag() {
   return <span className="cal-badge"><SparkIcon size={10} /> {t("AI-generated")}</span>;
+}
+
+/**
+ * "Demo · synthetic data only", in the header of every page: public site,
+ * sign-in and every signed-in shell, including the intake form (QA issue 11).
+ * Not dismissible, so nobody types a real patient into a demo.
+ */
+export function DemoBadge() {
+  return (
+    <span className="demo-badge" role="note" title={t("Demonstration build. All data shown is synthetic. Do not enter real patient information.")}>
+      <AlertIcon size={12} />
+      <span className="demo-badge-full">{t("Demo · synthetic data only")}</span>
+      <span className="demo-badge-short" aria-hidden="true">{t("Demo")}</span>
+    </span>
+  );
 }
 
 /** Standing notice on every clinical screen while the server has no trained models. */

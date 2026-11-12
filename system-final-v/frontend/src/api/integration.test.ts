@@ -32,9 +32,13 @@ const DEMO_PASSWORD = "esap-demo";
  * describe.skip while *collecting*, which happens before any hook runs. A
  * probe in beforeAll always reads false and silently skips the whole suite.
  */
-const reachable = await fetch(`${API_BASE}/readyz`)
-  .then((r) => r.ok)
-  .catch(() => false);
+const ready = await fetch(`${API_BASE}/readyz`)
+  .then(async (r) => (r.ok ? ((await r.json()) as { model_mode?: string }) : null))
+  .catch(() => null);
+const reachable = ready !== null;
+/** "stub" or "real": the assertions below follow what the server is serving. */
+const MODEL_MODE = ready?.model_mode ?? "stub";
+const EXPECTED_MORTALITY_STATUS = MODEL_MODE === "stub" ? "stub" : "live";
 
 if (!reachable) {
   console.info(`[esap] API not reachable at ${API_BASE} — skipping integration tests.`);
@@ -86,9 +90,9 @@ online()("live API", () => {
 
     expect(result.differential.model_id).toBe("M-01");
     expect(result.los.result?.interval_low).toBeLessThanOrEqual(result.los.result!.interval_high);
-    expect(result.disclaimer).toMatch(/^Placeholder model, not for clinical use/);
-    // Stub mode is declared, never dressed up as live.
-    expect(result.mortality.status).toBe("stub");
+    // Stub mode is declared, never dressed up as live; real mode says live.
+    if (MODEL_MODE === "stub") expect(result.disclaimer).toMatch(/^Placeholder model, not for clinical use/);
+    expect(result.mortality.status).toBe(EXPECTED_MORTALITY_STATUS);
   });
 
   it("accepts every sample patient the intake form can load", async () => {
@@ -98,7 +102,7 @@ online()("live API", () => {
         features: toFeatures(sample.values),
       });
       expect(result.differential.model_id, sample.id).toBe("M-01");
-      expect(result.mortality.status, sample.id).toBe("stub");
+      expect(result.mortality.status, sample.id).toBe(EXPECTED_MORTALITY_STATUS);
     }
   });
 
@@ -141,13 +145,15 @@ online()("the flow a user actually takes", () => {
     const { useSession } = await import("@/lib/session");
     useSession.getState().signIn("physician");
 
+    // `authenticated` flips when the session is adopted; the bootstrap data
+    // lands a moment later, so wait for both.
     await vi.waitFor(() => {
       expect(useSession.getState().authenticated).toBe(true);
       expect(SOURCE.current.kind).toBe("api");
+      expect(ENCOUNTERS.length).toBeGreaterThan(0);
     }, { timeout: 5000 });
 
     expect(getToken()).toBeTruthy();
-    expect(ENCOUNTERS.length).toBeGreaterThan(0);
   });
 
   it("runs a write and sees the store refresh", async () => {

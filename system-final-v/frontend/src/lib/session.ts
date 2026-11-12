@@ -43,6 +43,12 @@ export type SessionState = {
   error: string | null;
   /** Set when a password step returned an MFA challenge: the form then asks for a code. */
   mfaPending: boolean;
+  /** An admin signed in without MFA: every screen is replaced by enrolment (QA issue 8). */
+  mfaSetupRequired: boolean;
+  /** Minutes of inactivity before sign-out. */
+  idleMinutes: number;
+  /** Called once MFA enrolment is confirmed: loads the console. */
+  completeMfaSetup: () => Promise<void>;
 
   signIn: (role: RoleCode) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
@@ -79,10 +85,16 @@ export const useSession = create<SessionState>((set, get) => ({
   pending: false,
   error: null,
   mfaPending: false,
+  mfaSetupRequired: false,
+  idleMinutes: 30,
 
   adoptSession: (payload) => {
-    setToken(payload.token);
+    // A cookie-backed session has no token in the body; keep whatever the
+    // sign-in response gave us (in memory only).
+    if (payload.token) setToken(payload.token);
     set({
+      mfaSetupRequired: Boolean(payload.mfa_setup_required),
+      idleMinutes: payload.idle_timeout_minutes ?? 30,
       authenticated: true,
       role: payload.user.role as RoleCode,
       name: payload.user.name,
@@ -104,6 +116,11 @@ export const useSession = create<SessionState>((set, get) => ({
 
   startSession: async (payload) => {
     get().adoptSession(payload);
+    if (!payload.mfa_setup_required) await hydrateFromApi();
+  },
+
+  completeMfaSetup: async () => {
+    set({ mfaSetupRequired: false });
     await hydrateFromApi();
   },
 
@@ -123,7 +140,7 @@ export const useSession = create<SessionState>((set, get) => ({
         return;
       }
       get().adoptSession(payload as SessionPayload);
-      await hydrateFromApi();
+      if (!(payload as SessionPayload).mfa_setup_required) await hydrateFromApi();
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : "Could not reach the ESAP API.";
@@ -147,7 +164,7 @@ export const useSession = create<SessionState>((set, get) => ({
       mfaChallenge = null;
       get().adoptSession(payload);
       set({ mfaPending: false });
-      await hydrateFromApi();
+      if (!payload.mfa_setup_required) await hydrateFromApi();
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : "Could not reach the ESAP API.";
@@ -186,7 +203,7 @@ export const useSession = create<SessionState>((set, get) => ({
   signOut: () => {
     if (live()) void api.post("/api/v1/auth/logout").catch(() => undefined);
     setToken(null);
-    set({ authenticated: false, elevation: null, error: null });
+    set({ authenticated: false, elevation: null, error: null, mfaSetupRequired: false });
     // Drop the signed-in data and go back to what a visitor may see.
     void hydratePublic().catch(() => undefined);
   },
@@ -230,6 +247,31 @@ setUnauthorizedHandler(() => {
   });
   void hydratePublic().catch(() => undefined);
 });
+
+/**
+ * Sign out after a stretch with no keyboard, pointer or scroll activity (QA
+ * issue 8). The server enforces the same limit; this makes the screen clear
+ * itself on an unattended workstation instead of waiting for the next request.
+ */
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+function resetIdle(): void {
+  if (idleTimer) clearTimeout(idleTimer);
+  const { authenticated, idleMinutes } = useSession.getState();
+  if (!authenticated || idleMinutes <= 0) return;
+  idleTimer = setTimeout(() => {
+    if (!useSession.getState().authenticated) return;
+    useSession.getState().signOut();
+    useSession.setState({ error: `You were signed out after ${idleMinutes} minutes without activity.` });
+  }, idleMinutes * 60_000);
+}
+if (typeof window !== "undefined") {
+  for (const ev of ["pointerdown", "keydown", "wheel", "touchstart"]) {
+    window.addEventListener(ev, resetIdle, { passive: true });
+  }
+  useSession.subscribe((s, prev) => {
+    if (s.authenticated !== prev.authenticated) resetIdle();
+  });
+}
 
 export function homeFor(role: RoleCode): string {
   return ROLES[role].home;

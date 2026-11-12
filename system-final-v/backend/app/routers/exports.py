@@ -176,6 +176,17 @@ def _payload(kind: str, actor: Actor, tenant_id: str, scope: dict) -> tuple[list
             "records": db.docs("SELECT doc FROM records WHERE patient_id=?", (actor.user_id,)),
             "results": db.docs("SELECT doc FROM released_results WHERE patient_id=?", (actor.user_id,)),
             "consents": db.docs("SELECT doc FROM consents WHERE patient_id=?", (actor.user_id,)),
+            # Right of access covers what the patient told us and who looked
+            # (QA issue 22), not only what the hospital wrote.
+            "submissions": db.document(f"patient_submissions:{actor.user_id}") or [],
+            "requests": db.docs("SELECT doc FROM service_requests WHERE requester=? ORDER BY created_at DESC",
+                                (actor.email,)),
+            "processingConsents": db.docs(
+                "SELECT doc FROM processing_consents WHERE patient_id=? ORDER BY json_extract(doc,'$.decidedAt')",
+                (actor.user_id,)),
+            "accessHistory": audit.patient_history(actor.email, actor.user_id),
+            "format": {"name": "ESAP patient record export", "version": "1.1", "encoding": "JSON",
+                       "note": "A structured JSON file in ESAP's own layout. It is not FHIR."},
         }, 1
     raise ApiError(422, f"Unknown export kind '{kind}'.")
 

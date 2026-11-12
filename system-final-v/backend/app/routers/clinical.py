@@ -233,6 +233,19 @@ def assess(
         )
     _refuse_unused_discharge_fields(body, frame)
 
+    if body.encounter_id:
+        # A patient who withdrew consent to AI decision support is not scored
+        # (QA issue 9). Checked before any model runs.
+        from .privacy import portal_id_for_clinical_patient, withdrawn
+
+        enc_row = db.one_doc("SELECT doc FROM encounters WHERE id=? AND tenant_id=?",
+                             (body.encounter_id, actor.tenant_id))
+        clinical_id = ((enc_row or {}).get("patient") or {}).get("id")
+        portal_id = portal_id_for_clinical_patient(clinical_id) if clinical_id else None
+        if portal_id and withdrawn(portal_id, "ai_decision_support"):
+            raise ApiError(403, "This patient has withdrawn consent to AI decision support. "
+                                "Care continues as normal without the tool.", code="CONSENT_WITHDRAWN")
+
     response = assembler.assess(body, top_n=top_n, frame=frame)
     # Apply this tenant's Settings → Model display policy at the serving boundary:
     # withhold models turned off here, drop suppressed CCSR categories, cap the
