@@ -21,7 +21,14 @@ import { ApiError, api, setToken, setUnauthorizedHandler } from "@/api/client";
 import { hydrateFromApi, hydratePublic, type SessionPayload } from "@/api/bootstrap";
 
 /** The shared demo password. Synthetic accounts, stated rather than hidden. */
-export const DEMO_PASSWORD = "esap-demo";
+/**
+ * The local seed's shared demo password, for development builds and tests only.
+ * A production build compiles it out (Vite replaces `import.meta.env.DEV` with
+ * false), so the password is never published in the site's code (QA issue 1).
+ * Production demo accounts have their own private passwords.
+ */
+export const DEMO_PASSWORD: string =
+  (import.meta as unknown as { env: { DEV?: boolean } }).env.DEV ? "esap-demo" : "";
 
 /** The pending MFA challenge token between the password step and the TOTP step. */
 let mfaChallenge: string | null = null;
@@ -194,6 +201,11 @@ export const useSession = create<SessionState>((set, get) => ({
     const id = DEMO_IDENTITY[role];
     if (!id?.email) {
       const message = "There is no demo account for this role on this server.";
+      set({ error: message });
+      throw new Error(message);
+    }
+    if (!DEMO_PASSWORD) {
+      const message = "One-click demo sign-in is off on this server. Sign in with your email and password.";
       set({ error: message });
       throw new Error(message);
     }

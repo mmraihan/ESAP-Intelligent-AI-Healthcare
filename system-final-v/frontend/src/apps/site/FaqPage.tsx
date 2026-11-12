@@ -151,10 +151,8 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: () => React
   {
     id: "try-it", cat: "demo",
     q: "How do I try it?",
-    text: "Sign in with any demo account on the login page using the password esap-demo, or create a free individual account. Hospitals can join the early-access waitlist.",
-    a: () => <p>{tl("{signin} with any demo account using the password {password}, or {signup}. Hospitals can join the {waitlist}.", {
-      signin: <Link to="/login">{t("Sign in")}</Link>,
-      password: <code>esap-demo</code>,
+    text: "Create a free individual account to try it. Reviewers and pilot hospitals are given their own sign-in by the ESAP team. Hospitals can join the early-access waitlist.",
+    a: () => <p>{tl("{signup} to try it. Reviewers and pilot hospitals are given their own sign-in by the ESAP team. Hospitals can join the {waitlist}.", {
       signup: <Link to="/signup">{t("create a free individual account")}</Link>,
       waitlist: <Link to="/waitlist">{t("early-access waitlist")}</Link>,
     })}</p>,
