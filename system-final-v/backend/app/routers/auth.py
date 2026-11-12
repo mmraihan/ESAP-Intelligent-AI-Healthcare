@@ -9,7 +9,7 @@ import time
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 import os
@@ -125,31 +125,43 @@ def _throttle_check(email: str) -> None:
 
 
 def _throttle_fail(email: str) -> bool:
-    """Count a failure. True when this failure locked the address."""
+    """Count a failure. True when the address is now locked.
+
+    The count is incremented in SQL, so parallel wrong guesses are all counted
+    rather than overwriting each other. Failures older than the lockout window,
+    or from before an expired lock, start a fresh count, so occasional typos
+    spread over days never add up to a lockout.
+    """
     cfg = settings()
     conn = db.connect()
-    row = conn.execute("SELECT failures, first_at, locked_until FROM login_throttle WHERE email=?",
-                       (email,)).fetchone()
     now = utcnow()
     window = timedelta(minutes=cfg.lockout_minutes)
-    failures, first_at = 1, now
+
+    def _ts(value: str | None) -> datetime | None:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
+
+    row = conn.execute("SELECT failures, first_at, locked_until FROM login_throttle WHERE email=?",
+                       (email,)).fetchone()
     if row:
-        expired_lock = bool(row["locked_until"]) and datetime.fromisoformat(
-            row["locked_until"].replace("Z", "+00:00")) <= now
-        # Failures only add up inside one window: four typos last month and
-        # one today are not five in a row.
-        stale = not row["first_at"] or datetime.fromisoformat(
-            row["first_at"].replace("Z", "+00:00")) <= now - window
-        if not (expired_lock or stale):
-            failures = row["failures"] + 1
-            first_at = datetime.fromisoformat(row["first_at"].replace("Z", "+00:00"))
-    locked = failures >= cfg.lockout_threshold
+        lock_end, first = _ts(row["locked_until"]), _ts(row["first_at"])
+        if (lock_end and lock_end <= now) or (not lock_end and (first is None or now - first > window)):
+            # Stale: start over. Conditional on first_at, so if a parallel
+            # request already restarted the count this does nothing.
+            conn.execute(
+                "UPDATE login_throttle SET failures=0, first_at=?, locked_until=NULL"
+                " WHERE email=? AND COALESCE(first_at, '')=?",
+                (iso(now), email, row["first_at"] or ""),
+            )
     conn.execute(
-        "INSERT INTO login_throttle (email, failures, first_at, locked_until) VALUES (?,?,?,?)"
-        " ON CONFLICT(email) DO UPDATE SET failures=excluded.failures, first_at=excluded.first_at,"
-        " locked_until=excluded.locked_until",
-        (email, failures, iso(first_at), iso(now + window) if locked else None),
+        "INSERT INTO login_throttle (email, failures, first_at, locked_until) VALUES (?,1,?,NULL)"
+        " ON CONFLICT(email) DO UPDATE SET failures=login_throttle.failures + 1",
+        (email, iso(now)),
     )
+    failures = conn.execute("SELECT failures FROM login_throttle WHERE email=?", (email,)).fetchone()["failures"]
+    locked = failures >= cfg.lockout_threshold
+    if locked:
+        conn.execute("UPDATE login_throttle SET locked_until=? WHERE email=? AND locked_until IS NULL",
+                     (iso(now + timedelta(minutes=cfg.lockout_minutes)), email))
     conn.commit()
     return locked
 
@@ -160,17 +172,8 @@ def _throttle_clear(email: str) -> None:
     conn.commit()
 
 
-def _demo_picker_on() -> bool:
-    return os.environ.get("ESAP_DEMO_PICKER", "true").strip().lower() in {"1", "true", "yes", "on"}
-
-
 def _needs_mfa_setup(user_id: str, email: str, role: str) -> bool:
-    """Admin and platform accounts must enrol MFA (QA issue 8).
-
-    The shared demo accounts are exempt only while the demo picker is switched
-    on (ESAP_DEMO_PICKER), by product decision; turning the picker off removes
-    the exemption.
-    """
+    """Admin and platform accounts must enrol MFA (QA issue 8), demo accounts included."""
     if not mfa_mandatory(email, role):
         return False
     row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?", (user_id,)).fetchone()
@@ -182,7 +185,10 @@ def mfa_mandatory(email: str, role: str) -> bool:
         return False
     if rbac.roles().get(role, {}).get("surface") not in {"admin", "ops"}:
         return False
-    if _demo_picker_on():
+    # Admin and ops accounts need MFA even with the demo picker on: the picker
+    # offers only clinical and patient accounts. The seeded demo admins may
+    # skip it only on a local dev or test server that opts in explicitly.
+    if os.environ.get("ESAP_DEMO_ADMIN_MFA_EXEMPT", "").strip().lower() in {"1", "true", "yes", "on"}:
         demo = {(v or {}).get("email", "").lower() for v in (db.document("demo_identity") or {}).values()}
         if email.lower() in demo:
             return False
@@ -320,17 +326,21 @@ def mfa_verify(body: MfaVerifyRequest, request: Request):
         " FROM credentials WHERE user_id=?", (user_id,)).fetchone()
     if row is None or not row["mfa_enabled"]:
         raise ApiError(401, "This sign-in step is no longer valid.")
-    # Wrong codes count toward the same lockout as wrong passwords; without
-    # this one challenge token allows unlimited guesses at a 6-digit code.
-    _throttle_check(row["email"])
+    # Wrong codes count toward the same lockout as wrong passwords, so a
+    # stolen password does not buy unlimited guesses at the 6-digit code.
+    throttle_key = row["email"].strip().lower()
+    _throttle_check(throttle_key)
     if not verify_totp(row["mfa_secret"] or "", body.code):
         audit.record(
             Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
             "login.mfa_failed", row["email"], outcome="error",
             ip=request.client.host if request.client else "unknown",
         )
-        if _throttle_fail(row["email"]):
-            _throttle_check(row["email"])
+        if _throttle_fail(throttle_key):
+            audit.record(Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
+                         "login.locked", row["email"], outcome="denied",
+                         ip=request.client.host if request.client else "unknown")
+            _throttle_check(throttle_key)
         raise ApiError(401, "That verification code is not correct.")
     user = db.connect().execute("SELECT name, status FROM users WHERE email=?", (row["email"],)).fetchone()
     tenant = db.connect().execute("SELECT status FROM tenants WHERE id=?", (row["tenant_id"],)).fetchone()
@@ -738,24 +748,27 @@ def issue_reset_link(user_id: str, email: str) -> str:
     mailer.send(email, "Reset your ESAP password",
                 "Someone asked to reset the password for this ESAP account.\n\n"
                 f"Choose a new password here (the link works for {_RESET_TTL_MINUTES} minutes):\n{link}\n\n"
-                "If you did not ask for this, you can ignore this email. Your password has not changed.")
+                "If you did not ask for this, you can ignore this email. Your password has not changed.",
+                secret=link)
     return link
 
 
 @router.post("/auth/password/forgot", status_code=202)
-def forgot_password(body: ForgotPasswordRequest, request: Request):
+def forgot_password(body: ForgotPasswordRequest, request: Request, background: BackgroundTasks):
     """Start a password reset.
 
     Patients and self-serve clinicians get a reset link by email straight away.
     Hospital staff are reset by their administrator, so the request goes to
     the admin's queue. The answer is the same whether or not the address has
     an account: a different reply for a known address would enumerate emails.
+    The reset email is sent after the reply goes out, so a slow mail server
+    does not make known addresses answer more slowly than unknown ones.
     """
     email = body.email.strip().lower()
     row = db.connect().execute(
         "SELECT user_id, role, tenant_id FROM credentials WHERE email=?", (email,)).fetchone()
     if row is not None and _self_service_reset(row["role"], row["tenant_id"]):
-        issue_reset_link(row["user_id"], email)
+        background.add_task(issue_reset_link, row["user_id"], email)
         audit.record(Actor(row["user_id"], email, row["role"], row["tenant_id"], ""),
                      "user.password_reset_link", email, tenant_id=row["tenant_id"],
                      ip=request.client.host if request.client else "unknown")

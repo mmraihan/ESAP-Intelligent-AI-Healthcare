@@ -160,9 +160,10 @@ online()("the flow a user actually takes", () => {
     const { useSession } = await import("@/lib/session");
     const { actAndRefresh, isLive } = await import("./actions");
 
-    // signIn is fire-and-forget, so wait for the role the token actually
-    // carries rather than for "is it live" — which is already true here.
-    useSession.getState().signIn("tenant_owner");
+    // Admins are not offered for one-click demo sign-in, so this signs in by
+    // email and password (the local seed's). Wait for the role the token
+    // actually carries rather than for "is it live" — already true here.
+    void useSession.getState().signInWithPassword("mira.novak@styves.example", DEMO_PASSWORD);
     await vi.waitFor(() => {
       expect(useSession.getState().role).toBe("tenant_owner");
       expect(isLive()).toBe(true);

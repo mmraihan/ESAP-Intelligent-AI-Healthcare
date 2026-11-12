@@ -196,12 +196,23 @@ def test_new_intake_draft_saves_and_restores_per_clinician(client, auth):
 
 # --- Issue 17: self-service password reset -----------------------------------
 
-def test_patient_gets_a_reset_link_and_can_set_a_new_password(client):
+def test_patient_gets_a_reset_link_and_can_set_a_new_password(client, monkeypatch):
+    from app import mailer
+    sent: list[str] = []
+    real_send = mailer.send
+
+    def capture(to, subject, body, secret=None):
+        sent.append(body)
+        return real_send(to, subject, body, secret=secret)
+
+    monkeypatch.setattr(mailer, "send", capture)
     email, _ = _signup(client)
     r = client.post("/api/v1/auth/password/forgot", json={"email": email})
     assert r.status_code == 202 and "emailed" in r.json()["message"]
+    token = sent[-1].split("token=")[1].split()[0]
+    # The stored copy never holds the usable link (review finding: outbox and logs).
     mail = db.docs("SELECT doc FROM mail_outbox WHERE to_addr=? ORDER BY created_at DESC", (email,))[0]
-    token = mail["body"].split("token=")[1].split()[0]
+    assert token not in mail["body"] and "[link withheld]" in mail["body"]
     assert client.post("/api/v1/auth/password/reset", json={"token": token, "new_password": "brand-new-pass"}).status_code == 200
     assert client.post("/api/v1/auth/password/reset", json={"token": token, "new_password": "again-new-pass"}).status_code == 400
     assert client.post("/api/v1/auth/login", json={"email": email, "password": "brand-new-pass"}).status_code == 200

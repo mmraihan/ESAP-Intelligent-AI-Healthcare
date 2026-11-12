@@ -238,9 +238,11 @@ def assess(
         # (QA issue 9). Checked before any model runs.
         from .privacy import portal_id_for_clinical_patient, withdrawn
 
-        enc_row = db.one_doc("SELECT doc FROM encounters WHERE id=? AND tenant_id=?",
-                             (body.encounter_id, actor.tenant_id))
-        clinical_id = ((enc_row or {}).get("patient") or {}).get("id")
+        # Fails closed: an encounter that cannot be found is a 404 here, before
+        # any model runs, not a skipped consent check. The result is written
+        # back under actor.tenant_id below, so the same lookup is used here.
+        enc_row = _encounter_or_404(body.encounter_id, actor.tenant_id)
+        clinical_id = (enc_row.get("patient") or {}).get("id")
         portal_id = portal_id_for_clinical_patient(clinical_id) if clinical_id else None
         if portal_id and withdrawn(portal_id, "ai_decision_support"):
             raise ApiError(403, "This patient has withdrawn consent to AI decision support. "

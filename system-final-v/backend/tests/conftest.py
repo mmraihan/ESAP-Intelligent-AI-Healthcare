@@ -11,6 +11,8 @@ import pytest
 TMP = Path(tempfile.mkdtemp(prefix="esap-test-"))
 os.environ["ESAP_DB_PATH"] = str(TMP / "test.db")
 os.environ["MODEL_MODE"] = "stub"
+# The seeded demo admins sign in without MFA in tests only (never in production).
+os.environ["ESAP_DEMO_ADMIN_MFA_EXEMPT"] = "true"
 os.environ["ESAP_SECRET"] = "test-secret-not-a-real-key"
 
 from fastapi.testclient import TestClient  # noqa: E402

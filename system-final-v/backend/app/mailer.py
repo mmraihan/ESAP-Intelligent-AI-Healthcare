@@ -2,14 +2,20 @@
 
 Every message is written to `mail_outbox` first. When ESAP_SMTP_HOST is set it
 is also sent over SMTP (STARTTLS); without it the message stays in the outbox
-and the link is logged, which is how a demo server without a mail service still
-lets platform staff complete a reset. Never put clinical content in an email.
+only. Never put clinical content in an email.
+
+A secret in the message (a reset link) is passed as `secret`. It goes into the
+email itself and nowhere else: the outbox row and the log keep "[link withheld]"
+in its place, so a database copy, a backup or a log file cannot be used to take
+over an account. A local dev server with no mail service can set
+ESAP_MAIL_LOG_SECRETS=true to log the full message instead.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import smtplib
 import ssl
 import uuid
@@ -22,9 +28,13 @@ from .security import iso, utcnow
 log = logging.getLogger("esap.mail")
 
 
-def send(to: str, subject: str, body: str) -> dict:
+_WITHHELD = "[link withheld]"
+
+
+def send(to: str, subject: str, body: str, secret: str | None = None) -> dict:
     cfg = settings()
-    doc = {"id": f"mail_{uuid.uuid4().hex[:10]}", "to": to, "subject": subject, "body": body,
+    stored = body.replace(secret, _WITHHELD) if secret else body
+    doc = {"id": f"mail_{uuid.uuid4().hex[:10]}", "to": to, "subject": subject, "body": stored,
            "createdAt": iso(utcnow()), "status": "queued"}
     if cfg.smtp_host:
         msg = EmailMessage()
@@ -43,7 +53,8 @@ def send(to: str, subject: str, body: str) -> dict:
             log.warning("mail to %s failed: %s", to, type(exc).__name__)
     else:
         doc["status"] = "outbox_only"
-        log.info("mail (no SMTP configured) to=%s subject=%s\n%s", to, subject, body)
+        dev_log = os.environ.get("ESAP_MAIL_LOG_SECRETS", "").strip().lower() in {"1", "true", "yes", "on"}
+        log.info("mail (no SMTP configured) to=%s subject=%s\n%s", to, subject, body if dev_log else stored)
     conn = db.connect()
     conn.execute("INSERT INTO mail_outbox (id, to_addr, created_at, status, doc) VALUES (?,?,?,?,?)",
                  (doc["id"], to, doc["createdAt"], doc["status"], json.dumps(doc)))

@@ -12,6 +12,7 @@ deployable is a build-config change. Until then the tenant wall is enforced in
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import uuid
 
 from fastapi import Depends, FastAPI, Request
@@ -29,7 +30,17 @@ from .assembler import PLACEHOLDER_DISCLAIMER
 from .seed import ensure_seeded
 from .security import iso, utcnow
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # A lifespan handler rather than @app.on_event("startup"), which newer
+    # Starlette releases deprecate. Seeding and the retention scheduler must
+    # run on every start.
+    startup()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="ESAP Intelligent AI Healthcare — API",
     version="1.0.0",
     description=(
@@ -70,7 +81,6 @@ async def attach_request_id(request: Request, call_next):
     return response
 
 
-@app.on_event("startup")
 def startup() -> None:
     ensure_seeded()
     _schedule_retention()

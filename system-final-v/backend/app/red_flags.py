@@ -59,7 +59,10 @@ _EN_RULES: list[tuple[str, list[str]]] = [
         r"\b(?:trouble|difficulty|difficulties|problems?|issues?|struggling|struggle|hard\s+time|tough\s+time|hard|difficult)"
         r"\s+(?:with\s+|to\s+|in\s+)?breath(?:e|ing)\b",
         r"\bbreathing\s+(?:trouble|troubles|problems?|issues?|difficulty|difficulties)\b",
-        r"\bbreathing\s+(?:is|has\s+been|feels|got|became|is\s+getting)\s+(?:\w+\s+){0,2}"
+        # Up to two filler words ("really", "a bit"), but never a negation:
+        # "breathing is not bad today" is reassurance, not a red flag.
+        r"\bbreathing\s+(?:is|has\s+been|feels|got|became|is\s+getting)\s+"
+        r"(?:(?!(?:not|no|never|hardly|barely|isn't|isnt)\b)\w+\s+){0,2}"
         r"(?:difficult|hard|bad|worse|laboured|labored|shallow)\b",
         rf"\b{_CANNOT}\s+(?:breathe?|(?:catch|get)\s+{_PRONOUN}breath|get\s+(?:enough\s+|any\s+)?air)\b",
         rf"\bstruggling\s+(?:for|to\s+get)\s+(?:air|{_PRONOUN}breath)\b",

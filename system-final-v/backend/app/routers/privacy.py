@@ -26,7 +26,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, rbac, settings_store
-from ..deps import Actor, current_actor
+from ..deps import Actor, admin_only, current_actor
 from ..errors import ApiError
 from ..security import iso, utcnow
 
@@ -151,7 +151,7 @@ def decide(body: ConsentDecision, request: Request, actor: Actor = Depends(curre
     return doc
 
 
-@router.get("/admin/consents/summary")
+@router.get("/admin/consents/summary", dependencies=[Depends(admin_only)])
 def consent_summary(actor: Actor = Depends(current_actor)):
     """Counts per purpose for the privacy officer. No names: counts only."""
     rbac.require_any(actor, ("audit:view", "tenant:manage"))
@@ -230,7 +230,7 @@ def _retention_admin(actor: Actor) -> None:
     rbac.require_any(actor, ("audit:view", "tenant:manage"))
 
 
-@router.post("/admin/retention/run", status_code=201)
+@router.post("/admin/retention/run", status_code=201, dependencies=[Depends(admin_only)])
 def run_tenant_purge(request: Request, actor: Actor = Depends(current_actor)):
     _retention_admin(actor)
     # The purge deletes records. An auditor's access is read-only by design:
@@ -243,7 +243,7 @@ def run_tenant_purge(request: Request, actor: Actor = Depends(current_actor)):
     return report
 
 
-@router.get("/admin/retention/reports")
+@router.get("/admin/retention/reports", dependencies=[Depends(admin_only)])
 def tenant_reports(actor: Actor = Depends(current_actor)):
     """Purge reports covering this tenant: its own runs and the platform runs."""
     _retention_admin(actor)

@@ -21,12 +21,12 @@ import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { DemoBadge } from "@/components/ui/domain";
 import { Badge, Banner, Button } from "@/components/ui/primitives";
-import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, ShieldIcon } from "@/components/ui/icons";
+import { ActivityIcon, AlertIcon, ArrowRight, HeartPulseIcon, ShieldIcon } from "@/components/ui/icons";
 
+// Clinical and patient roles only. Admin, ops and platform accounts have
+// private passwords and MFA, so they are never offered for one-click sign-in.
 const DEMO_GROUPS: { title: string; note: string; icon: JSX.Element; roles: RoleCode[] }[] = [
   { title: "Clinical workspace", note: "Doctors and nurses. Guest-reachable in production.", icon: <ActivityIcon size={18} />, roles: ["physician", "resident", "charge_nurse", "staff_nurse", "case_manager"] },
-  { title: "Hospital admin console", note: "Tenant-walled. A separate bundle in production.", icon: <ShieldIcon size={18} />, roles: ["tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor"] },
-  { title: "Platform ops console", note: "Not on public DNS. VPN and hardware key only.", icon: <GlobeIcon size={18} />, roles: ["super_admin"] },
   { title: "Patient portal", note: "Plain language, released content only.", icon: <HeartPulseIcon size={18} />, roles: ["patient"] },
 ];
 

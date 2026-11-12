@@ -222,6 +222,9 @@ def test_admins_keep_the_directory(client, auth):
     assert len(client.get("/api/v1/bootstrap", headers=auth("tenant_owner")).json()["users"]) > 1
 
 
-def test_the_demo_role_page_keeps_every_account(client):
+def test_the_demo_role_page_keeps_every_clinical_and_patient_account(client):
+    # Directory minimisation must not empty the picker. Admin and ops accounts
+    # are deliberately left out (private passwords + MFA).
     accounts = client.get("/api/v1/public/demo-accounts").json()["accounts"]
-    assert {"physician", "tenant_owner", "super_admin", "patient"} <= set(accounts)
+    assert {"physician", "resident", "charge_nurse", "staff_nurse", "case_manager", "patient"} <= set(accounts)
+    assert not {"tenant_owner", "super_admin"} & set(accounts)

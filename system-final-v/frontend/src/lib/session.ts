@@ -20,15 +20,13 @@ import { ROLES, type RoleCode } from "./rbac";
 import { ApiError, api, setToken, setUnauthorizedHandler } from "@/api/client";
 import { hydrateFromApi, hydratePublic, type SessionPayload } from "@/api/bootstrap";
 
-/** The shared demo password. Synthetic accounts, stated rather than hidden. */
 /**
- * The local seed's shared demo password, for development builds and tests only.
- * A production build compiles it out (Vite replaces `import.meta.env.DEV` with
- * false), so the password is never published in the site's code (QA issue 1).
- * Production demo accounts have their own private passwords.
+ * The shared demo password used by the /demo-role picker. In production only
+ * the clinical and patient demo accounts (synthetic data) use it. Admin, ops
+ * and platform accounts have their own private passwords and MFA, so this
+ * password never opens an admin or ops console (QA issue 1).
  */
-export const DEMO_PASSWORD: string =
-  (import.meta as unknown as { env: { DEV?: boolean } }).env.DEV ? "esap-demo" : "";
+export const DEMO_PASSWORD = "esap-demo";
 
 /** The pending MFA challenge token between the password step and the TOTP step. */
 let mfaChallenge: string | null = null;

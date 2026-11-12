@@ -220,7 +220,10 @@ def extract(text: str) -> dict:
             continue
         # Short abbreviations ("k", "na", "cr") must be followed closely by the value.
         gap = "{0,3}" if len(name) <= 3 else "{0,12}"
-        m = re.search(rf"\b{re.escape(name)}\b\+?[^0-9a-z-]{gap}(\d+(?:\.\d+)?)", low)
+        # Linking words are allowed before the value: "creatinine of 2.1",
+        # "lactate is 4.2", "potassium was 6.1".
+        m = re.search(rf"\b{re.escape(name)}\b\+?(?:\s*(?:of|is|was|at|level|levels|=|:)\b)*"
+                      rf"[^0-9a-z-]{gap}(\d+(?:\.\d+)?)", low)
         if m and not any(a <= m.start(1) < b for a, b in used):
             labs[itemid] = float(m.group(1))
             captured.append(f"Lab {name}: {m.group(1)}")
@@ -290,11 +293,21 @@ def _not_captured(text: str, used: list[tuple[int, int]], vit: dict, age: int | 
     return out[:10]
 
 
+#: Free-text notes that build up over a conversation. A new turn adds to them
+#: instead of replacing what earlier turns recorded.
+_APPEND_TEXT = {"hpi": ("\n", 2000), "chief_complaint": ("; ", 300), "physical_exam": ("; ", 1000)}
+
+
 def merge(draft: dict, delta: dict) -> dict:
-    """Deep-merge a delta into the running draft (dicts recurse; lists union; scalars replace)."""
+    """Deep-merge a delta into the running draft (dicts recurse; lists union;
+    running notes append; other scalars replace)."""
     out = {k: v for k, v in (draft or {}).items()}
     for key, val in (delta or {}).items():
-        if isinstance(val, dict) and isinstance(out.get(key), dict):
+        earlier = out.get(key)
+        if key in _APPEND_TEXT and isinstance(val, str) and isinstance(earlier, str) and earlier.strip():
+            sep, cap = _APPEND_TEXT[key]
+            out[key] = earlier if val in earlier else f"{earlier}{sep}{val}"[:cap]
+        elif isinstance(val, dict) and isinstance(out.get(key), dict):
             out[key] = merge(out[key], val)
         elif isinstance(val, list) and isinstance(out.get(key), list):
             seen = list(out[key])

@@ -169,5 +169,11 @@ def public_demo_accounts():
 
     if os.environ.get("ESAP_DEMO_PICKER", "true").strip().lower() not in {"1", "true", "yes", "on"}:
         return {"enabled": False, "accounts": {}}
+    from .. import rbac
+
     identities = db.document("demo_identity") or {}
-    return {"enabled": True, "accounts": {r: v for r, v in identities.items() if r != "guest"}}
+    # Clinical and patient roles only: admin, ops and platform accounts have
+    # private passwords and MFA and are never offered for one-click sign-in.
+    surfaces = {r: (meta or {}).get("surface") for r, meta in rbac.roles().items()}
+    return {"enabled": True, "accounts": {r: v for r, v in identities.items()
+                                          if r != "guest" and surfaces.get(r) in {"clinician", "patient"}}}
