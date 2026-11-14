@@ -8,57 +8,83 @@ For the detailed, screen-by-screen history of what has already been tested and f
 
 ## 1. Quick start
 
-```bash
-# Backend — from system/system-final-v/backend
-source .venv/bin/activate
-uvicorn app.main:app --port 8000 --log-level warning
-# no --reload in normal use: restart manually after any backend .py change
-#   pkill -f "uvicorn app.main:app"; then re-run the line above
+Paths below are relative to `system-final-v/` in this repository.
 
-# Frontend — from system/system-final-v/frontend
+```bash
+# Backend: from backend/
+.venv\Scripts\activate          # Windows (source .venv/bin/activate on Linux/macOS)
+uvicorn app.main:app --port 8000 --log-level warning
+# No --reload in normal use: restart it by hand after any backend .py change.
+
+# Frontend: from frontend/
 npx vite --port 5175 --host localhost
 ```
 
-Sign in at **http://localhost:5175/login**. Every seeded account below uses the same demo
-password unless noted otherwise:
+Sign in at **http://localhost:5175/login**. Every account in §2 uses the same demo password:
 
 ```
 esap-demo
 ```
 
-The account menu (click your name, top-right) no longer lets you switch roles from inside
-the app — that was removed. To test a different role, sign out and sign back in with a
-different email from the table below, or use the role picker on the **public login page**
-(that one is a logged-out convenience for exploring the demo and is intentionally kept).
+**Sign-in is password only.** Two-factor sign-in (authenticator codes) was removed on
+14 Nov 2026: no account is asked for a code, admins are not made to set one up, and the
+`/auth/mfa/*` API routes no longer exist.
+
+**One-click demo sign-in** lives on an unlisted page, `/demo-role` (production:
+https://care.esap.ai/demo-role). It exists only when `VITE_DEMO_ACCESS_PATH` is set: production
+sets it in `frontend/.env.production`; for local use, put `VITE_DEMO_ACCESS_PATH=/demo-role` in
+`frontend/.env.local`. The backend side is `ESAP_DEMO_PICKER` (on by default, and on in
+production). The picker lists:
+
+| Group | Roles | How it signs in |
+|---|---|---|
+| Clinical workspace | Physician, Resident, Charge Nurse, Staff Nurse, Case Manager | One click (shared demo password) |
+| Platform ops console | Super-Admin | Opens `/login` with the email filled in; type `esap-demo` |
+| Patient portal | Patient | One click |
+
+NP/PA, Pharmacist and the five hospital admin roles are **not** on the picker: sign in to them on
+`/login` with the email from §2 and `esap-demo`.
+
+The account menu (click your name, top-right) shows who you are and signs you out; it does not
+switch roles. To test a different role, sign out and sign in as another account.
 
 ---
 
-## 2. Every role — email, password, what it's for
+## 2. Every role: email, password, what it's for
 
-All in tenant **St. Yves Medical Center** (`t_yves`) unless marked otherwise.
+All in tenant **St. Yves Medical Center** (`t_yves`). The same accounts exist locally (seed) and
+on production.
 
-| Role (code) | Label | Email | Password | Home screen | Surface |
-|---|---|---|---|---|---|
-| `physician` | Attending Physician | `amara.okonkwo@styves.example` | `esap-demo` | `/doctor/worklist` | clinician |
-| `resident` | Resident / Fellow | `tobias.lindqvist@styves.example` | `esap-demo` | `/doctor/worklist` | clinician |
-| `np_pa` | Nurse Practitioner / PA | `priya.raman@styves.example` | `esap-demo` | `/doctor/worklist` | clinician |
-| `charge_nurse` | Charge Nurse | `ines.vasquez@styves.example` | `esap-demo` | `/nurse/roster` | clinician |
-| `staff_nurse` | Staff / Bedside Nurse | `lucas.beaulieu@styves.example` | `esap-demo` | `/nurse/my-patients` | clinician |
-| `case_manager` | Care Coordinator / Case Manager | `noor.haddad@styves.example` | `esap-demo` | `/doctor/discharge` | clinician |
-| `pharmacist` | Clinical Pharmacist | `ezra.stein@styves.example` | `esap-demo` | `/doctor/worklist` | clinician |
-| `tenant_owner` | Hospital Admin | `mira.novak@styves.example` | `esap-demo` | `/admin/home` | admin |
-| `it_admin` | IT Admin | `kofi.mensah@styves.example` | `esap-demo` | `/admin/integrations` | admin |
-| `privacy_officer` | Compliance / Privacy Officer | `sanne.devries@styves.example` | `esap-demo` | `/admin/audit` | admin |
-| `billing_admin` | Billing Admin | `hugo.ferreira@styves.example` | `esap-demo` | `/admin/billing` | admin |
-| `auditor` | Quality / QI Auditor | `leila.aziz@styves.example` | `esap-demo` | `/admin/usage` | admin |
-| `super_admin` | Super-Admin (Platform) | `rmoravec@esap.health` | `esap-demo` | `/ops/fleet` | ops |
-| `patient` | Patient / Caregiver | `delia.salib@example.com` | `esap-demo` | `/patient/home` | patient |
-| `guest` | Individual / Self-serve | *(sign up fresh, or use the public "Individual" demo picker)* | — | `/patient/home` | patient |
+| Role (code) | Label | Email | Password | Home screen | Surface | On `/demo-role` |
+|---|---|---|---|---|---|---|
+| `physician` | Attending Physician | `amara.okonkwo@styves.example` | `esap-demo` | `/doctor/worklist` | clinician | one click |
+| `resident` | Resident / Fellow | `tobias.lindqvist@styves.example` | `esap-demo` | `/doctor/worklist` | clinician | one click |
+| `np_pa` | Nurse Practitioner / PA | `priya.raman@styves.example` | `esap-demo` | `/doctor/worklist` | clinician | no |
+| `charge_nurse` | Charge Nurse | `ines.vasquez@styves.example` | `esap-demo` | `/nurse/roster` | clinician | one click |
+| `staff_nurse` | Staff / Bedside Nurse | `lucas.beaulieu@styves.example` | `esap-demo` | `/nurse/my-patients` | clinician | one click |
+| `case_manager` | Care Coordinator / Case Manager | `noor.haddad@styves.example` | `esap-demo` | `/doctor/discharge` | clinician | one click |
+| `pharmacist` | Clinical Pharmacist | `ezra.stein@styves.example` | `esap-demo` | `/doctor/worklist` | clinician | no |
+| `tenant_owner` | Hospital Admin | `mira.novak@styves.example` | `esap-demo` | `/admin/home` | admin | no |
+| `it_admin` | IT Admin | `kofi.mensah@styves.example` | `esap-demo` | `/admin/integrations` | admin | no |
+| `privacy_officer` | Compliance / Privacy Officer | `sanne.devries@styves.example` | `esap-demo` | `/admin/audit` | admin | no |
+| `billing_admin` | Billing Admin | `hugo.ferreira@styves.example` | `esap-demo` | `/admin/billing` | admin | no |
+| `auditor` | Quality / QI Auditor | `leila.aziz@styves.example` | `esap-demo` | `/admin/usage` | admin | no |
+| `super_admin` | Super-Admin (Platform) | `rmoravec@esap.health` | `esap-demo` | `/ops/fleet` | ops | typed password |
+| `patient` | Patient / Caregiver | `delia.salib@example.com` | `esap-demo` | `/patient/home` | patient | one click |
+| `guest` | Individual / Guest | *(sign up fresh at `/signup`)* | — | `/patient/home` | patient | no |
 
-These are the **canonical** one-per-role accounts (the same list the public login page's demo
-picker uses). The seed also has many more accounts per clinical role (used to test unit-scoped
-visibility, e.g. a second NP/PA assigned to a different unit) — open **Roster** as any admin role
-to browse the full staff directory and pick a specific unit/scope if a test needs one.
+These are the **canonical** one-per-role accounts (`demo_identity` in the seed). The seed also has
+many more accounts per clinical role, used to test unit-scoped visibility (e.g. a second NP/PA on a
+different unit). Open **Roster** as an admin role to browse them.
+
+**Passwords on production (since 14 Nov 2026).** Only the 14 accounts in the table above use
+`esap-demo`. Every other production account, including the extra seeded staff and any account a
+real person signed up with, has its own password. On a fresh local seed every account uses
+`esap-demo`.
+
+> **Warning:** with two-factor sign-in gone and `esap-demo` in the public site code, anyone can
+> sign in to production as the admin and Super-Admin accounts above. Don't put real data behind
+> them.
 
 ---
 
@@ -98,13 +124,17 @@ on resident acknowledgements").
 
 ### Admin-surface roles (console only, never opens a chart)
 
-| Role | user:manage | tenant:manage | billing:view | audit:view | fairness:audit_view |
-|---|---|---|---|---|---|
-| Hospital Admin (`tenant_owner`) | F | F | F | S | — |
-| IT Admin | S | F | — | — | — |
-| Privacy Officer | — | — | — | F | F |
-| Billing Admin | — | — | F | — | — |
-| Auditor | — | — | — | F | F |
+| Role | user:manage | tenant:manage | billing:view | audit:view | fairness:audit_view | roster:view | export:deidentified |
+|---|---|---|---|---|---|---|---|
+| Hospital Admin (`tenant_owner`) | F | F | F | S | — | — | — |
+| IT Admin | S | F | — | — | — | — | — |
+| Privacy Officer | — | — | — | F | F | — | — |
+| Billing Admin | — | — | F | — | — | — | — |
+| Auditor | — | — | — | F | F | F | F |
+
+Hospital Admin also holds `transfer:initiate` (F) and `transfer:approve` (C). The Auditor's matrix
+row also has `patient:read` (S) and `explain:view` (F), so it can read the fairness and calibration
+evidence. It still has no clinical workspace and cannot export PHI.
 
 IT Admin's whole reason for existing: `tenant:manage: F` (provisions accounts, wires SSO/ADT,
 configures the org) but **no path to grant a clinical (chart-access) role** — that's reserved
@@ -136,8 +166,9 @@ This is the checklist that found every bug logged in `TEST_RESULTS_FEATURES.md`.
 every role being tested, and repeat it in full on every re-test — don't just re-check the
 specific thing that was fixed last time; something else may have moved.
 
-1. **Sign in fresh.** Clear `localStorage`/`sessionStorage` first (a stale token from another
-   role can mask what you're actually testing) and sign in with that role's real credentials.
+1. **Sign in fresh.** Sign out first, or clear the site's cookies and storage (the session is an
+   HttpOnly cookie, so a session from another role can mask what you're testing). Then sign in
+   with that role's email and password from §2.
 2. **Confirm the nav matches the matrix above.** Every link on the left rail should correspond
    to a permission this role actually holds (§3). If a link is visible, clicking it must not 403.
 3. **Confirm every *hidden* link is also blocked by direct URL**, not just missing from the
@@ -160,12 +191,14 @@ specific thing that was fixed last time; something else may have moved.
    for someone else.
 8. **Run both test suites** after any code change:
    ```bash
-   # Backend — from system/system-final-v/backend
-   source .venv/bin/activate && python -m pytest tests/ -q
+   # Backend: from backend/ (venv active)
+   python -m pytest tests/ -q
 
-   # Frontend — from system/system-final-v/frontend
-   npx tsc --noEmit && npx vitest run --no-file-parallelism
+   # Frontend: from frontend/
+   npm run build      # type check + production build
+   npm test           # vitest
    ```
+   On 14 Nov 2026: backend 357 passed; frontend 203 passed, 9 skipped; build OK.
    Restart the backend (`pkill -f "uvicorn app.main:app"`, then re-run it) after *any* backend
    `.py` change — it does not run with `--reload`. The frontend dev server hot-reloads on its
    own.
@@ -206,9 +239,11 @@ on any new screen:
 - `backend/app/rbac.py` — server-side enforcement, reading the same matrix from the seeded
   `documents.rbac` (kept in sync with `rbac.ts` via `npm run seed:dump`).
 - `backend/seed/seed.json` / `frontend/src/mock/seed.json` — the actual seeded accounts,
-  tenants, encounters, etc. `demo_identity` in there is the exact table in §2.
+  tenants, encounters, etc. `demo_identity` in there is the table in §2.
 - `frontend/src/components/shell/nav.tsx` — which nav items exist per surface, and which
   permission (`anyPerm`) gates each one.
+- `frontend/src/apps/auth/DemoAccessPage.tsx` — the `/demo-role` picker (which roles are
+  listed, which are one click and which are private).
 - `frontend/src/App.tsx` — the route guard (`guardRedirect`) that keeps a role off both the
   wrong surface *and* a same-surface screen it lacks the permission for.
 - `TEST_RESULTS_FEATURES.md` — the full, ongoing log of what's been tested and every bug found
