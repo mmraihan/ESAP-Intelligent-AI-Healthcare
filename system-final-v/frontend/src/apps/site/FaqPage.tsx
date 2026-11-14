@@ -103,6 +103,12 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: () => React
     a: () => <p>{tl("No compliance is claimed today. HIPAA, GDPR, Saudi PDPL, SOC 2 and HITRUST are all planned work, and no certification is held. This demo must only be used with synthetic data. See the {security} for what is built and what is planned.", { security: <Link to="/security">{t("Security page")}</Link> })}</p>,
   },
   {
+    id: "saudi-approvals", cat: "privacy",
+    q: "Which Saudi approvals is ESAP working towards?",
+    text: "ESAP is preparing for Saudi hospitals. Planned: a Saudi entity or Authorised Representative, hosting inside the Kingdom with a CST-licensed provider, NCA cybersecurity controls with a penetration test, SDAIA registration under the PDPL with a Data Protection Officer, hospital ethics approval for a silent pilot, SFDA medical device authorisation (MDMA) and SCFHS checks on clinician licences. None is held yet. Each will be announced when granted. See our Terms.",
+    a: () => <p>{tl("ESAP is preparing for Saudi hospitals. Planned: a Saudi entity or Authorised Representative, hosting inside the Kingdom with a CST-licensed provider, NCA cybersecurity controls with a penetration test, SDAIA registration under the PDPL with a Data Protection Officer, hospital ethics approval for a silent pilot, SFDA medical device authorisation (MDMA) and SCFHS checks on clinician licences. None is held yet. Each will be announced when granted. See our {terms}.", { terms: <Link to="/terms#saudi-approvals">{t("Terms")}</Link> })}</p>,
+  },
+  {
     id: "who-can-see", cat: "privacy",
     q: "Can ESAP Clinical AI staff see our patients?",
     text: "Not by default. ESAP Clinical AI staff have no standing access to health data. Emergency access needs a named patient, a written reason, a ticket and a second approver, it expires automatically, and it is recorded in the platform audit log.",

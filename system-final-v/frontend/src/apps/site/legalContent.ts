@@ -365,6 +365,23 @@ const TERMS_EN: LegalText = {
       ],
     },
     {
+      id: "saudi-approvals",
+      title: "Saudi registrations and approvals",
+      blocks: [
+        { p: "ESAP is preparing to serve hospitals in the Kingdom of Saudi Arabia. The registrations and approvals below are planned. None of them is held yet, and each will be listed here as it is granted." },
+        { ul: [
+          "A Saudi legal entity or a licensed Authorised Representative (MISA, Saudi Business Center).",
+          "Hosting inside Saudi Arabia with a CST-licensed cloud provider, or on the hospital's own servers.",
+          "Cybersecurity controls assessed against NCA ECC and CCC, with an external penetration test.",
+          "Registration with SDAIA under the PDPL, with a named Data Protection Officer.",
+          "Research ethics approval through the partner hospital's NCBE-registered IRB for a silent pilot.",
+          "Medical device marketing authorisation (MDMA) from the SFDA, through the GHAD system.",
+          "Clinician accounts verified against SCFHS licences.",
+        ] },
+        { p: "Until the SFDA grants marketing authorisation, ESAP's estimates will not be used to inform the care of real patients." },
+      ],
+    },
+    {
       id: "demo",
       title: "This is a demonstration",
       blocks: [
@@ -472,6 +489,23 @@ const TERMS_AR: LegalText = {
       blocks: [
         { p: "تقدّم ESAP تقديرات تساعد الطبيب على التفكير. لا تشخّص، ولا تقرر العلاج، ولا تغني عن الحكم السريري. وينبغي ألا يتصرف المرضى بناءً على أي شيء في البوابة دون فريق رعايتهم." },
         { p: "لم تُسجَّل ESAP لدى الهيئة العامة للغذاء والدواء ولم تراجعها أي جهة رقابية. ويجري تقييم ما إذا كان كل نموذج يُعدّ جهازًا طبيًا." },
+      ],
+    },
+    {
+      id: "saudi-approvals",
+      title: "التسجيلات والموافقات في المملكة العربية السعودية",
+      blocks: [
+        { p: "تستعد ESAP لخدمة المستشفيات في المملكة العربية السعودية. التسجيلات والموافقات أدناه مخطط لها، ولم يُحصل على أي منها بعد، وستُدرج هنا كلٌّ منها عند منحها." },
+        { ul: [
+          "كيان قانوني سعودي أو ممثل معتمد مرخّص (وزارة الاستثمار، المركز السعودي للأعمال).",
+          "استضافة داخل المملكة لدى مزوّد سحابي مرخّص من هيئة الاتصالات والفضاء والتقنية، أو على خوادم المستشفى نفسه.",
+          "ضوابط أمن سيبراني مُقيَّمة وفق الضوابط الأساسية وضوابط الحوسبة السحابية للهيئة الوطنية للأمن السيبراني، مع اختبار اختراق خارجي.",
+          "التسجيل لدى سدايا بموجب نظام حماية البيانات الشخصية، مع تسمية مسؤول حماية البيانات.",
+          "موافقة أخلاقيات البحث عبر لجنة المستشفى الشريك المسجّلة لدى اللجنة الوطنية للأخلاقيات الحيوية، لتجربة صامتة.",
+          "إذن تسويق جهاز طبي من الهيئة العامة للغذاء والدواء عبر نظام غد.",
+          "التحقق من حسابات الأطباء مقابل تراخيص الهيئة السعودية للتخصصات الصحية.",
+        ] },
+        { p: "إلى أن تمنح الهيئة العامة للغذاء والدواء إذن التسويق، لن تُستخدم تقديرات ESAP في رعاية مرضى حقيقيين." },
       ],
     },
     {
