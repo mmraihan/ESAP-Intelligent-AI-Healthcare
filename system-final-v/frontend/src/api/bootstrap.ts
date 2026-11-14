@@ -30,8 +30,6 @@ export type SessionPayload = {
   expires_at: string;
   /** Sign out after this many idle minutes (server-enforced too). */
   idle_timeout_minutes?: number;
-  /** An admin without MFA: only enrolment is allowed until it is done. */
-  mfa_setup_required?: boolean;
   user: {
     id: string;
     email: string;
@@ -88,7 +86,7 @@ export async function boot(): Promise<BootResult> {
     if (who.authenticated) {
       const session = who as SessionPayload;
       setToken(session.token);
-      if (!session.mfa_setup_required) await hydrateFromApi();
+      await hydrateFromApi();
       return { source: "api", authenticated: true, session };
     }
     if (getToken()) setToken(null);

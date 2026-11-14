@@ -109,7 +109,7 @@ const PRIVACY_EN: LegalText = {
       id: "security",
       title: "How we protect it",
       blocks: [
-        { p: "Built today: role-based access checked on the server, a log of every read and change, a session cookie that page scripts cannot read, sign-out after 30 minutes without activity, a lock after repeated wrong passwords, and two-factor sign-in, which is required for administrators." },
+        { p: "Built today: role-based access checked on the server, a log of every read and change, a session cookie that page scripts cannot read, sign-out after 30 minutes without activity, and a lock after repeated wrong passwords. Two-factor sign-in is planned, not built." },
         { p: "Still planned: encryption at rest, an independent penetration test, tamper-evident audit storage and automated backups. The Security page lists what is built and what is planned." },
       ],
     },
@@ -266,7 +266,7 @@ const PRIVACY_AR: LegalText = {
       id: "security",
       title: "كيف نحميها",
       blocks: [
-        { p: "المتوفر اليوم: صلاحيات حسب الدور يتحقق منها الخادم، وسجل لكل اطلاع وتغيير، وملف ارتباط للجلسة لا تستطيع سكربتات الصفحة قراءته، وتسجيل الخروج بعد 30 دقيقة دون نشاط، وقفل الحساب بعد تكرار كلمة المرور الخاطئة، والتحقق بخطوتين وهو إلزامي للمسؤولين." },
+        { p: "المتوفر اليوم: صلاحيات حسب الدور يتحقق منها الخادم، وسجل لكل اطلاع وتغيير، وملف ارتباط للجلسة لا تستطيع سكربتات الصفحة قراءته، وتسجيل الخروج بعد 30 دقيقة دون نشاط، وقفل الحساب بعد تكرار كلمة المرور الخاطئة. أما التحقق بخطوتين فهو مخطط له ولم يُبنَ بعد." },
         { p: "ما زال مخططًا: التشفير أثناء التخزين، واختبار اختراق مستقل، وتخزين للسجل يكشف أي تلاعب، والنسخ الاحتياطي الآلي. تعرض صفحة الأمان ما هو متوفر وما هو مخطط." },
       ],
     },

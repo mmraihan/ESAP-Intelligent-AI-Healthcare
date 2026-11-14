@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import time
 import uuid
 
 import pytest
 
 from app import chat_extract, db, red_flags
-from app.security import _totp_at, hash_password
 
 
 # --- red flags: a negation inside the phrase is not an emergency ----------------
@@ -50,33 +48,6 @@ def test_later_turns_add_to_the_notes_instead_of_replacing_them():
 
 
 # --- lockout ----------------------------------------------------------------------
-
-def test_wrong_mfa_codes_count_toward_the_lockout(client):
-    email = f"mfa-{uuid.uuid4().hex[:6]}@styves.example"
-    uid = f"u_{uuid.uuid4().hex[:8]}"
-    conn = db.connect()
-    conn.execute("INSERT INTO credentials (user_id, email, password_hash, role, tenant_id) VALUES (?,?,?,?,?)",
-                 (uid, email, hash_password("a-long-password"), "it_admin", "t_yves"))
-    conn.commit()
-    h = {"Authorization": f"Bearer {client.post('/api/v1/auth/login', json={'email': email, 'password': 'a-long-password'}).json()['token']}"}
-    client.cookies.clear()
-    secret = client.post("/api/v1/auth/mfa/enroll", headers=h).json()["secret"]
-    assert client.post("/api/v1/auth/mfa/activate", headers=h,
-                       json={"code": _totp_at(secret, int(time.time()) // 30)}).status_code == 200
-
-    challenge = client.post("/api/v1/auth/login", json={"email": email, "password": "a-long-password"}).json()
-    client.cookies.clear()
-    assert challenge["mfa_required"] is True
-    codes = [client.post("/api/v1/auth/mfa/verify", json={"mfa_token": challenge["mfa_token"], "code": "000000"}).status_code
-             for _ in range(5)]
-    assert codes[:4] == [401] * 4 and codes[4] == 429
-    # Locked: even the right code is refused now.
-    r = client.post("/api/v1/auth/mfa/verify", json={"mfa_token": challenge["mfa_token"],
-                                                     "code": _totp_at(secret, int(time.time()) // 30)})
-    assert r.status_code == 429
-    db.connect().execute("DELETE FROM login_throttle WHERE email=?", (email,))
-    db.connect().commit()
-
 
 def test_old_failures_do_not_add_up_to_a_lockout(client):
     email = f"typo-{uuid.uuid4().hex[:6]}@example.com"
@@ -133,21 +104,9 @@ def test_demo_picker_lists_only_clinical_and_patient_accounts(client):
     accounts = client.get("/api/v1/public/demo-accounts").json()["accounts"]
     assert "physician" in accounts and "patient" in accounts
     # One-click accounts are clinical or patient; the super admin is listed
-    # only as private (own password + MFA). Hospital admin roles are absent.
+    # only as private (own password). Hospital admin roles are absent.
     one_click = {r for r, v in accounts.items() if not v.get("private")}
     assert all(rbac.roles()[r]["surface"] in {"clinician", "patient"} for r in one_click)
     assert accounts["super_admin"]["private"] is True and "super_admin" not in one_click
     for blocked in ("tenant_owner", "it_admin", "privacy_officer", "billing_admin", "auditor"):
         assert blocked not in accounts
-
-
-def test_demo_admins_need_mfa_without_the_dev_exemption(client, monkeypatch):
-    from app.routers.auth import mfa_mandatory
-    admin = db.document("demo_identity")["it_admin"]["email"]
-    doctor = db.document("demo_identity")["physician"]["email"]
-    monkeypatch.delenv("ESAP_DEMO_ADMIN_MFA_EXEMPT", raising=False)
-    monkeypatch.setenv("ESAP_DEMO_PICKER", "true")
-    assert mfa_mandatory(admin, "it_admin") is True
-    assert mfa_mandatory(doctor, "physician") is False
-    monkeypatch.setenv("ESAP_DEMO_ADMIN_MFA_EXEMPT", "true")
-    assert mfa_mandatory(admin, "it_admin") is False

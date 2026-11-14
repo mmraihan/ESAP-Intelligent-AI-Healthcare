@@ -7,7 +7,7 @@ import uuid
 import pytest
 
 from app import db
-from app.security import iso, utcnow, verify_totp, _totp_at  # noqa: F401
+from app.security import iso, utcnow  # noqa: F401
 from app.seed import DEMO_PASSWORD
 
 
@@ -18,11 +18,6 @@ def _signup(client, role="patient"):
     assert r.status_code == 201, r.text
     client.cookies.clear()
     return email, {"Authorization": f"Bearer {r.json()['token']}"}
-
-
-def _code(secret: str) -> str:
-    import time
-    return _totp_at(secret, int(time.time()) // 30)
 
 
 # --- Issue 7: breach flag and clocks -----------------------------------------
@@ -80,7 +75,9 @@ def test_idle_session_is_signed_out(client, auth):
     assert r.status_code == 401 and "without activity" in r.json()["error"]["message"]
 
 
-def test_non_demo_admin_must_enrol_mfa_before_anything_else(client):
+def test_two_factor_sign_in_is_removed(client):
+    """2FA was taken out on request (14 Nov 2026): an admin signs in with the
+    password alone, reaches the console at once, and the MFA routes are gone."""
     email = f"admin-{uuid.uuid4().hex[:6]}@styves.example"
     from app.security import hash_password
     uid = f"u_{uuid.uuid4().hex[:8]}"
@@ -91,21 +88,29 @@ def test_non_demo_admin_must_enrol_mfa_before_anything_else(client):
     r = client.post("/api/v1/auth/login", json={"email": email, "password": "a-long-password"})
     client.cookies.clear()
     body = r.json()
-    assert body["mfa_setup_required"] is True
+    assert r.status_code == 200 and body["token"]
+    assert "mfa_required" not in body and "mfa_setup_required" not in body
     h = {"Authorization": f"Bearer {body['token']}"}
-    blocked = client.get("/api/v1/bootstrap", headers=h)
-    assert blocked.status_code == 403 and blocked.json()["error"]["code"] == "MFA_SETUP_REQUIRED"
-    secret = client.post("/api/v1/auth/mfa/enroll", headers=h).json()["secret"]
-    assert client.post("/api/v1/auth/mfa/activate", headers=h, json={"code": _code(secret)}).status_code == 200
     assert client.get("/api/v1/bootstrap", headers=h).status_code == 200
-    # Required for the role, so it cannot be switched off, and re-enrolling is refused.
-    assert client.post("/api/v1/auth/mfa/disable", headers=h, json={"code": _code(secret)}).status_code == 403
-    assert client.post("/api/v1/auth/mfa/enroll", headers=h).status_code == 409
+    for path in ("/api/v1/auth/mfa/enroll", "/api/v1/auth/mfa/activate",
+                 "/api/v1/auth/mfa/disable", "/api/v1/auth/mfa/verify"):
+        assert client.post(path, headers=h, json={"code": "123456"}).status_code in (404, 405)
+    assert client.get("/api/v1/auth/mfa/status", headers=h).status_code == 404
 
 
-def test_demo_admin_accounts_stay_exempt_while_picker_is_on(client, auth):
-    r = client.get("/api/v1/auth/session", headers=auth("tenant_owner"))
-    assert r.status_code == 200 and r.json()["mfa_setup_required"] is False
+def test_demo_accounts_still_sign_in_with_the_shared_password(client):
+    demo = db.document("demo_identity") or {}
+    assert demo, "demo identities must still be seeded"
+    with_account = {r["email"].lower() for r in db.connect().execute("SELECT email FROM credentials")}
+    checked = 0
+    for role, ident in demo.items():
+        if (ident or {}).get("email", "").lower() not in with_account:
+            continue  # e.g. "guest" is a picker label, not an account
+        checked += 1
+        r = client.post("/api/v1/auth/login", json={"email": ident["email"], "password": DEMO_PASSWORD})
+        client.cookies.clear()
+        assert r.status_code == 200, (role, r.text)
+    assert checked >= 5
 
 
 # --- Issue 9: processing consent and retention --------------------------------

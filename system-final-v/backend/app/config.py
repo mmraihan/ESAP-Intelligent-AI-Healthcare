@@ -73,8 +73,6 @@ class Settings:
     #: Wrong passwords allowed before an address is locked, and for how long.
     lockout_threshold: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_THRESHOLD", "5")))
     lockout_minutes: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_MINUTES", "15")))
-    #: Admin and platform roles must enrol MFA before they can use the console.
-    require_admin_mfa: bool = field(default_factory=lambda: _bool("ESAP_REQUIRE_ADMIN_MFA", True))
     #: Where links in emails point (the website, not the API).
     public_url: str = field(default_factory=lambda: os.environ.get(
         "ESAP_PUBLIC_URL", "http://localhost:5175").rstrip("/"))

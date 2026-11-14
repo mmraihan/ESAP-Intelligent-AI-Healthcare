@@ -3,63 +3,24 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
-import time
 import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-import os
 from datetime import timedelta
 
 from .. import audit, db, mailer, npi, rbac, session_cookie, settings_store, sso
 from ..deps import Actor, current_actor, display_name, end_sessions
 from ..errors import ApiError
 from ..security import (
-    expiry, hash_password, iso, new_token, new_totp_secret, totp_uri, utcnow,
-    verify_or_burn, verify_totp,
+    expiry, hash_password, iso, new_token, utcnow, verify_or_burn,
 )
 from ..config import settings
 
 router = APIRouter(tags=["auth"])
-
-#: How long an MFA challenge (the bridge between the password step and the TOTP
-#: step at login) stays valid.
-_MFA_CHALLENGE_TTL_S = 300
-
-
-def _sign_mfa_challenge(user_id: str) -> str:
-    """A short-lived signed token asserting the user passed the password step.
-
-    Self-contained (HMAC over user_id + expiry with the app secret) so it needs
-    no storage; it only bridges the password and the second factor at login.
-    """
-    exp = int(time.time()) + _MFA_CHALLENGE_TTL_S
-    body = f"{user_id}.{exp}"
-    sig = hmac.new(settings().secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-    return f"{body}.{sig}"
-
-
-def _open_mfa_challenge(token: str) -> str | None:
-    """Return the user_id if the challenge is valid and unexpired, else None."""
-    try:
-        user_id, exp_s, sig = token.rsplit(".", 2)
-    except ValueError:
-        return None
-    body = f"{user_id}.{exp_s}"
-    want = hmac.new(settings().secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(want, sig):
-        return None
-    try:
-        if int(exp_s) < int(time.time()):
-            return None
-    except ValueError:
-        return None
-    return user_id
-
 
 class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -172,34 +133,11 @@ def _throttle_clear(email: str) -> None:
     conn.commit()
 
 
-def _needs_mfa_setup(user_id: str, email: str, role: str) -> bool:
-    """Admin and platform accounts must enrol MFA (QA issue 8), demo accounts included."""
-    if not mfa_mandatory(email, role):
-        return False
-    row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?", (user_id,)).fetchone()
-    return not (row and row["mfa_enabled"])
-
-
-def mfa_mandatory(email: str, role: str) -> bool:
-    if not settings().require_admin_mfa:
-        return False
-    if rbac.roles().get(role, {}).get("surface") not in {"admin", "ops"}:
-        return False
-    # Admin and ops accounts need MFA even with the demo picker on: the picker
-    # offers only clinical and patient accounts. The seeded demo admins may
-    # skip it only on a local dev or test server that opts in explicitly.
-    if os.environ.get("ESAP_DEMO_ADMIN_MFA_EXEMPT", "").strip().lower() in {"1", "true", "yes", "on"}:
-        demo = {(v or {}).get("email", "").lower() for v in (db.document("demo_identity") or {}).values()}
-        if email.lower() in demo:
-            return False
-    return True
-
-
 def _identity(role: str) -> dict:
     return (db.document("demo_identity") or {}).get(role, {})
 
 
-def _session_payload(actor_row: dict, token: str, expires: str, mfa_setup: bool = False) -> dict:
+def _session_payload(actor_row: dict, token: str, expires: str) -> dict:
     role = actor_row["role"]
     meta = rbac.roles().get(role, {})
     ident = _identity(role)
@@ -207,8 +145,6 @@ def _session_payload(actor_row: dict, token: str, expires: str, mfa_setup: bool 
         "token": token,
         "expires_at": expires,
         "idle_timeout_minutes": settings().idle_timeout_minutes,
-        # An admin without MFA gets a session that can only enrol it.
-        "mfa_setup_required": mfa_setup,
         "user": {
             "id": actor_row["user_id"],
             "email": actor_row["email"],
@@ -232,19 +168,18 @@ def _mint(user_id: str, email: str, role: str, tenant_id: str, name: str | None 
     token = new_token()
     ttl_h = settings().session_ttl_hours
     exp = expiry(ttl_h)
-    mfa_setup = _needs_mfa_setup(user_id, email, role)
     conn = db.connect()
     conn.execute(
         "INSERT INTO sessions (token, user_id, role, tenant_id, issued_at, expires_at, elevation,"
-        " last_seen, mfa_setup) VALUES (?,?,?,?,?,?,NULL,?,?)",
-        (token, user_id, role, tenant_id, iso(utcnow()), iso(exp), iso(utcnow()), int(mfa_setup)),
+        " last_seen) VALUES (?,?,?,?,?,?,NULL,?)",
+        (token, user_id, role, tenant_id, iso(utcnow()), iso(exp), iso(utcnow())),
     )
     conn.commit()
     session_cookie.remember(token, int(ttl_h * 3600))
     _throttle_clear(email.strip().lower())
     return _session_payload(
         {"user_id": user_id, "email": email, "role": role, "tenant_id": tenant_id, "name": name},
-        token, iso(exp), mfa_setup,
+        token, iso(exp),
     )
 
 
@@ -253,7 +188,7 @@ def login(body: LoginRequest, request: Request):
     email = body.email.strip().lower()
     _throttle_check(email)
     row = db.connect().execute(
-        "SELECT user_id, email, password_hash, role, tenant_id, mfa_enabled FROM credentials WHERE email = ?",
+        "SELECT user_id, email, password_hash, role, tenant_id FROM credentials WHERE email = ?",
         (email,),
     ).fetchone()
 
@@ -284,74 +219,11 @@ def login(body: LoginRequest, request: Request):
         )
         raise ApiError(403, "This account is suspended. Contact your administrator.")
 
-    # Second factor: if this account has MFA enrolled, the password alone does not
-    # issue a session. Hand back a short-lived challenge; POST /auth/mfa/verify
-    # with a valid TOTP code completes the sign-in.
-    if row["mfa_enabled"]:
-        audit.record(
-            Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
-            "login.mfa_challenge", row["email"],
-            ip=request.client.host if request.client else "unknown",
-        )
-        return {"mfa_required": True, "mfa_token": _sign_mfa_challenge(row["user_id"])}
-
     payload = _mint(row["user_id"], row["email"], row["role"], row["tenant_id"],
                     user["name"] if user else None)
     audit.record(
         Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], payload["token"]),
         "login.success", row["email"],
-        ip=request.client.host if request.client else "unknown",
-    )
-    return payload
-
-
-class MfaVerifyRequest(Strict):
-    mfa_token: str = Field(min_length=8, max_length=400)
-    code: str = Field(min_length=6, max_length=10)
-
-
-class MfaActivateRequest(Strict):
-    code: str = Field(min_length=6, max_length=10)
-
-
-@router.post("/auth/mfa/verify")
-def mfa_verify(body: MfaVerifyRequest, request: Request):
-    """Complete a login that returned ``mfa_required``: check the TOTP code
-    against the challenged account and issue the session."""
-    user_id = _open_mfa_challenge(body.mfa_token)
-    if user_id is None:
-        raise ApiError(401, "This sign-in step has expired. Enter your password again.")
-    row = db.connect().execute(
-        "SELECT user_id, email, password_hash, role, tenant_id, mfa_secret, mfa_enabled"
-        " FROM credentials WHERE user_id=?", (user_id,)).fetchone()
-    if row is None or not row["mfa_enabled"]:
-        raise ApiError(401, "This sign-in step is no longer valid.")
-    # Wrong codes count toward the same lockout as wrong passwords, so a
-    # stolen password does not buy unlimited guesses at the 6-digit code.
-    throttle_key = row["email"].strip().lower()
-    _throttle_check(throttle_key)
-    if not verify_totp(row["mfa_secret"] or "", body.code):
-        audit.record(
-            Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
-            "login.mfa_failed", row["email"], outcome="error",
-            ip=request.client.host if request.client else "unknown",
-        )
-        if _throttle_fail(throttle_key):
-            audit.record(Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], ""),
-                         "login.locked", row["email"], outcome="denied",
-                         ip=request.client.host if request.client else "unknown")
-            _throttle_check(throttle_key)
-        raise ApiError(401, "That verification code is not correct.")
-    user = db.connect().execute("SELECT name, status FROM users WHERE email=?", (row["email"],)).fetchone()
-    tenant = db.connect().execute("SELECT status FROM tenants WHERE id=?", (row["tenant_id"],)).fetchone()
-    if (user and user["status"] == "suspended") or (tenant and tenant["status"] == "suspended"):
-        # Suspended between the password step and the code.
-        raise ApiError(403, "This account is suspended. Contact your administrator.")
-    payload = _mint(row["user_id"], row["email"], row["role"], row["tenant_id"],
-                    user["name"] if user else None)
-    audit.record(
-        Actor(row["user_id"], row["email"], row["role"], row["tenant_id"], payload["token"]),
-        "login.success", row["email"], reason="mfa",
         ip=request.client.host if request.client else "unknown",
     )
     return payload
@@ -418,72 +290,6 @@ def sso_dev_login(body: SsoDevLoginRequest, request: Request):
     assertion = sso.mint_dev_assertion(body.email, body.name or body.email, tenant_id)
     claims = sso.verify_assertion(assertion)
     return _complete_sso(claims["email"], claims.get("name") or "", tenant_id, sso_cfg, request)
-
-
-@router.get("/auth/mfa/status")
-def mfa_status(actor: Actor = Depends(current_actor)):
-    row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?",
-                               (actor.user_id,)).fetchone()
-    return {"enabled": bool(row and row["mfa_enabled"])}
-
-
-@router.post("/auth/mfa/enroll")
-def mfa_enroll(actor: Actor = Depends(current_actor)):
-    """Begin MFA enrolment: mint a secret and return the otpauth URI to add to an
-    authenticator app. Not active until confirmed with a code at /auth/mfa/activate."""
-    # Re-enrolling would clear mfa_enabled, which would let any open session
-    # switch someone's second factor off without a code. Disable first.
-    row = db.connect().execute("SELECT mfa_enabled FROM credentials WHERE user_id=?",
-                               (actor.user_id,)).fetchone()
-    if row and row["mfa_enabled"]:
-        raise ApiError(409, "Two-factor sign-in is already on. Turn it off with a code first to start again.")
-    secret = new_totp_secret()
-    conn = db.connect()
-    conn.execute("UPDATE credentials SET mfa_secret=?, mfa_enabled=0 WHERE user_id=?",
-                 (secret, actor.user_id))
-    conn.commit()
-    return {"secret": secret, "otpauth_uri": totp_uri(secret, actor.email), "activated": False}
-
-
-@router.post("/auth/mfa/activate")
-def mfa_activate(body: MfaActivateRequest, request: Request, actor: Actor = Depends(current_actor)):
-    """Confirm enrolment: a valid code proves the authenticator is set up, and
-    turns the second factor on for every future sign-in."""
-    row = db.connect().execute("SELECT mfa_secret FROM credentials WHERE user_id=?",
-                               (actor.user_id,)).fetchone()
-    if row is None or not row["mfa_secret"]:
-        raise ApiError(409, "Start enrolment first (POST /auth/mfa/enroll).")
-    if not verify_totp(row["mfa_secret"], body.code):
-        raise ApiError(400, "That code is not correct. Check your authenticator and try again.")
-    conn = db.connect()
-    conn.execute("UPDATE credentials SET mfa_enabled=1 WHERE user_id=?", (actor.user_id,))
-    conn.execute("UPDATE sessions SET mfa_setup=0 WHERE user_id=?", (actor.user_id,))
-    conn.execute("UPDATE users SET doc=json_set(doc, '$.mfa', 'totp') WHERE email=?", (actor.email,))
-    conn.commit()
-    audit.record(actor, "user.mfa_enabled", actor.email,
-                 ip=request.client.host if request.client else "unknown")
-    return {"activated": True}
-
-
-@router.post("/auth/mfa/disable")
-def mfa_disable(body: MfaActivateRequest, request: Request, actor: Actor = Depends(current_actor)):
-    """Turn MFA off. Requires a current code, so a walk-up session cannot remove
-    someone's second factor."""
-    row = db.connect().execute("SELECT mfa_secret, mfa_enabled FROM credentials WHERE user_id=?",
-                               (actor.user_id,)).fetchone()
-    if not row or not row["mfa_enabled"]:
-        return {"activated": False}
-    if mfa_mandatory(actor.email, actor.role):
-        raise ApiError(403, "Administrator accounts must keep two-factor sign-in on.")
-    if not verify_totp(row["mfa_secret"] or "", body.code):
-        raise ApiError(400, "That code is not correct.")
-    conn = db.connect()
-    conn.execute("UPDATE credentials SET mfa_enabled=0, mfa_secret=NULL WHERE user_id=?", (actor.user_id,))
-    conn.execute("UPDATE users SET doc=json_set(doc, '$.mfa', 'none') WHERE email=?", (actor.email,))
-    conn.commit()
-    audit.record(actor, "user.mfa_disabled", actor.email,
-                 ip=request.client.host if request.client else "unknown")
-    return {"activated": False}
 
 
 @router.post("/auth/signup", status_code=201)
@@ -671,12 +477,12 @@ def accept_invite(body: AcceptInviteRequest):
 @router.get("/auth/session")
 def session(actor: Actor = Depends(current_actor)):
     user = db.connect().execute("SELECT name FROM users WHERE email=?", (actor.email,)).fetchone()
-    row = db.connect().execute("SELECT expires_at, mfa_setup FROM sessions WHERE token=?",
+    row = db.connect().execute("SELECT expires_at FROM sessions WHERE token=?",
                                (actor.token,)).fetchone()
     payload = _session_payload(
         {"user_id": actor.user_id, "email": actor.email, "role": actor.role,
          "tenant_id": actor.tenant_id, "name": user["name"] if user else None},
-        actor.token, row["expires_at"], bool(row["mfa_setup"]),
+        actor.token, row["expires_at"],
     )
     payload["elevation"] = actor.elevation
     if actor.via_cookie:

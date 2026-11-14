@@ -21,13 +21,12 @@ import { AuthLayout } from "./AuthLayout";
 
 export function LoginPage() {
   const nav = useNavigate();
-  const { signInWithPassword, verifyMfa, cancelMfa, mfaPending, pending, error } = useSession();
+  const { signInWithPassword, pending, error } = useSession();
   const [showPassword, setShowPassword] = useState(false);
   // /demo-role sends private accounts (the super admin) here with ?email=.
   const [params] = useSearchParams();
   const [email, setEmail] = useState(() => params.get("email") ?? "");
   const [password, setPassword] = useState("");
-  const [mfaCode, setMfaCode] = useState("");
   const [capsLock, setCapsLock] = useState(false);
   const [resetNote, setResetNote] = useState<string | null>(null);
   // Set when "Sign in" is pressed with a field empty. The button stays a live
@@ -66,24 +65,9 @@ export function LoginPage() {
     setMissing(false);
     try {
       await signInWithPassword(email.trim(), password);
-      // A second factor may be required; if so, wait on the code step rather
-      // than navigating with a role we do not yet have.
-      if (useSession.getState().mfaPending) return;
       nav(ROLES[useSession.getState().role].home);
     } catch {
       setAttempt((n) => n + 1); // `error` on the store already holds the server's message.
-    }
-  }
-
-  async function submitMfa(e: FormEvent) {
-    e.preventDefault();
-    if (pending || mfaCode.trim().length < 6) return;
-    try {
-      await verifyMfa(mfaCode.trim());
-      setMfaCode("");
-      nav(ROLES[useSession.getState().role].home);
-    } catch {
-      setAttempt((n) => n + 1);
     }
   }
 
@@ -97,33 +81,6 @@ export function LoginPage() {
 
   return (
     <AuthLayout variant="signin">
-      {mfaPending ? (
-        <form className="auth-card auth-step" onSubmit={submitMfa} noValidate>
-          <div className="auth-head">
-            <span className="auth-kicker"><ShieldIcon size={13} /> {t("Two-step verification")}</span>
-            <h1 className="auth-title">{t("Check your authenticator")}</h1>
-            <p className="auth-sub">{t("Enter the 6-digit code from your authenticator app to finish signing in.")}</p>
-          </div>
-          {failure}
-          <label className="auth-field">
-            <span className="auth-label">{t("Verification code")}</span>
-            <input
-              className="input auth-input auth-otp"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              maxLength={6}
-              placeholder="000000"
-              value={mfaCode}
-              onChange={(e) => setMfaCode(e.currentTarget.value.replace(/\D/g, ""))}
-            />
-          </label>
-          <button type="submit" className="btn btn-primary auth-submit" disabled={pending || mfaCode.trim().length < 6}>
-            {pending ? <><span className="esap-spinner" /> {t("Verifying…")}</> : t("Verify and sign in")}
-          </button>
-          <button type="button" className="auth-link" onClick={cancelMfa}>{t("Use a different account")}</button>
-        </form>
-      ) : (
         <form className="auth-card auth-step" onSubmit={submit} noValidate>
           <div className="auth-head">
             <h1 className="auth-title">{t("Welcome back")}</h1>
@@ -212,7 +169,6 @@ export function LoginPage() {
             </button>
           </div>
         </form>
-      )}
     </AuthLayout>
   );
 }

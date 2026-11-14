@@ -12,7 +12,6 @@ from app.chat_extract import extract
 from app.red_flags import screen
 from app.seed import DEMO_PASSWORD
 
-from .test_qa_p2 import _code, _signup
 
 
 def _login(client, email: str) -> dict:
@@ -23,26 +22,6 @@ def _login(client, email: str) -> dict:
 
 
 # --- auth ---------------------------------------------------------------------
-
-def test_mfa_codes_cannot_be_brute_forced(client):
-    """Wrong second-factor codes count toward the lockout like wrong passwords."""
-    email, h = _signup(client)
-    secret = client.post("/api/v1/auth/mfa/enroll", headers=h).json()["secret"]
-    assert client.post("/api/v1/auth/mfa/activate", headers=h, json={"code": _code(secret)}).status_code == 200
-
-    def challenge():
-        r = client.post("/api/v1/auth/login", json={"email": email, "password": "a-long-password"})
-        assert r.status_code == 200, r.text
-        return r.json()["mfa_token"]
-
-    token = challenge()
-    statuses = [client.post("/api/v1/auth/mfa/verify", json={"mfa_token": token, "code": "000000"}).status_code
-                for _ in range(6)]
-    assert 429 in statuses, statuses
-    # Locked: even the right code is refused until the lock lifts.
-    r = client.post("/api/v1/auth/mfa/verify", json={"mfa_token": token, "code": _code(secret)})
-    assert r.status_code == 429
-
 
 def test_old_failures_do_not_add_up_to_a_lockout(client):
     """Four typos last month and one today must not lock the account."""

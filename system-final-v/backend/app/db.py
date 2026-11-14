@@ -271,14 +271,8 @@ _ADDED_COLUMNS = (
     # A transfer belongs to the hospital it was sent to or from. Without it
     # every tenant's transfer queue listed every other tenant's patients.
     ("transfers", "tenant_id", "TEXT"),
-    # Multi-factor auth (TOTP). Enrolment stores a secret; a code confirms it and
-    # sets mfa_enabled, after which login requires a second factor.
-    ("credentials", "mfa_secret", "TEXT"),
-    ("credentials", "mfa_enabled", "INTEGER NOT NULL DEFAULT 0"),
     # Idle timeout: the last time this session made a request (QA issue 8).
     ("sessions", "last_seen", "TEXT"),
-    # 1 = an admin signed in without MFA; only enrolment is allowed until done.
-    ("sessions", "mfa_setup", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 

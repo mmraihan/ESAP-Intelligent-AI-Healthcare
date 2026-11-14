@@ -23,13 +23,10 @@ import { hydrateFromApi, hydratePublic, type SessionPayload } from "@/api/bootst
 /**
  * The shared demo password used by the /demo-role picker. In production only
  * the clinical and patient demo accounts (synthetic data) use it. Admin, ops
- * and platform accounts have their own private passwords and MFA, so this
+ * and platform accounts have their own private passwords, so this
  * password never opens an admin or ops console (QA issue 1).
  */
 export const DEMO_PASSWORD = "esap-demo";
-
-/** The pending MFA challenge token between the password step and the TOTP step. */
-let mfaChallenge: string | null = null;
 
 export type SessionState = {
   authenticated: boolean;
@@ -46,21 +43,11 @@ export type SessionState = {
   pending: boolean;
   /** Last sign-in failure, in the server's own words. */
   error: string | null;
-  /** Set when a password step returned an MFA challenge: the form then asks for a code. */
-  mfaPending: boolean;
-  /** An admin signed in without MFA: every screen is replaced by enrolment (QA issue 8). */
-  mfaSetupRequired: boolean;
   /** Minutes of inactivity before sign-out. */
   idleMinutes: number;
-  /** Called once MFA enrolment is confirmed: loads the console. */
-  completeMfaSetup: () => Promise<void>;
 
   signIn: (role: RoleCode) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  /** Complete an MFA-challenged sign-in with a TOTP code. */
-  verifyMfa: (code: string) => Promise<void>;
-  /** Abandon an in-progress MFA challenge (back to the password form). */
-  cancelMfa: () => void;
   signOut: () => void;
   switchTenant: (tenantId: string) => void;
   /** `grantId`: start the elevation under an approved `/ops/break-glass` grant, which then sets its terms. */
@@ -89,8 +76,6 @@ export const useSession = create<SessionState>((set, get) => ({
   requireResidentCosign: true,
   pending: false,
   error: null,
-  mfaPending: false,
-  mfaSetupRequired: false,
   idleMinutes: 30,
 
   adoptSession: (payload) => {
@@ -98,7 +83,6 @@ export const useSession = create<SessionState>((set, get) => ({
     // sign-in response gave us (in memory only).
     if (payload.token) setToken(payload.token);
     set({
-      mfaSetupRequired: Boolean(payload.mfa_setup_required),
       idleMinutes: payload.idle_timeout_minutes ?? 30,
       authenticated: true,
       role: payload.user.role as RoleCode,
@@ -121,66 +105,25 @@ export const useSession = create<SessionState>((set, get) => ({
 
   startSession: async (payload) => {
     get().adoptSession(payload);
-    if (!payload.mfa_setup_required) await hydrateFromApi();
-  },
-
-  completeMfaSetup: async () => {
-    set({ mfaSetupRequired: false });
     await hydrateFromApi();
   },
 
   signInWithPassword: async (email, password) => {
-    set({ pending: true, error: null, mfaPending: false });
+    set({ pending: true, error: null });
     try {
-      const payload = await api.post<SessionPayload | { mfa_required: true; mfa_token: string }>(
+      const payload = await api.post<SessionPayload>(
         "/api/v1/auth/login",
         { email, password },
         { anonymous: true },
       );
-      if ("mfa_required" in payload && payload.mfa_required) {
-        // Password accepted; a second factor is required. Hold the challenge and
-        // let the form ask for a code.
-        mfaChallenge = payload.mfa_token;
-        set({ pending: false, mfaPending: true, error: null });
-        return;
-      }
-      get().adoptSession(payload as SessionPayload);
-      if (!(payload as SessionPayload).mfa_setup_required) await hydrateFromApi();
-    } catch (error) {
-      const message =
-        error instanceof ApiError ? error.message : "Could not reach the ESAP API.";
-      set({ pending: false, error: message });
-      throw error;
-    }
-  },
-
-  verifyMfa: async (code) => {
-    if (!mfaChallenge) {
-      set({ error: "This sign-in step has expired. Enter your password again.", mfaPending: false });
-      return;
-    }
-    set({ pending: true, error: null });
-    try {
-      const payload = await api.post<SessionPayload>(
-        "/api/v1/auth/mfa/verify",
-        { mfa_token: mfaChallenge, code },
-        { anonymous: true },
-      );
-      mfaChallenge = null;
       get().adoptSession(payload);
-      set({ mfaPending: false });
-      if (!payload.mfa_setup_required) await hydrateFromApi();
+      await hydrateFromApi();
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : "Could not reach the ESAP API.";
       set({ pending: false, error: message });
       throw error;
     }
-  },
-
-  cancelMfa: () => {
-    mfaChallenge = null;
-    set({ mfaPending: false, error: null, pending: false });
   },
 
   /**
@@ -213,7 +156,7 @@ export const useSession = create<SessionState>((set, get) => ({
   signOut: () => {
     if (live()) void api.post("/api/v1/auth/logout").catch(() => undefined);
     setToken(null);
-    set({ authenticated: false, elevation: null, error: null, mfaSetupRequired: false });
+    set({ authenticated: false, elevation: null, error: null });
     // Drop the signed-in data and go back to what a visitor may see.
     void hydratePublic().catch(() => undefined);
   },

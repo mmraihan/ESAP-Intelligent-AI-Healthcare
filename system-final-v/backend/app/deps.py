@@ -94,12 +94,6 @@ def _bearer(request: Request) -> str | None:
 CLIENT_HEADER = "x-esap-client"
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
-#: What an admin who has not enrolled MFA yet may still call (QA issue 8).
-_MFA_SETUP_PATHS = {
-    "/api/v1/auth/session", "/api/v1/auth/whoami", "/api/v1/auth/logout",
-    "/api/v1/auth/mfa/status", "/api/v1/auth/mfa/enroll", "/api/v1/auth/mfa/activate",
-}
-
 
 def session_token(request: Request) -> tuple[str | None, bool]:
     """The session token and whether it came from the HttpOnly cookie."""
@@ -123,7 +117,7 @@ def current_actor(request: Request) -> Actor:
 
     row = db.connect().execute(
         "SELECT s.token, s.user_id, s.role, s.tenant_id, s.expires_at, s.elevation, s.last_seen,"
-        " s.mfa_setup, s.issued_at, c.email"
+        " s.issued_at, c.email"
         " FROM sessions s LEFT JOIN credentials c ON c.user_id = s.user_id"
         " WHERE s.token = ?",
         (token,),
@@ -149,10 +143,6 @@ def current_actor(request: Request) -> Actor:
         db.connect().execute("UPDATE sessions SET last_seen=? WHERE token=?",
                              (now.isoformat().replace("+00:00", "Z"), token))
         db.connect().commit()
-
-    if row["mfa_setup"] and request.url.path not in _MFA_SETUP_PATHS:
-        raise ApiError(403, "Set up two-factor sign-in before using this console. "
-                            "Administrator accounts must have it.", code="MFA_SETUP_REQUIRED")
 
     elevation = json.loads(row["elevation"]) if row["elevation"] else None
     if elevation and datetime.fromisoformat(elevation["expiresAt"].replace("Z", "+00:00")) <= utcnow():

@@ -1,6 +1,6 @@
 /**
  * Account and security for hospital staff and platform staff (QA issue 8):
- * who you are signed in as, change your password, two-factor sign-in.
+ * who you are signed in as and changing your password.
  * Patients have the same controls on their own Settings page.
  */
 import { useState } from "react";
@@ -12,7 +12,6 @@ import { act } from "@/api/actions";
 import { api } from "@/api/client";
 import { useSession } from "@/lib/session";
 import { ROLES } from "@/lib/rbac";
-import { TwoFactorPanel } from "./TwoFactor";
 
 export function PasswordChangeButton({ onResult }: { onResult: (message: string) => void }) {
   const [password, setPassword] = useState<{ current: string; next: string; again: string } | null>(null);
@@ -62,7 +61,6 @@ export function PasswordChangeButton({ onResult }: { onResult: (message: string)
 export function AccountPage() {
   const { name, email, role, idleMinutes } = useSession();
   const [toast, setToast] = useState<string | null>(null);
-  const mandatory = ROLES[role]?.surface === "admin" || ROLES[role]?.surface === "ops";
   return (
     <>
       <PageHeader eyebrow={t("Account")} title={t("Account and security")} lede={t("How you sign in, and keeping this account safe.")} />
@@ -79,7 +77,6 @@ export function AccountPage() {
       <Card title={t("Password")}>
         <PasswordChangeButton onResult={setToast} />
       </Card>
-      <TwoFactorPanel mandatory={mandatory} />
       <Toast message={toast} onDone={() => setToast(null)} />
     </>
   );

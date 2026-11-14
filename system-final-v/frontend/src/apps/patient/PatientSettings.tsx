@@ -18,7 +18,6 @@ import {
 import { act } from "@/api/actions";
 import { api } from "@/api/client";
 import { useSettings } from "@/hooks/useSettings";
-import { TwoFactorPanel } from "@/apps/auth/TwoFactor";
 import { ProcessingConsentCard } from "./ProcessingConsentCard";
 
 type Prefs = {
@@ -180,8 +179,6 @@ export function PatientSettings() {
           <Button icon={<ShieldIcon size={15} />} onClick={() => setPassword({ current: "", next: "", again: "" })}>{t("Change my password")}</Button>
         </div>
       </Card>
-
-      <TwoFactorPanel />
 
       <ProcessingConsentCard />
 

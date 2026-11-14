@@ -174,7 +174,7 @@ def public_demo_accounts():
     identities = db.document("demo_identity") or {}
     # Clinical and patient roles get one-click sign-in with the demo password.
     # The super admin is listed too, but marked private: the picker sends it to
-    # the normal sign-in with its own password and MFA. Hospital admin roles
+    # the normal sign-in with its own password. Hospital admin roles
     # are not listed.
     surfaces = {r: (meta or {}).get("surface") for r, meta in rbac.roles().items()}
     accounts = {r: v for r, v in identities.items()

@@ -70,7 +70,6 @@ Keep these at their production values on any real deployment.
 | Variable | Default | Production | Purpose |
 |---|---|---|---|
 | `ESAP_DEMO_PICKER` | `true` | `true` (care.esap.ai) | Serves the /demo-role picker. Lists clinical and patient demo accounts only; admin and ops accounts are never offered. |
-| `ESAP_DEMO_ADMIN_MFA_EXEMPT` | `false` | `false` | Lets the seeded demo admin/ops accounts skip mandatory MFA. Local dev and tests only. **Never enable in production.** |
 | `ESAP_DEMO_ALL_ACCESS` | `false` | `false` | One platform account with every permission and no break-glass. **Never enable in production.** |
 | `ESAP_SUPERUSER_EMAIL` | `superadmin@esap.health` | — | The account `ESAP_DEMO_ALL_ACCESS` applies to. |
 | `ESAP_ALLOW_PREFILL` | `false` | `false` | Enables `GET /api/v1/cases/{hadm_id}/prefill` (non-production entitlement). |

@@ -52,7 +52,6 @@ const BUILT = [
   { area: "Passwords", detail: "Stored as salted PBKDF2-HMAC-SHA256 hashes, never in plain text. Patients and individual clinicians reset their own password with an emailed link that works once, for 60 minutes." },
   { area: "Sign-in protection", detail: "Five wrong passwords lock sign-in for that address for 15 minutes, with the same message whether or not the account exists. Failed sign-ins are written to the audit log." },
   { area: "Sessions", detail: "Issued and checked on the server. A session ends after 30 minutes without activity and after 12 hours in any case. The browser keeps it in an HttpOnly cookie, not in local storage." },
-  { area: "Multi-factor sign-in", detail: "Administrator and platform accounts must set up an authenticator app before they can use the product. Every other account can turn it on. The shared demo accounts are exempt while the demo is open." },
   { area: "Invitations", detail: "Hospital accounts are created through invitations that can be used once and expire." },
   { area: "Role-based access", detail: "Permissions are enforced on the server for each role. A clinician with a limited scope sees their own unit or assigned patients, and a request outside that scope is refused." },
   { area: "Organisation separation", detail: "Every request is filtered to the caller's organisation by the application." },
@@ -68,7 +67,7 @@ const BUILT = [
 const PLANNED = [
   { area: "Encryption", items: ["Encryption at rest, with keys per organisation", "Mutual TLS on integration endpoints"] },
   { area: "Isolation and hosting", items: ["Database-enforced row-level security", "Dedicated single-tenant deployments", "Hosting inside Saudi Arabia", "EU data residency"] },
-  { area: "Sign-in", items: ["Hospital single sign-on (OIDC or SAML) and SCIM provisioning", "Required multi-factor sign-in on every account"] },
+  { area: "Sign-in", items: ["Hospital single sign-on (OIDC or SAML) and SCIM provisioning", "Multi-factor sign-in"] },
   { area: "Audit and recovery", items: ["Tamper-evident, append-only audit storage", "Automated backups with tested restores"] },
   { area: "Assurance", items: ["Independent penetration test", "Published sub-processor register"] },
   { area: "Compliance programmes", items: ["Saudi PDPL programme and a named Data Protection Officer", "SFDA determination of whether each model is a medical device", "HIPAA programme and Business Associate Agreement", "GDPR data-subject process", "SOC 2 Type II", "HITRUST"] },

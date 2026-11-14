@@ -327,10 +327,6 @@ def test_no_v1_route_is_unauthenticated(client):
     # A carer accepting a patient's family-access invite has no account yet, so
     # viewing and accepting the invite are reachable before any session exists.
     exempt |= {"/api/v1/auth/caregiver-invite/{token}", "/api/v1/auth/caregiver-accept"}
-    # The second-factor step completes a login that has passed the password step;
-    # like login itself it must be reachable without a session (it holds a signed,
-    # short-lived MFA challenge instead).
-    exempt |= {"/api/v1/auth/mfa/verify"}
     # SSO is a way to obtain a session, like login: discovery, the IdP callback,
     # and the dev-only simulated login are all reachable without a prior session.
     exempt |= {"/api/v1/auth/sso/discover", "/api/v1/auth/sso/callback",

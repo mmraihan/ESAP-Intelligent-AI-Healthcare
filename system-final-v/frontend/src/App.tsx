@@ -35,7 +35,6 @@ import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
 import { CaregiverAcceptPage } from "@/apps/auth/CaregiverAcceptPage";
 import { ResetPasswordPage } from "@/apps/auth/ResetPasswordPage";
-import { MfaSetupPage } from "@/apps/auth/TwoFactor";
 
 /**
  * The demo role picker's route. Set VITE_DEMO_ACCESS_PATH in a gitignored
@@ -320,7 +319,6 @@ export function App() {
   // version remounts the current screen when fresh data lands, which is what
   // makes a saved change show up without a manual refresh.
   const version = useDataVersion();
-  const { authenticated, mfaSetupRequired } = useSession();
 
   // Offline, the static marketing pages still render (they carry no live data
   // and fall back gracefully on an empty store); everything else — sign-in and
@@ -341,10 +339,6 @@ export function App() {
       </Routes>
     );
   }
-
-  // An admin who signed in without two-factor sign-in sees only the set-up
-  // screen until it is on; the server refuses everything else meanwhile.
-  if (authenticated && mfaSetupRequired) return <MfaSetupPage />;
 
   return (
     <Routes key={version}>

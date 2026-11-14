@@ -25,11 +25,11 @@ import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, LockIco
 
 // Clinical and patient roles sign in with one click (the demo password). The
 // super admin is listed but private: it opens the normal sign-in with the
-// email filled in, and needs its own password and MFA. Hospital admin roles
+// email filled in, and needs its own password. Hospital admin roles
 // are not offered here.
 const DEMO_GROUPS: { title: string; note: string; icon: JSX.Element; roles: RoleCode[] }[] = [
   { title: "Clinical workspace", note: "Doctors and nurses. Guest-reachable in production.", icon: <ActivityIcon size={18} />, roles: ["physician", "resident", "charge_nurse", "staff_nurse", "case_manager"] },
-  { title: "Platform ops console", note: "Own password and two-factor code required.", icon: <GlobeIcon size={18} />, roles: ["super_admin"] },
+  { title: "Platform ops console", note: "Own password required, not the shared demo password.", icon: <GlobeIcon size={18} />, roles: ["super_admin"] },
   { title: "Patient portal", note: "Plain language, released content only.", icon: <HeartPulseIcon size={18} />, roles: ["patient"] },
 ];
 
