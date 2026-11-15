@@ -122,6 +122,10 @@ def chat(body: ChatRequest, actor: Actor = Depends(current_actor)):
     # service being up, must not be reworded, and must not wait on a slow call.
     flags = red_flags.screen(body.message) if patient_voice else []
     if flags:
+        # "Symptom: chest pain" from the extractor and "Chest pain" from the
+        # screen are the same finding; keep the safety label once (QA issue 19).
+        flagged = {label.lower() for label in flags}
+        captured = [c for c in captured if c.lower().removeprefix("symptom: ") not in flagged]
         captured.extend(label for label in flags if label not in captured)
         earlier = ((body.draft or {}).get("notes") or {}).get("hpi")
         text = body.message.strip()

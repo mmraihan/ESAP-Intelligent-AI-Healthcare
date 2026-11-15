@@ -31,6 +31,17 @@ type AssessSummary = {
   conditions: { ccsr: string; family: string; probability: number }[];
   placeholder: boolean;
 };
+/**
+ * The server sends chip labels in English. Translate the ones a patient sees
+ * ("Age 55", "Chest pain", "Arm pain"…) so an Arabic portal shows Arabic chips
+ * (QA issue 19); anything without an entry falls back to the English text.
+ */
+function chipLabel(c: string): string {
+  const age = /^Age (\d{1,3})$/.exec(c);
+  if (age) return t("Age {n}", { n: age[1] });
+  return t(c);
+}
+
 type Msg =
   | { role: "assistant" | "user"; content: string; emergency?: boolean }
   | { role: "result"; summary: AssessSummary };
@@ -252,7 +263,7 @@ export function ChatAssistant() {
               <p className="assist-label">{t("Captured so far")} · <span className="tnum">{captured.length}</span></p>
               <div className="assist-chips">
                 {captured.slice(0, 24).map((c, i) => (
-                  <span key={i} className="assist-chip"><CheckIcon size={11} />{c}</span>
+                  <span key={i} className="assist-chip"><CheckIcon size={11} />{chipLabel(c)}</span>
                 ))}
               </div>
             </div>

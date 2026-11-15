@@ -103,8 +103,17 @@ _HEIGHT = re.compile(r"\b(\d{2,3})\s*(?:cm|centimet)", re.I)
 _BMI = re.compile(r"\bbmi\s*(?:of|is|=|:)?\s*(\d{2}(?:\.\d)?)\b", re.I)
 
 
+# Arabic (QA issue 19): "عمري 55 سنة", "عمره ٥٥", "55 سنة". Arabic-Indic digits
+# are folded to ASCII first. "سنة/سنه/عام" alone needs a number right before it,
+# so "منذ سنة" (a year ago) without a number is never read as an age.
+_AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
+_AGE_AR = re.compile(r"(?:عمري|عمره|عمرها|العمر)\s*[:：]?\s*(\d{1,3})")
+_AGE_AR2 = re.compile(r"(?<![\d.])(\d{1,3})\s*(?:سنة|سنه|عاما|عامًا|عام)(?!\s*(?:مضت|ماضية|ماضيه))")
+
+
 def _find_age(text: str) -> int | None:
-    for rx in (_AGE, _AGE2, _AGE3, _AGE_SEX):
+    text = text.translate(_AR_DIGITS)
+    for rx in (_AGE, _AGE2, _AGE3, _AGE_SEX, _AGE_AR, _AGE_AR2):
         m = rx.search(text)
         if m:
             v = int(m.group(1))

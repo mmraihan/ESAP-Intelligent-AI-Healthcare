@@ -1131,4 +1131,10 @@ export const AR: Record<string, string> = {
   "Demonstration build. All data shown is synthetic — no real patient information appears anywhere in this application.": "إصدار تجريبي. جميع البيانات المعروضة اصطناعية — لا تظهر أي معلومات مرضى حقيقية في أي مكان من هذا التطبيق.",
   "Privacy": "الخصوصية",
   "Terms": "الشروط",
+  // Assistant chips for what a patient told it (QA issue 19).
+  "Age {n}": "العمر {n}",
+  "Arm pain": "ألم في الذراع",
+  "Jaw pain": "ألم في الفك",
+  "Trouble breathing": "صعوبة في التنفس",
+  "Possible stroke signs": "علامات محتملة للسكتة الدماغية",
 };

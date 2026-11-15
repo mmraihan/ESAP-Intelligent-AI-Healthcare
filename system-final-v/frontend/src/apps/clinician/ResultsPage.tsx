@@ -16,7 +16,7 @@ import {
   AcknowledgeBar, ChatPanel, DifferentialCard, EncounterHeader, ExplanationDrawer, LosCard,
   RiskRow, SignalRail, type RiskSlot,
 } from "@/components/clinical";
-import { AssistiveLine, FusionPill } from "@/components/ui/domain";
+import { AssistiveLine } from "@/components/ui/domain";
 import { PatientSubmissions } from "@/components/clinical/PatientSubmissions";
 import { ExperimentalModelsPanel } from "@/components/clinical/ExperimentalModelsPanel";
 import { Badge, Banner, Button, Card, EmptyState, Field, Select, Tabs, TextArea, TextInput } from "@/components/ui/primitives";
@@ -195,7 +195,13 @@ export function ResultsPage({ readOnly }: { readOnly?: boolean }) {
           <p className="result-meta">
             <ClockIcon size={13} /> Assessed {enc.lastAssessedAt ? ago(enc.lastAssessedAt) : "—"} ·{" "}
             {enc.lastAssessedAt ? dateTimeLabel(enc.lastAssessedAt) : ""} · run {enc.assessmentCount} of {enc.assessmentCount}{" "}
-            <FusionPill status="tower_a_only" />
+            {/* Plain words for clinicians; "Tower A only" stays on the Models page (QA issue 5). */}
+            <span
+              className="fusion-pill is-partial"
+              title="Estimated from the structured admission data only. The note and history models are not in use yet."
+            >
+              Admission data only
+            </span>
           </p>
 
           <RiskRow slots={slots} onExplain={(k) => setExplain({ kind: "model", key: k })} />

@@ -287,3 +287,31 @@ def test_closing_a_patient_account_really_closes_it(client):
     assert r.status_code == 200 and r.json()["closed"] is True
     assert client.get("/api/v1/auth/session", headers=h).status_code == 401
     assert client.post("/api/v1/auth/login", json={"email": email, "password": "a-long-password"}).status_code == 401
+
+
+# --- Issue 19 leftovers (retest 11 Nov): Arabic capture, no duplicate chip ----
+
+QA_AR = ("اختبار تجريبي: عمري 55 سنة وعندي ألم في الصدر وذراعي اليسرى تؤلمني. "
+         "هل هذه نوبة قلبية؟ ما هي درجة الخطر عندي؟")
+QA_EN = ("QA synthetic test: I am 55 and have chest pain and my left arm hurts. "
+         "Am I having a heart attack? What is my risk score?")
+
+
+def test_arabic_red_flag_message_captures_age_chest_and_arm_pain(client, auth):
+    r = client.post("/api/v1/chat", headers=auth("patient"), json={"message": QA_AR, "lang": "ar"}).json()
+    assert r["emergency"] is True and "997" in r["reply"]
+    assert {"Age 55", "Chest pain", "Arm pain"} <= set(r["captured"]), r["captured"]
+
+
+def test_english_red_flag_message_lists_chest_pain_once(client, auth):
+    r = client.post("/api/v1/chat", headers=auth("patient"), json={"message": QA_EN}).json()
+    chest = [c for c in r["captured"] if "chest pain" in c.lower()]
+    assert len(chest) == 1, r["captured"]
+    assert "Age 55" in r["captured"] and "Arm pain" in r["captured"]
+
+
+@pytest.mark.parametrize("text,age", [("عمري ٥٥ سنة", 55), ("العمر: 70", 70), ("رجل 68 عاما", 68),
+                                      ("بدأ الألم منذ سنة", None), ("عمر يشعر بالتعب", None)])
+def test_arabic_age_is_read_only_when_it_is_an_age(text, age):
+    from app import chat_extract
+    assert chat_extract._find_age(text) == age
