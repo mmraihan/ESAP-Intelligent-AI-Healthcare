@@ -281,7 +281,10 @@ def _not_captured(text: str, used: list[tuple[int, int]], vit: dict, age: int | 
     """Numbers in the message that nothing above mapped, with the word before
     each, e.g. "troponin 0.4". Shown to the clinician before an assessment."""
     spans = list(used)
-    for rx in (_AGE, _AGE2, _AGE3, _AGE_SEX, _BP, _WEIGHT, _HEIGHT, _BMI):
+    # Arabic digits become ASCII (same length, so spans still line up), and the
+    # Arabic age phrases count as mapped: "عمري 55 سنة" is the age, not a stray number.
+    text = text.translate(_AR_DIGITS)
+    for rx in (_AGE, _AGE2, _AGE3, _AGE_SEX, _AGE_AR, _AGE_AR2, _BP, _WEIGHT, _HEIGHT, _BMI):
         for m in rx.finditer(text):
             spans.append(m.span())
     low = text.lower()

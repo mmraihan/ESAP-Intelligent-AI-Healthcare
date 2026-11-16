@@ -301,6 +301,16 @@ def test_arabic_red_flag_message_captures_age_chest_and_arm_pain(client, auth):
     r = client.post("/api/v1/chat", headers=auth("patient"), json={"message": QA_AR, "lang": "ar"}).json()
     assert r["emergency"] is True and "997" in r["reply"]
     assert {"Age 55", "Chest pain", "Arm pain"} <= set(r["captured"]), r["captured"]
+    # The age it captured is not also listed as an unmapped number (16 Nov).
+    assert not any("55" in x for x in r.get("not_captured", [])), r.get("not_captured")
+
+
+@pytest.mark.parametrize("text", [QA_AR, "عمري ٥٥ سنة وعندي ألم في الصدر", QA_EN])
+def test_captured_age_is_not_listed_as_not_captured(text):
+    from app import chat_extract
+    r = chat_extract.extract(text)
+    assert "Age 55" in r["captured"], r["captured"]
+    assert not any("55" in x for x in r["not_captured"]), r["not_captured"]
 
 
 def test_english_red_flag_message_lists_chest_pain_once(client, auth):
