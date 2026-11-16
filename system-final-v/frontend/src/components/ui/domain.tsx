@@ -106,10 +106,16 @@ export function CalibratedBadge({ calibrated, validity, estimated = true }: {
   );
 }
 
-/** Fusion state pill — "Tower A only" vs "A+B+C fused". Always text, never a bare color. */
-export function FusionPill({ status }: { status: "tower_a_only" | "pending" | "fused" }) {
-  const label = status === "fused" ? "Towers A+B+C fused" : status === "pending" ? "Fusion pending" : "Tower A only";
-  return <span className={cx("fusion-pill", status === "fused" ? "is-fused" : "is-partial")}>{label}</span>;
+/** Fusion state pill — "Tower A only" vs "A+B+C fused". Always text, never a bare color.
+ *  `plain` gives clinician-facing words (QA issue 5); the technical label stays on the Models pages. */
+export function FusionPill({ status, plain }: { status: "tower_a_only" | "pending" | "fused"; plain?: boolean }) {
+  const label = plain
+    ? (status === "fused" ? "Admission data, notes and history" : "Admission data only")
+    : status === "fused" ? "Towers A+B+C fused" : status === "pending" ? "Fusion pending" : "Tower A only";
+  const title = plain && status !== "fused"
+    ? "Estimated from the structured admission data only. The note and history models are not in use yet."
+    : undefined;
+  return <span className={cx("fusion-pill", status === "fused" ? "is-fused" : "is-partial")} title={title}>{label}</span>;
 }
 
 // --- Severity ---------------------------------------------------------------

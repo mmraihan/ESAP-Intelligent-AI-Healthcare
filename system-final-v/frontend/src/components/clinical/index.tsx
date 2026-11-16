@@ -187,7 +187,7 @@ export function DifferentialCard({
     <Card
       title={<span className="row" style={{ gap: 7 }}><StethoscopeIcon size={16} /> Likely concurrent conditions</span>}
       subtitle={`M-01 · top ${Math.min(topN, items.length)} of ~502 CCSR categories`}
-      actions={<div className="row" style={{ gap: 8 }}><AiGeneratedTag /><FusionPill status={fusionStatus} /></div>}
+      actions={<div className="row" style={{ gap: 8 }}><AiGeneratedTag /><FusionPill status={fusionStatus} plain /></div>}
       footnote={
         unscored > 0
           ? `${unscored} CCSR categories were not scored for this patient because the required inputs were absent. They are omitted rather than shown as zero.`

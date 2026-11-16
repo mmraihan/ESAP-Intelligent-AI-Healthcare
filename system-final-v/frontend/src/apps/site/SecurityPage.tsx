@@ -93,7 +93,7 @@ export function SecurityPage() {
       </section>
 
       <Banner tone="warning" icon={<AlertIcon size={18} />} title={t("This is a demonstration, not a production service for patient data")}>
-        {t("The hosted demo holds synthetic data, serves placeholder models and is not hosted in Saudi Arabia. Text typed into the assistant may be processed by a language-model service. Please do not enter real patient information.")}
+        {t("The hosted demo holds synthetic data, uses models that are not validated for clinical use and is not hosted in Saudi Arabia. Text typed into the assistant may be processed by a language-model service. Please do not enter real patient information.")}
       </Banner>
 
       <section className="stack" style={{ gap: 14 }}>

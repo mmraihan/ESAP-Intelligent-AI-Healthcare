@@ -485,8 +485,6 @@ export const AR: Record<string, string> = {
   "What a download contains": "ما الذي يتضمنه التنزيل",
   "Two formats, both yours": "صيغتان، وكلتاهما لك",
   "**A readable PDF** — what you would print, or take to a new doctor.": "**ملف PDF سهل القراءة**: ما يمكنك طباعته أو أخذه إلى طبيب جديد.",
-  "**A structured file** — a standard format another hospital’s computer system can read directly, so nothing has to be typed in again.":
-    "**ملف منظّم**: بصيغة قياسية يستطيع نظام أي مستشفى آخر قراءتها مباشرة، فلا حاجة لإعادة إدخال أي شيء.",
   "Visit summary": "ملخص زيارة",
   "Test result": "نتيجة فحص",
   "Scan or x-ray": "صورة أشعة",

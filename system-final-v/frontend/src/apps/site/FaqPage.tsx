@@ -65,8 +65,8 @@ const RAW: { id: string; cat: Category; q: string; text: string; a?: () => React
   {
     id: "how-accurate", cat: "accuracy",
     q: "How accurate are the models?",
-    text: "The hosted demo serves placeholder models, so its estimates are not accurate predictions and there is no validated performance to report. Measured results appear on the Evidence page only when an evaluation is available on the server.",
-    a: () => <p>{tl("The hosted demo serves **placeholder models**, so its estimates are not accurate predictions and there is no validated performance to report. Measured results appear on the {evidence} only when an evaluation is available on the server.", { evidence: <Link to="/evidence">{t("Evidence page")}</Link> })}</p>,
+    text: "The hosted demo uses models that are not validated for clinical use, so its estimates are not clinical predictions. Measured results appear on the Evidence page only when an evaluation is available on the server.",
+    a: () => <p>{tl("The hosted demo uses models that are **not validated for clinical use**, so its estimates are not clinical predictions. Measured results appear on the {evidence} only when an evaluation is available on the server.", { evidence: <Link to="/evidence">{t("Evidence page")}</Link> })}</p>,
   },
   {
     id: "calibration", cat: "accuracy",
