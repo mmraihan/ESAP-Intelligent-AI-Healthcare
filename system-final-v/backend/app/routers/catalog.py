@@ -181,4 +181,26 @@ def public_demo_accounts():
                 if r != "guest" and surfaces.get(r) in {"clinician", "patient"}}
     if identities.get("super_admin"):
         accounts["super_admin"] = {**identities["super_admin"], "private": True}
-    return {"enabled": True, "accounts": accounts}
+    return {"enabled": True, "accounts": accounts, "solo": _solo_demo_accounts()}
+
+
+# Self-serve ("Solo clinician") QA accounts offered on the picker, so a tester
+# can check that one solo practice cannot see another's patients. Only names
+# listed here, only if the account exists, is in the solo tenant and is active.
+DEFAULT_SOLO_DEMO_EMAILS = "qa-solo-2@esap-qa.example"
+
+
+def _solo_demo_accounts() -> list[dict]:
+    import os
+
+    from ..deps import SOLO_TENANT_ID
+
+    raw = os.environ.get("ESAP_DEMO_SOLO_EMAILS", DEFAULT_SOLO_DEMO_EMAILS)
+    out: list[dict] = []
+    for email in [e.strip().lower() for e in raw.split(",") if e.strip()]:
+        user = db.one_doc("SELECT doc FROM users WHERE email=? AND tenant_id=?", (email, SOLO_TENANT_ID))
+        if not user or user.get("status", "active") != "active":
+            continue
+        out.append({"name": user.get("name") or email, "email": email,
+                    "title": user.get("localTitle") or user.get("title") or ""})
+    return out

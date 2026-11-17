@@ -228,3 +228,17 @@ def test_the_demo_role_page_keeps_every_clinical_and_patient_account(client):
     accounts = client.get("/api/v1/public/demo-accounts").json()["accounts"]
     assert {"physician", "resident", "charge_nurse", "staff_nurse", "case_manager", "patient", "super_admin"} <= set(accounts)
     assert "tenant_owner" not in accounts and accounts["super_admin"]["private"] is True
+
+
+def test_the_demo_role_page_lists_named_solo_accounts_only(client, monkeypatch):
+    # The isolation check needs a second solo practice on /demo-role. Only
+    # addresses named in ESAP_DEMO_SOLO_EMAILS that exist in the solo tenant
+    # are listed; a hospital account or an unknown address is not.
+    listed = f"qa-solo-{uuid.uuid4().hex[:6]}@esap-qa.example"
+    client.post("/api/v1/auth/signup", json={
+        "name": "QA Solo Listed", "email": listed, "password": "a-long-enough-password", "role": "physician"})
+    monkeypatch.setenv("ESAP_DEMO_SOLO_EMAILS", f"{listed.upper()}, nobody@esap-qa.example, amara.okonkwo@styves.example")
+    solo = client.get("/api/v1/public/demo-accounts").json()["solo"]
+    assert [a["email"] for a in solo] == [listed]
+    assert solo[0]["name"] == "QA Solo Listed" and "password" not in solo[0]
+    assert "solo" not in client.get("/api/v1/public/demo-accounts").json()["accounts"]

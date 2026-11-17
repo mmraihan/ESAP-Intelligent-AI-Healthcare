@@ -11,7 +11,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/(product|pricing|security|evidence|waitlist|privacy|terms|faq|login|signup|demo-role|welcome|reset-password|account|support|models|help)",
+      "source": "/(product|pricing|security|evidence|waitlist|privacy|terms|faq|login|signup|demo-role|welcome|reset-password|verify-email|account|support|models|help)",
       "destination": "/index.html"
     },
     {

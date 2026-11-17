@@ -13,7 +13,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROLES, type RoleCode } from "@/lib/rbac";
-import { useSession } from "@/lib/session";
+import { DEMO_PASSWORD, useSession } from "@/lib/session";
 import { api } from "@/api/client";
 import { DEMO_IDENTITY, mergeDemoAccounts } from "@/mock/db";
 import { LanguageToggle, t } from "@/i18n";
@@ -21,7 +21,7 @@ import { BrandMark } from "@/components/shell/AppShell";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { DemoBadge } from "@/components/ui/domain";
 import { Badge, Banner, Button } from "@/components/ui/primitives";
-import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, LockIcon, ShieldIcon } from "@/components/ui/icons";
+import { ActivityIcon, AlertIcon, ArrowRight, GlobeIcon, HeartPulseIcon, LockIcon, ShieldIcon, UserIcon } from "@/components/ui/icons";
 
 // Clinical and patient roles sign in with one click (the demo password). The
 // super admin is listed but private: it opens the normal sign-in with the
@@ -36,18 +36,22 @@ const DEMO_GROUPS: { title: string; note: string; icon: JSX.Element; roles: Role
 /** Never signed in with the shared demo password, whatever the server sends. */
 const PRIVATE_ROLES = new Set<RoleCode>(["super_admin"]);
 
+/** A self-serve ("Solo clinician") QA account, for the isolation check. */
+type SoloAccount = { name: string; email: string; title: string };
+
 const isPrivate = (role: RoleCode) => PRIVATE_ROLES.has(role) || Boolean(DEMO_IDENTITY[role]?.private);
 
 export function DemoAccessPage() {
   const nav = useNavigate();
-  const { signIn, pending, error } = useSession();
+  const { signIn, signInWithPassword, pending, error } = useSession();
   const [, setLoaded] = useState(false);
+  const [solo, setSolo] = useState<SoloAccount[]>([]);
 
   // A signed-in session only holds its own identity, so a person who opens this
   // page while signed in still needs the full list to switch role.
   useEffect(() => {
-    api.get<{ accounts: Record<string, { name: string; email: string; title: string; private?: boolean }> }>("/api/v1/public/demo-accounts")
-      .then((r) => { mergeDemoAccounts(r.accounts ?? {}); setLoaded(true); })
+    api.get<{ accounts: Record<string, { name: string; email: string; title: string; private?: boolean }>; solo?: SoloAccount[] }>("/api/v1/public/demo-accounts")
+      .then((r) => { mergeDemoAccounts(r.accounts ?? {}); setSolo(r.solo ?? []); setLoaded(true); })
       .catch(() => undefined);
   }, []);
 
@@ -68,6 +72,14 @@ export function DemoAccessPage() {
       return;
     }
     void signIn(role).then(() => nav(ROLES[role].home)).catch(() => undefined);
+  }
+
+  function enterSolo(email: string) {
+    if (!DEMO_PASSWORD) {
+      nav(`/login?email=${encodeURIComponent(email)}`);
+      return;
+    }
+    void signInWithPassword(email, DEMO_PASSWORD).then(() => nav(ROLES.physician.home)).catch(() => undefined);
   }
 
   return (
@@ -125,6 +137,28 @@ export function DemoAccessPage() {
                   </section>
                 );
               })}
+              {solo.length ? (
+                <section className="demo-group auth-rise" style={{ "--i": DEMO_GROUPS.length } as CSSProperties}>
+                  <header className="demo-group-head">
+                    <span className="demo-group-icon"><UserIcon size={18} /></span>
+                    <div>
+                      <strong>{t("Solo practice")}</strong>
+                      <span>{t("Individual accounts, each with its own patients. For checking that one practice can't see another's.")}</span>
+                    </div>
+                  </header>
+                  <div className="demo-roles">
+                    {solo.map((a) => (
+                      <button key={a.email} type="button" className="demo-role" disabled={pending} onClick={() => enterSolo(a.email)}>
+                        <span className="demo-role-text">
+                          <strong>{t("Solo clinician")}</strong>
+                          <small>{a.name}</small>
+                        </span>
+                        <ArrowRight size={14} />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
             </div>
           )}
 

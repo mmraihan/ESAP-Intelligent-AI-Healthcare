@@ -981,6 +981,8 @@ export const AR: Record<string, string> = {
   "Hospital single sign-on is not connected in this build yet.": "تسجيل الدخول الموحّد للمستشفى غير متصل في هذه النسخة بعد.",
   "New to ESAP?": "جديد على ESAP؟",
   "Solo clinician": "طبيب مستقل",
+  "Solo practice": "عيادة مستقلة",
+  "Individual accounts, each with its own patients. For checking that one practice can't see another's.": "حسابات فردية، لكل منها مرضاه. للتحقق من أن أي عيادة لا ترى مرضى عيادة أخرى.",
   "Create an individual account": "أنشئ حسابًا فرديًا",
   "Patient or carer": "مريض أو مقدّم رعاية",
   "Open the patient portal": "افتح بوابة المريض",
