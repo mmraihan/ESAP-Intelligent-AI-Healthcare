@@ -28,6 +28,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .. import audit, db, evidence, rbac
+from ..config import settings
 from ..deps import Actor, current_actor, display_name, tenant_scope
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -117,6 +118,8 @@ def _payload(kind: str, actor: Actor, tenant_id: str, scope: dict) -> tuple[list
             rows = [r for r in rows if r["id"] == invoice_id]
             if not rows:
                 raise ApiError(404, "No such invoice.")
+        # Every invoice names where billing questions go.
+        rows = [{**r, "billingContact": r.get("billingContact") or settings().billing_email} for r in rows]
         return rows, len(rows)
     if kind in {"encounter_summary", "handoff"}:
         from .clinical import scope_encounters

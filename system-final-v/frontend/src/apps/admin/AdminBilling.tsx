@@ -19,6 +19,7 @@ import { AlertIcon, BedIcon, ChartIcon, CreditCardIcon, DownloadIcon, FileIcon }
 import { act, requestExport } from "@/api/actions";
 import { ApiError, api } from "@/api/client";
 import { openBillingPortal, startCheckout } from "@/api/billing";
+import { BILLING_EMAIL, MailLink } from "@/lib/contact";
 import type { PlanDefinition } from "@/mock/types";
 
 const INCLUDED_ASSESSMENTS = 17_000;
@@ -151,7 +152,7 @@ export function AdminBilling() {
       )}
 
       {tab === "invoices" && (
-        <Card title="Invoices" padded={false}>
+        <Card title="Invoices" subtitle={<>Questions about an invoice: <MailLink address={BILLING_EMAIL} /></>} padded={false}>
           <div className="scroll-x">
             <table className="data-table">
               <thead><tr><th>Invoice</th><th>Period</th><th>Issued</th><th style={{ textAlign: "right" }}>Amount</th><th>Status</th><th></th></tr></thead>
@@ -254,6 +255,9 @@ export function AdminBilling() {
               ))}
             </ul>
             <div className="invoice-total"><span>Total</span><span className="tnum">{usd(openInvoice.amountUsd)}</span></div>
+            <p className="muted" style={{ margin: "12px 0 0", fontSize: 13 }}>
+              Billing questions: <MailLink address={BILLING_EMAIL} subject={`Invoice ${openInvoice.id}`} />
+            </p>
           </>
         )}
       </Modal>

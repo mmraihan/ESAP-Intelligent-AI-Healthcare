@@ -19,6 +19,7 @@ import { ApiError, NetworkError } from "@/api/client";
 import { planCopy } from "@/lib/planCopy";
 import { Badge, Banner, Button, Card, SegmentedControl, cx } from "@/components/ui/primitives";
 import { t, tl } from "@/i18n";
+import { BILLING_EMAIL, MailLink } from "@/lib/contact";
 import { SiteLayout } from "./SiteLayout";
 import { PricingArt } from "./SiteArt";
 import { CheckIcon, LockIcon, ScaleIcon, ShieldIcon } from "@/components/ui/icons";
@@ -197,6 +198,8 @@ export function PricingPage() {
         <h2 style={{ fontSize: 24, margin: 0, letterSpacing: "-0.02em" }}>{t("Questions people actually ask")}</h2>
         <p className="muted" style={{ margin: 0 }}>
           {tl("More on accuracy, privacy and the patient portal in the {faq}.", { faq: <Link to="/faq">{t("full FAQ")}</Link> })}
+          {" "}
+          {tl("Questions about a payment or an invoice: {billing}.", { billing: <MailLink address={BILLING_EMAIL} /> })}
         </p>
         {PRICING_FAQ.map((f) => (
           <Card key={f.q} title={t(f.q)}>

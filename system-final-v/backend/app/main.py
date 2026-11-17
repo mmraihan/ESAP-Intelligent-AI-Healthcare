@@ -13,6 +13,8 @@ deployable is a build-config change. Until then the tenant wall is enforced in
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import logging
+import os
 import uuid
 
 from fastapi import Depends, FastAPI, Request
@@ -29,6 +31,27 @@ from .routers import (
 from .assembler import PLACEHOLDER_DISCLAIMER
 from .seed import ensure_seeded
 from .security import iso, utcnow
+
+def _configure_logging() -> None:
+    """Send the app's own `esap.*` loggers (mail, retention) to stderr.
+
+    Uvicorn configures only its own loggers, so without this an "email kept in
+    the outbox" or "mail to … failed" line was never printed. ESAP_LOG_LEVEL
+    sets the level (default INFO). Idempotent: reloads do not add handlers.
+    """
+    logger = logging.getLogger("esap")
+    if any(getattr(h, "_esap", False) for h in logger.handlers):
+        return
+    handler = logging.StreamHandler()
+    handler._esap = True  # type: ignore[attr-defined]
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(os.environ.get("ESAP_LOG_LEVEL", "INFO").upper())
+    logger.propagate = False
+
+
+_configure_logging()
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):

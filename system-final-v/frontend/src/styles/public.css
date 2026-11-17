@@ -419,6 +419,15 @@
     color: var(--text-primary);
   }
 }
+.pub-foot-mail {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  color: var(--text-muted);
+}
+.pub-foot-cols .pub-foot-mail a {
+  min-height: 32px;
+}
 .pub-foot .pub-foot-note {
   display: flex;
   flex-wrap: wrap;
@@ -1806,6 +1815,9 @@
   flex: none;
   margin-top: 0.15rem;
   color: var(--accent-ink);
+}
+.legal-contact p + p {
+  margin-top: 0.5rem;
 }
 .legal-contact p {
   margin: 0;

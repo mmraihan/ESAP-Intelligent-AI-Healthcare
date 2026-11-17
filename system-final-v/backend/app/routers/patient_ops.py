@@ -13,10 +13,10 @@ import uuid
 
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, red_flags, settings_store
+from .. import audit, db, notify, red_flags, settings_store
 from ..care_team import has_care_team
 from ..deps import Actor, current_actor
 from ..errors import ApiError
@@ -74,6 +74,8 @@ class FamilyAccessRequest(Strict):
     level: str = Field("view_summaries", pattern="^(view_summaries|view_all|act_on_behalf)$")
     notify_on_view: bool = True
     expires_at: str | None = None
+    #: Portal language when the invite was sent; the carer's email uses it.
+    lang: str | None = Field(None, pattern="^(en|ar)$")
 
 
 def _me(actor: Actor) -> str:
@@ -150,7 +152,7 @@ def list_submissions(actor: Actor = Depends(current_actor)):
 
 
 @router.post("/family", status_code=201)
-def grant_family_access(body: FamilyAccessRequest, request: Request,
+def grant_family_access(body: FamilyAccessRequest, request: Request, background: BackgroundTasks,
                         actor: Actor = Depends(current_actor)):
     """Give a relative or carer their own access.
 
@@ -165,7 +167,11 @@ def grant_family_access(body: FamilyAccessRequest, request: Request,
     # password, so the audit log can say which person actually looked.
     token = f"cg_{secrets.token_urlsafe(24)}"
     pu = db.one_doc("SELECT doc FROM users WHERE id=?", (patient_id,))
-    patient_name = (pu or {}).get("name") or "your family member"
+    # Seeded demo patients sign in through a demo identity, not a users row.
+    me = pu or db.one_doc("SELECT doc FROM users WHERE id=?", (actor.user_id,)) or {}
+    ident = (db.document("demo_identity") or {}).get(actor.role) or {}
+    real_name = me.get("name") or (ident.get("name") if ident.get("email") == actor.email else None)
+    patient_name = real_name or "your family member"
     email = body.email.strip().lower()
     doc = {
         "id": f"c_{uuid.uuid4().hex[:10]}", "grantee": f"{body.name} ({body.relationship})",
@@ -182,6 +188,8 @@ def grant_family_access(body: FamilyAccessRequest, request: Request,
         "status": "pending", "createdAt": iso(utcnow()),
     })
     audit.record(actor, "consent.grant", doc["grantee"], ip=_ip(request))
+    lang = notify.lang_of(body.lang or me.get("lang"))
+    background.add_task(notify.caregiver_invite, email, token, body.name, real_name, body.relationship, lang)
     return {**doc, "acceptToken": token, "acceptPath": f"/caregiver/accept/{token}"}
 
 

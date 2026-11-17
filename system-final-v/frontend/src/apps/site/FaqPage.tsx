@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { cx, EmptyState } from "@/components/ui/primitives";
 import { ChevronDown, LinkIcon, MailIcon, SearchIcon, SparkIcon, XIcon } from "@/components/ui/icons";
 import { t, tl } from "@/i18n";
+import { BILLING_EMAIL, MailLink, SUPPORT_EMAIL } from "@/lib/contact";
 import { SiteLayout } from "./SiteLayout";
 import { FaqArt } from "./SiteArt";
 import { PRICING_FAQ } from "./PricingPage";
@@ -332,9 +333,10 @@ export function FaqPage() {
           <div>
             <strong>{t("Still have a question?")}</strong>
             <p>
-              {tl("Hospitals can {waitlist}; anyone can email {email}. Signed-in users can open a ticket from {support}.", {
+              {tl("Hospitals can {waitlist}; anyone can email {email}, and payment questions go to {billing}. Signed-in users can open a ticket from {support}.", {
                 waitlist: <Link to="/waitlist">{t("talk to our team through the waitlist")}</Link>,
-                email: <a href="mailto:support@esap.ai" lang="en" dir="ltr">support@esap.ai</a>,
+                email: <MailLink address={SUPPORT_EMAIL} />,
+                billing: <MailLink address={BILLING_EMAIL} />,
                 support: <Link to="/support">{t("Help & support")}</Link>,
               })}
             </p>

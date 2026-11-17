@@ -13,6 +13,7 @@ import { ROLES } from "@/lib/rbac";
 import { billingStatus, checkoutStatus } from "@/api/billing";
 import { ApiError } from "@/api/client";
 import { Banner, Card } from "@/components/ui/primitives";
+import { BILLING_EMAIL, MailLink } from "@/lib/contact";
 import { SiteLayout } from "./SiteLayout";
 
 const POLL_MS = 2500;
@@ -90,13 +91,14 @@ export function BillingSuccessPage() {
           )}
           {view.kind === "active" && (
             <Banner tone="good" title={`Your ${view.plan} plan is active`}>
-              A receipt is on its way from Polar. <Link to={home}>Go to your workspace</Link>.
+              A receipt is on its way from Polar. Billing questions: <MailLink address={BILLING_EMAIL} />.{" "}
+              <Link to={home}>Go to your workspace</Link>.
             </Banner>
           )}
           {view.kind === "slow" && (
             <Banner tone="warning" title="Still waiting on confirmation">
               Your payment may still be processing. Your plan will switch over as soon as it is confirmed — check back
-              shortly, or <Link to="/support">contact support</Link> if it has not changed within the hour.
+              shortly, or write to <MailLink address={BILLING_EMAIL} /> if it has not changed within the hour.
             </Banner>
           )}
           {view.kind === "failed" && <Banner tone="critical" title="Payment not completed">{view.message} <Link to="/pricing">Back to pricing</Link>.</Banner>}

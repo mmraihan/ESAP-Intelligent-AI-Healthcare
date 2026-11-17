@@ -352,7 +352,10 @@ export const AR_SITE: Record<string, string> = {
   "Link copied": "نُسخ الرابط",
   "Copy link to this answer": "نسخ رابط هذه الإجابة",
   "Still have a question?": "لديك سؤال آخر؟",
-  "Hospitals can {waitlist}; anyone can email {email}. Signed-in users can open a ticket from {support}.": "يمكن للمستشفيات {waitlist}؛ ويمكن لأي شخص المراسلة على {email}. ويمكن للمستخدمين المسجّلين فتح تذكرة من {support}.",
+  "Hospitals can {waitlist}; anyone can email {email}, and payment questions go to {billing}. Signed-in users can open a ticket from {support}.": "يمكن للمستشفيات {waitlist}؛ ويمكن لأي شخص المراسلة على {email}، وتُوجَّه أسئلة الدفع إلى {billing}. ويمكن للمستخدمين المسجّلين فتح تذكرة من {support}.",
+  "Questions about a payment or an invoice: {billing}.": "لأسئلة الدفع أو الفواتير: {billing}.",
+  "Support": "الدعم",
+  "Billing": "الفوترة",
   "talk to our team through the waitlist": "التواصل مع فريقنا عبر قائمة الانتظار",
 
   // --- Evidence page --------------------------------------------------------------------

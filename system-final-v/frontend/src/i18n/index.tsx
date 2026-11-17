@@ -28,7 +28,7 @@ const STORAGE_KEY = "esap.lang";
  * the legal pages) is localised too (QA issue 14).
  */
 export const LOCALISED_PREFIXES = [
-  "/patient", "/welcome", "/login", "/signup", "/invite", "/reset-password", "/privacy", "/terms",
+  "/patient", "/welcome", "/login", "/signup", "/invite", "/reset-password", "/verify-email", "/privacy", "/terms",
   "/product", "/pricing", "/security", "/evidence", "/faq", "/waitlist",
 ];
 

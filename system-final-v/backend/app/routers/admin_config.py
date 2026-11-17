@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, rbac, settings_store
+from .. import audit, db, notify, rbac, settings_store
 from ..deps import Actor, admin_only, current_actor, end_sessions, tenant_scope, staff_only
 from ..errors import ApiError
 from ..security import iso, utcnow
@@ -157,6 +157,7 @@ def delete_unit(
 def remind_invite(
     invite_id: str,
     request: Request,
+    background: BackgroundTasks,
     actor: Actor = Depends(current_actor),
     tenant_id: str = Depends(tenant_scope),
 ):
@@ -173,6 +174,14 @@ def remind_invite(
                        {"remindersSent": int(invite.get("remindersSent", 0)) + 1})
     audit.record(actor, "invite.send", f"reminder: {invite['email']}",
                  tenant_id=tenant_id, ip=_ip(request))
+    row = db.connect().execute("SELECT token FROM invites WHERE id=?", (invite_id,)).fetchone()
+    if row and row["token"]:
+        tenant = db.one_doc("SELECT doc FROM tenants WHERE id=?", (tenant_id,)) or {}
+        background.add_task(
+            notify.staff_invite, invite["email"], row["token"], tenant.get("name") or "your hospital",
+            invite.get("localTitle") or rbac.roles().get(invite["role"], {}).get("label", invite["role"]),
+            invite.get("sentBy") or "your hospital's administrator", invite.get("expiresAt"),
+            reminder=True)
     return doc
 
 

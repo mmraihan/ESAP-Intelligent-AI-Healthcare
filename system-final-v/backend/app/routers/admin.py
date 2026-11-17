@@ -11,10 +11,10 @@ from __future__ import annotations
 import secrets
 import uuid
 
-from fastapi import APIRouter, Body, Depends, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, entitlements, evidence, rbac, settings_store
+from .. import audit, db, entitlements, evidence, notify, rbac, settings_store
 from ..deps import Actor, admin_only, current_actor, display_name, end_sessions, tenant_scope, staff_only
 from ..errors import ApiError
 from ..security import expiry, iso, utcnow
@@ -302,6 +302,7 @@ def invites(actor: Actor = Depends(current_actor), tenant_id: str = Depends(tena
 def send_invite(
     body: InviteRequest,
     request: Request,
+    background: BackgroundTasks,
     actor: Actor = Depends(current_actor),
     tenant_id: str = Depends(tenant_scope),
 ):
@@ -346,6 +347,11 @@ def send_invite(
     })
     audit.record(actor, "invite.send", doc["email"], tenant_id=tenant_id,
                  ip=request.client.host if request.client else "unknown")
+    tenant = db.one_doc("SELECT doc FROM tenants WHERE id=?", (tenant_id,)) or {}
+    background.add_task(
+        notify.staff_invite, doc["email"], accept_token, tenant.get("name") or "your hospital",
+        doc["localTitle"] or rbac.roles().get(body.role, {}).get("label", body.role),
+        doc["sentBy"], doc["expiresAt"])
     return {**doc, "acceptToken": accept_token}
 
 

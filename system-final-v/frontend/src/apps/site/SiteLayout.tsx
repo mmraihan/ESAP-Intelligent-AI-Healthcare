@@ -9,6 +9,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BrandMark } from "@/components/shell/AppShell";
 import { DemoBadge } from "@/components/ui/domain";
+import { BILLING_EMAIL, MailLink, SUPPORT_EMAIL } from "@/lib/contact";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { cx } from "@/components/ui/primitives";
 import { LanguageToggle, t } from "@/i18n";
@@ -130,6 +131,8 @@ export function SiteFooter() {
               <strong>{t("Help")}</strong>
               <Link to="/faq">{t("FAQ")}</Link>
               <Link to="/waitlist">{t("Talk to us")}</Link>
+              <span className="pub-foot-mail">{t("Support")}: <MailLink address={SUPPORT_EMAIL} /></span>
+              <span className="pub-foot-mail">{t("Billing")}: <MailLink address={BILLING_EMAIL} /></span>
             </nav>
             <nav aria-label="Legal">
               <strong>{t("Legal")}</strong>

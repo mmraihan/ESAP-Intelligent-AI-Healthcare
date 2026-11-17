@@ -26,7 +26,8 @@ def polar(monkeypatch):
     cfg = SimpleNamespace(polar_env="sandbox", polar_access_token="polar_oat_test",
                           polar_webhook_secret=SECRET,
                           billing_success_url="https://care.esap.ai/billing/success?checkout_id={CHECKOUT_ID}",
-                          billing_return_url="https://care.esap.ai/pricing")
+                          billing_return_url="https://care.esap.ai/pricing",
+                          billing_email="billing@esap.ai")
     monkeypatch.setattr(billing, "settings", lambda: cfg)
     calls: list[tuple[str, str, dict | None]] = []
 

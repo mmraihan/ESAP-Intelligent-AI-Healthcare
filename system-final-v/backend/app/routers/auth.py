@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from datetime import timedelta
 
-from .. import audit, db, mailer, npi, rbac, session_cookie, settings_store, sso
+from .. import audit, db, mailer, notify, npi, rbac, session_cookie, settings_store, sso
 from ..deps import Actor, current_actor, display_name, end_sessions
 from ..errors import ApiError
 from ..security import (
@@ -38,6 +38,8 @@ class SignupRequest(Strict):
     role: str = "physician"
     #: Recorded for a later audit; not verified automatically.
     licence_number: str | None = Field(None, max_length=60)
+    #: Website language at sign-up; account emails are written in it.
+    lang: str | None = Field(None, pattern="^(en|ar)$")
 
 
 class AcceptInviteRequest(Strict):
@@ -62,6 +64,7 @@ class ElevateRequest(Strict):
 
 class ForgotPasswordRequest(Strict):
     email: str = Field(min_length=3, max_length=200)
+    lang: str | None = Field(None, pattern="^(en|ar)$")
 
 
 class ResetPasswordRequest(Strict):
@@ -293,7 +296,7 @@ def sso_dev_login(body: SsoDevLoginRequest, request: Request):
 
 
 @router.post("/auth/signup", status_code=201)
-def signup(body: SignupRequest):
+def signup(body: SignupRequest, background: BackgroundTasks):
     """Self-serve individual seat (§17) — never a hospital tenant.
 
     A self-serve account lands in the individual tenant on a clinical role. A
@@ -338,10 +341,16 @@ def signup(body: SignupRequest):
         "npiChecksumValid": (npi_result or {}).get("checksumValid"),
         "npiVerified": bool((npi_result or {}).get("verified")),
         "attestedAt": iso(utcnow()) if body.role != "patient" else None,
+        "lang": notify.lang_of(body.lang),
+        "emailVerified": False,
     }
     db.insert_doc("users", doc, {"tenant_id": "t_solo", "email": email,
                                  "name": body.name, "role": body.role, "status": "active"})
     conn.commit()
+    # After the reply goes out, so a slow mail server does not hold up sign-up.
+    verify_link = issue_verify_link(user_id, email)
+    background.add_task(notify.signup_confirmation, email, body.name, doc["localTitle"],
+                        body.role == "patient", verify_link, doc["lang"])
     return _mint(user_id, email, body.role, "t_solo", body.name)
 
 
@@ -537,8 +546,15 @@ def _self_service_reset(role: str, tenant_id: str) -> bool:
     return role == "patient" or tenant_id == "t_solo"
 
 
-def issue_reset_link(user_id: str, email: str) -> str:
-    """Create a one-time reset token and email the link. Returns the link."""
+def _user_lang(user_id: str) -> str:
+    return notify.lang_of((db.one_doc("SELECT doc FROM users WHERE id=?", (user_id,)) or {}).get("lang"))
+
+
+def issue_reset_link(user_id: str, email: str, lang: str | None = None) -> str:
+    """Create a one-time reset token and email the link. Returns the link.
+
+    In `lang` when the request said which language the page was in, otherwise
+    the language saved on the account."""
     raw = new_token()
     now = utcnow()
     conn = db.connect()
@@ -551,12 +567,89 @@ def issue_reset_link(user_id: str, email: str) -> str:
     )
     conn.commit()
     link = f"{settings().public_url}/reset-password?token={raw}"
-    mailer.send(email, "Reset your ESAP password",
-                "Someone asked to reset the password for this ESAP account.\n\n"
-                f"Choose a new password here (the link works for {_RESET_TTL_MINUTES} minutes):\n{link}\n\n"
-                "If you did not ask for this, you can ignore this email. Your password has not changed.",
-                secret=link)
+    notify.password_reset(email, link, _RESET_TTL_MINUTES, notify.lang_of(lang) if lang else _user_lang(user_id))
     return link
+
+
+# --- email confirmation ----------------------------------------------------------
+# The link is the proof, so only its hash is stored, like a reset token. An
+# unconfirmed address can still sign in: confirmation marks the account, and
+# the account page asks for it, rather than locking anyone out.
+
+
+def _verify_key(raw: str) -> str:
+    return f"email_verify:{hashlib.sha256(raw.encode()).hexdigest()}"
+
+
+def issue_verify_link(user_id: str, email: str) -> str:
+    raw = new_token()
+    now = utcnow()
+    db.put_document(_verify_key(raw), {
+        "userId": user_id, "email": email, "createdAt": iso(now),
+        "expiresAt": iso(now + timedelta(hours=notify.VERIFY_TTL_HOURS)), "usedAt": None,
+    })
+    user = db.one_doc("SELECT doc FROM users WHERE id=?", (user_id,)) or {}
+    db.patch_doc("users", user_id, {"emailVerifySentAt": iso(now)})
+    if user.get("emailVerified") is None:
+        db.patch_doc("users", user_id, {"emailVerified": False})
+    return f"{settings().public_url}/verify-email?token={raw}"
+
+
+class VerifyEmailRequest(Strict):
+    token: str = Field(min_length=16, max_length=200)
+
+
+@router.post("/auth/email/verify")
+def verify_email(body: VerifyEmailRequest):
+    """Public: the confirmation link from the sign-up email lands here."""
+    rec = db.document(_verify_key(body.token))
+    if not rec:
+        raise ApiError(400, "That confirmation link is not recognised. Ask for a new one from your account page.")
+    if rec.get("usedAt"):
+        return {"verified": True, "email": rec["email"], "already": True}
+    if datetime.fromisoformat(rec["expiresAt"].replace("Z", "+00:00")) <= utcnow():
+        raise ApiError(400, "That confirmation link has expired. Ask for a new one from your account page.")
+    user = db.one_doc("SELECT doc FROM users WHERE id=?", (rec["userId"],))
+    # A link for an address the account no longer uses confirms nothing.
+    if user is None or (user.get("email") or "").lower() != rec["email"].lower():
+        raise ApiError(400, "That confirmation link is no longer valid.")
+    now = iso(utcnow())
+    db.patch_doc("users", rec["userId"], {"emailVerified": True, "emailVerifiedAt": now})
+    db.put_document(_verify_key(body.token), {**rec, "usedAt": now})
+    audit.record(Actor(rec["userId"], rec["email"], (user.get("roles") or ["patient"])[0],
+                       user.get("tenantId") or "t_solo", ""),
+                 "user.email_verified", rec["email"], tenant_id=user.get("tenantId") or "t_solo", ip="link")
+    return {"verified": True, "email": rec["email"], "already": False}
+
+
+@router.get("/auth/email/status")
+def email_status(actor: Actor = Depends(current_actor)):
+    """Whether the signed-in account's address is confirmed. `verified` is null
+    for accounts that never needed it (seeded demo identities, invited staff)."""
+    user = db.one_doc("SELECT doc FROM users WHERE id=?", (actor.user_id,)) or {}
+    return {"email": actor.email, "verified": user.get("emailVerified"),
+            "verifiedAt": user.get("emailVerifiedAt"), "sentAt": user.get("emailVerifySentAt")}
+
+
+_RESEND_GAP_SECONDS = 60
+
+
+@router.post("/auth/email/resend", status_code=202)
+def resend_verification(background: BackgroundTasks, request: Request, actor: Actor = Depends(current_actor)):
+    user = db.one_doc("SELECT doc FROM users WHERE id=?", (actor.user_id,))
+    if user is None or user.get("emailVerified") is None:
+        raise ApiError(409, "This account does not need email confirmation.")
+    if user.get("emailVerified"):
+        return {"sent": False, "verified": True}
+    sent = user.get("emailVerifySentAt")
+    if sent and (utcnow() - datetime.fromisoformat(sent.replace("Z", "+00:00"))).total_seconds() < _RESEND_GAP_SECONDS:
+        raise ApiError(429, "A confirmation email was sent a moment ago. Check your inbox, then try again in a minute.")
+    link = issue_verify_link(actor.user_id, user["email"])
+    background.add_task(notify.email_verification, user["email"], user.get("name"), link,
+                        notify.lang_of(user.get("lang")))
+    audit.record(actor, "user.email_verify_sent", user["email"], tenant_id=actor.tenant_id,
+                 ip=request.client.host if request.client else "unknown")
+    return {"sent": True, "verified": False}
 
 
 @router.post("/auth/password/forgot", status_code=202)
@@ -574,7 +667,7 @@ def forgot_password(body: ForgotPasswordRequest, request: Request, background: B
     row = db.connect().execute(
         "SELECT user_id, role, tenant_id FROM credentials WHERE email=?", (email,)).fetchone()
     if row is not None and _self_service_reset(row["role"], row["tenant_id"]):
-        background.add_task(issue_reset_link, row["user_id"], email)
+        background.add_task(issue_reset_link, row["user_id"], email, body.lang)
         audit.record(Actor(row["user_id"], email, row["role"], row["tenant_id"], ""),
                      "user.password_reset_link", email, tenant_id=row["tenant_id"],
                      ip=request.client.host if request.client else "unknown")

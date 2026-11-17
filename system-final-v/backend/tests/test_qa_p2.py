@@ -206,9 +206,9 @@ def test_patient_gets_a_reset_link_and_can_set_a_new_password(client, monkeypatc
     sent: list[str] = []
     real_send = mailer.send
 
-    def capture(to, subject, body, secret=None):
+    def capture(to, subject, body, secret=None, **kw):
         sent.append(body)
-        return real_send(to, subject, body, secret=secret)
+        return real_send(to, subject, body, secret=secret, **kw)
 
     monkeypatch.setattr(mailer, "send", capture)
     email, _ = _signup(client)

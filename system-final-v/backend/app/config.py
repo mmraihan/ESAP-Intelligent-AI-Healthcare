@@ -74,8 +74,11 @@ class Settings:
     lockout_threshold: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_THRESHOLD", "5")))
     lockout_minutes: int = field(default_factory=lambda: int(os.environ.get("ESAP_LOCKOUT_MINUTES", "15")))
     #: Where links in emails point (the website, not the API).
+    #: Unset on a server that sends real mail means production: links must not
+    #: point at localhost, so the default is then the live site.
     public_url: str = field(default_factory=lambda: os.environ.get(
-        "ESAP_PUBLIC_URL", "http://localhost:5175").rstrip("/"))
+        "ESAP_PUBLIC_URL",
+        "https://care.esap.ai" if os.environ.get("ESAP_SMTP_HOST") else "http://localhost:5175").rstrip("/"))
     #: Session cookie. HttpOnly always; Secure and SameSite=None over HTTPS so a
     #: website on another host can still send it (QA issue 13).
     cookie_name: str = "esap_session"
@@ -89,6 +92,13 @@ class Settings:
     smtp_user: str | None = field(default_factory=lambda: os.environ.get("ESAP_SMTP_USER") or None)
     smtp_password: str | None = field(default_factory=lambda: os.environ.get("ESAP_SMTP_PASSWORD") or None)
     mail_from: str = field(default_factory=lambda: os.environ.get("ESAP_MAIL_FROM", "ESAP Clinical AI <no-reply@esap.ai>"))
+    #: Where people write back. System mail comes from no-reply@ and carries one
+    #: of these as Reply-To: care@ for account help, billing@ for payments.
+    support_email: str = field(default_factory=lambda: os.environ.get("ESAP_SUPPORT_EMAIL", "care@esap.ai"))
+    billing_email: str = field(default_factory=lambda: os.environ.get("ESAP_BILLING_EMAIL", "billing@esap.ai"))
+    #: ESAP's own "Payment received" email. Polar sends a receipt too; set
+    #: false to leave receipts to Polar alone. Payment-failed mail is unaffected.
+    send_payment_receipts: bool = field(default_factory=lambda: _bool("ESAP_PAYMENT_RECEIPTS", True))
 
     # Deployment / tenancy seam (§5). SQLite is the default single-box store; a
     # multi-hospital deployment sets DATABASE_URL to a Postgres DSN and runs the

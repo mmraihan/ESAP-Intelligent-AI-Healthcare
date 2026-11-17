@@ -10,8 +10,9 @@
  */
 import { useEffect } from "react";
 import { SparkIcon } from "@/components/ui/icons";
+import { BILLING_EMAIL, SUPPORT_EMAIL } from "@/lib/contact";
 
-const CONTACT_EMAIL = "info@esap.ai";
+const CONTACT_EMAIL = SUPPORT_EMAIL;
 const TALLY_SCRIPT = "https://tally.so/widgets/embed.js";
 
 const rawFormId =
@@ -88,6 +89,7 @@ export function WaitlistSection() {
         )}
         <p className="waitlist-foot">
           For any inquiries, contact us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          {" "}Payment and invoice questions: <a href={`mailto:${BILLING_EMAIL}`}>{BILLING_EMAIL}</a>.
         </p>
       </div>
     </section>

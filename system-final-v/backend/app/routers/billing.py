@@ -29,11 +29,11 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import audit, db, rbac
+from .. import audit, db, mailer, notify, rbac
 from ..config import settings
 from ..deps import Actor, current_actor
 from ..errors import ApiError
@@ -113,7 +113,7 @@ def _polar(method: str, path: str, body: dict | None = None) -> dict:
             return json.loads(resp.read() or b"{}")
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode(errors="replace")[:500]
-        raise ApiError(502, "The payment provider refused the request. Try again, or contact support.",
+        raise ApiError(502, f"The payment provider refused the request. Try again, or write to {settings().billing_email}.",
                        detail={"polar_status": exc.code, "polar_body": detail}) from exc
     except (urllib.error.URLError, TimeoutError) as exc:
         raise ApiError(502, "Could not reach the payment provider. Try again in a moment.") from exc
@@ -151,13 +151,7 @@ def _buyer(actor: Actor, tier: str) -> tuple[str, str]:
 
 #: Reserved domains (RFC 2606/6761). Polar refuses them as customer_email, so
 #: demo accounts leave the field empty and the buyer types one at checkout.
-_RESERVED_TLDS = (".example", ".test", ".invalid", ".localhost", ".local")
-_RESERVED_DOMAINS = ("example.com", "example.net", "example.org")
-
-
-def _deliverable(email: str | None) -> bool:
-    domain = (email or "").rpartition("@")[2].lower()
-    return bool(domain) and not domain.endswith(_RESERVED_TLDS) and domain not in _RESERVED_DOMAINS
+_deliverable = mailer.deliverable
 
 
 def _customer_ref(owner_kind: str, owner_id: str) -> str:
@@ -269,7 +263,7 @@ def verify_signature(body: bytes, headers, secret: str, now: float | None = None
 
 
 @router.post("/polar/webhook", include_in_schema=False)
-async def polar_webhook(request: Request):
+async def polar_webhook(request: Request, background: BackgroundTasks):
     secret = settings().polar_webhook_secret
     if not secret:
         # 503 so Polar retries once the server is configured, rather than
@@ -291,14 +285,17 @@ async def polar_webhook(request: Request):
     # seen and Polar's retry gets another go. The handlers are upserts, so a
     # retry of a half-applied event lands in the same place.
     handler = _HANDLERS.get(kind)
-    if handler:
-        handler(data, kind)
+    # Handlers hand back the emails the event calls for; they go out after the
+    # reply, so a slow mail server never makes Polar time out and retry.
+    mails = (handler(data, kind) or []) if handler else []
     try:
         conn.execute("INSERT INTO billing_events (id, type, received_at, doc) VALUES (?,?,?,?)",
                      (msg_id, kind, iso(utcnow()), json.dumps({"type": kind, "objectId": data.get("id")})))
     except sqlite3.IntegrityError:
         pass  # a concurrent retry of the same delivery recorded it first
     conn.commit()
+    for fn, args in mails:
+        background.add_task(fn, *args)
     return {"ok": True}
 
 
@@ -362,7 +359,7 @@ def _revoke(owner_kind: str, owner_id: str, keep_sub: str | None = None) -> None
                  tenant_id=owner_id, platform=True, ip="polar")
 
 
-def _on_subscription(data: dict, kind: str) -> None:
+def _on_subscription(data: dict, kind: str) -> list:
     owner = _owner(data)
     tier = _tier_for_product(data.get("product_id")) or (data.get("metadata") or {}).get("esap_tier")
     if owner is None or tier is None:
@@ -378,6 +375,7 @@ def _on_subscription(data: dict, kind: str) -> None:
         "endsAt": data.get("ends_at"), "lastEvent": kind, "updatedAt": now,
     }
     tenant_id = owner_id if owner_kind == "tenant" else INDIVIDUAL_TENANT
+    prev = db.connect().execute("SELECT status FROM subscriptions WHERE id=?", (data["id"],)).fetchone()
     db.connect().execute(
         "INSERT INTO subscriptions (id, owner_kind, owner_id, tenant_id, tier, status, updated_at, doc) "
         "VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET tier=excluded.tier, status=excluded.status, "
@@ -389,6 +387,29 @@ def _on_subscription(data: dict, kind: str) -> None:
     elif status in _LIVE:
         extra = {"beds": data["seats"]} if owner_kind == "tenant" and tier in PER_BED_TIERS and data.get("seats") else {}
         _grant(owner_kind, owner_id, tier, extra)
+
+    # Payment failure: tell the payer once, when the subscription first goes past due.
+    if status == "past_due" and (prev is None or prev["status"] != "past_due"):
+        to = _recipient(owner_kind, owner_id, data)
+        if to:
+            return [(notify.payment_failed, (to[0], to[1], tier, owner_kind == "tenant", to[2]))]
+    return []
+
+
+def _recipient(owner_kind: str, owner_id: str, data: dict) -> tuple[str, str | None, str] | None:
+    """Who gets payment mail: the ESAP user who bought, else the plan owner,
+    else the address the buyer typed into Polar's checkout."""
+    meta = data.get("metadata") or {}
+    user_id = meta.get("esap_user_id") or (owner_id if owner_kind == "user" else None)
+    user = db.one_doc("SELECT doc FROM users WHERE id=?", (user_id,)) if user_id else None
+    lang = notify.lang_of((user or {}).get("lang"))
+    if user and _deliverable(user.get("email")):
+        return user["email"], user.get("name"), lang
+    customer = data.get("customer") or {}
+    email = customer.get("email") or data.get("customer_email")
+    if _deliverable(email):
+        return email, customer.get("name") or (user or {}).get("name"), lang
+    return None
 
 
 def _invoice_doc(data: dict, tier: str | None, status: str) -> dict:
@@ -407,28 +428,36 @@ def _invoice_doc(data: dict, tier: str | None, status: str) -> dict:
         "source": "polar",
         "polarOrderId": data["id"],
         "tier": tier,
+        "billingContact": settings().billing_email,
     }
 
 
-def _on_order_paid(data: dict, kind: str) -> None:
+def _on_order_paid(data: dict, kind: str) -> list:
     owner = _owner(data)
     tier = _tier_for_product(data.get("product_id")) or (data.get("metadata") or {}).get("esap_tier")
     if owner is None:
         return
     owner_kind, owner_id = owner
+    inv = _invoice_doc(data, tier, "paid")
     if owner_kind == "tenant":
         # Individuals' orders stay in Polar's portal; the invoices table is the
         # hospital's billing screen and the shared individual tenant has none.
         conn = db.connect()
         existing = conn.execute("SELECT id FROM invoices WHERE id=?", (data.get("invoice_number") or data["id"],)).fetchone()
         if existing is None:
-            inv = _invoice_doc(data, tier, "paid")
             conn.execute("INSERT INTO invoices (id, tenant_id, status, doc) VALUES (?,?,?,?)",
                          (inv["id"], owner_id, "paid", json.dumps(inv)))
     # The pilot is the one plan sold as a single payment: the order is the grant.
     if tier == "pilot":
         ends = iso(utcnow() + timedelta(days=PILOT_DAYS))
         _grant(owner_kind, owner_id, "pilot", {"pilotEndsAt": ends, "pilotOrderId": data["id"]})
+
+    # Payment success, carrying the invoice. Polar sends its own receipt as well.
+    to = _recipient(owner_kind, owner_id, data)
+    if to and inv["amountUsd"] > 0:
+        return [(notify.payment_received, (to[0], to[1], tier or "plan", inv["amountUsd"], inv["id"],
+                                           inv["period"], inv["lines"], owner_kind == "tenant", to[2]))]
+    return []
 
 
 def _on_order_refunded(data: dict, kind: str) -> None:

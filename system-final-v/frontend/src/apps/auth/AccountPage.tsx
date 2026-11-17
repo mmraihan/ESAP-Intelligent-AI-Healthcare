@@ -3,13 +3,13 @@
  * who you are signed in as and changing your password.
  * Patients have the same controls on their own Settings page.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { t } from "@/i18n";
-import { Button, Card, Field, PageHeader, TextInput } from "@/components/ui/primitives";
+import { Banner, Button, Card, Field, PageHeader, TextInput } from "@/components/ui/primitives";
 import { Modal, Toast } from "@/components/ui/overlays";
 import { ShieldIcon } from "@/components/ui/icons";
 import { act } from "@/api/actions";
-import { api } from "@/api/client";
+import { ApiError, api } from "@/api/client";
 import { useSession } from "@/lib/session";
 import { ROLES } from "@/lib/rbac";
 
@@ -58,6 +58,54 @@ export function PasswordChangeButton({ onResult }: { onResult: (message: string)
   );
 }
 
+type EmailStatus = { email: string; verified: boolean | null; verifiedAt: string | null };
+
+/** Confirm-your-email card. Hidden for accounts that never needed it, and when there is no API. */
+function EmailConfirmation({ onResult }: { onResult: (msg: string) => void }) {
+  const [status, setStatus] = useState<EmailStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api.get<EmailStatus>("/api/v1/auth/email/status")
+      .then((s) => { if (alive) setStatus(s); })
+      .catch(() => { /* demo build or signed out: nothing to show */ });
+    return () => { alive = false; };
+  }, []);
+
+  if (!status || status.verified === null) return null;
+
+  async function resend() {
+    setBusy(true);
+    try {
+      const r = await api.post<{ sent: boolean; verified: boolean }>("/api/v1/auth/email/resend");
+      if (r.verified) setStatus((s) => (s ? { ...s, verified: true } : s));
+      onResult(r.sent ? t("Confirmation email sent. Check your inbox.") : t("Your email is already confirmed."));
+    } catch (err) {
+      onResult(err instanceof ApiError ? err.message : t("Could not reach the ESAP API."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title={t("Email address")}>
+      {status.verified ? (
+        <Banner tone="good" title={t("Your email is confirmed")}><span lang="en" dir="ltr">{status.email}</span></Banner>
+      ) : (
+        <Banner tone="warning" title={t("Please confirm your email")}>
+          {t("We sent a confirmation link to {email}. Open it to confirm the address is yours.", { email: status.email })}
+        </Banner>
+      )}
+      {!status.verified && (
+        <div style={{ marginTop: 12 }}>
+          <Button variant="ghost" disabled={busy} onClick={() => void resend()}>{t("Send the link again")}</Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function AccountPage() {
   const { name, email, role, idleMinutes } = useSession();
   const [toast, setToast] = useState<string | null>(null);
@@ -74,6 +122,7 @@ export function AccountPage() {
           {t("You are signed out after {n} minutes without activity, and always after 12 hours.", { n: idleMinutes })}
         </p>
       </Card>
+      <EmailConfirmation onResult={setToast} />
       <Card title={t("Password")}>
         <PasswordChangeButton onResult={setToast} />
       </Card>

@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { Banner } from "@/components/ui/primitives";
 import { AlertIcon, BookIcon, CheckIcon, FileIcon, MailIcon } from "@/components/ui/icons";
 import { currentLang } from "@/i18n";
+import { BILLING_EMAIL, MailLink, SUPPORT_EMAIL } from "@/lib/contact";
 import { SiteLayout } from "./SiteLayout";
 import { LegalArt, PrivacyArt } from "./SiteArt";
 import { EFFECTIVE, LEGAL, LEGAL_UI, VERSION, type Block, type LegalText } from "./legalContent";
@@ -100,7 +101,12 @@ function LegalDoc({ doc, sibling, art }: { doc: LegalText; sibling: { to: string
 
           <div className="legal-contact">
             <MailIcon size={18} />
-            <p>{ui.contact}</p>
+            <div>
+              <p>{ui.contact}</p>
+              <p>
+                {ui.helpLead} <MailLink address={SUPPORT_EMAIL} />. {ui.billingLead} <MailLink address={BILLING_EMAIL} />.
+              </p>
+            </div>
           </div>
         </article>
       </div>

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { CONSENTS } from "@/mock/db";
 import type { ConsentGrant } from "@/mock/types";
 import { ago, initials } from "@/lib/format";
-import { t, tr } from "@/i18n";
+import { currentLang, t, tr } from "@/i18n";
 import { Badge, Banner, Button, Card, Field, PageHeader, Select, TextInput, Toggle } from "@/components/ui/primitives";
 import { ConfirmDestructive, Modal, Toast } from "@/components/ui/overlays";
 import {
@@ -85,7 +85,7 @@ export function PatientFamily() {
     const msg = await act(
       () => api.post<{ acceptToken: string; acceptPath: string }>("/api/v1/patient/family", {
         name: d.name.trim(), email: d.email.trim(), relationship: d.relation,
-        scope: LEVEL_SCOPE[d.level], level: d.level, notify_on_view: d.notify,
+        scope: LEVEL_SCOPE[d.level], level: d.level, notify_on_view: d.notify, lang: currentLang(),
       }),
       (r) => {
         lastCaregiverLink = { name: d.name.trim(), url: `${window.location.origin}${r.acceptPath}` };

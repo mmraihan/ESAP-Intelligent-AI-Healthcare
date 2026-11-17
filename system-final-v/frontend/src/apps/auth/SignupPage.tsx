@@ -9,7 +9,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSession } from "@/lib/session";
-import { t } from "@/i18n";
+import { currentLang, t } from "@/i18n";
 import { Banner, Select, Toggle, cx } from "@/components/ui/primitives";
 import { AlertIcon, ArrowRight, CheckIcon, EyeIcon, EyeOffIcon, HeartPulseIcon, ShieldIcon, StethoscopeIcon } from "@/components/ui/icons";
 import { ApiError, NetworkError, api } from "@/api/client";
@@ -85,6 +85,7 @@ export function SignupPage() {
       const session = await api.post<SessionPayload>("/api/v1/auth/signup", {
         name: form.name.trim(), email: form.email.trim(), password: form.password, role,
         licence_number: kind === "clinician" ? form.licence.trim() || null : null,
+        lang: currentLang(),
       }, { anonymous: true });
       await startSession(session);
       if (wantsPro && kind === "clinician") {

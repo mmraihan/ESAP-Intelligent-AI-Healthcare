@@ -35,6 +35,7 @@ import { SignupPage } from "@/apps/auth/SignupPage";
 import { InviteAcceptPage } from "@/apps/auth/InviteAcceptPage";
 import { CaregiverAcceptPage } from "@/apps/auth/CaregiverAcceptPage";
 import { ResetPasswordPage } from "@/apps/auth/ResetPasswordPage";
+import { VerifyEmailPage } from "@/apps/auth/VerifyEmailPage";
 
 /**
  * The demo role picker's route. Set VITE_DEMO_ACCESS_PATH in a gitignored
@@ -360,6 +361,7 @@ export function App() {
         <Route path={DEMO_ACCESS_PATH} element={<Suspense fallback={null}><DemoAccessPage /></Suspense>} />
       )}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/account" element={<Account><AccountPage /></Account>} />
       <Route path="/invite/:token" element={<InviteAcceptPage />} />
       <Route path="/caregiver/accept/:token" element={<CaregiverAcceptPage />} />

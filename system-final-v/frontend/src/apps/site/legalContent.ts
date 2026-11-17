@@ -603,6 +603,7 @@ export const LEGAL_UI = {
     draftTitle: "Draft — not yet reviewed by counsel",
     draftBody: "This text describes how the demonstration build is designed to behave. It has not been reviewed by a lawyer and is not a contract. A hospital's signed agreement and data processing agreement take precedence over anything written here.",
     contact: "Questions about this document go to the ESAP Data Protection Officer at dpo@esap.ai. If a hospital treats you, its own privacy officer is usually the quickest route.",
+    helpLead: "For help with your account, write to", billingLead: "Payment and invoice questions go to",
     readPrivacy: "Read the Privacy Policy", readTerms: "Read the Terms & Conditions",
   },
   ar: {
@@ -610,6 +611,7 @@ export const LEGAL_UI = {
     draftTitle: "مسودة — لم يراجعها مستشار قانوني بعد",
     draftBody: "يصف هذا النص كيف صُمّم الإصدار التجريبي ليعمل. لم يراجعه محامٍ وليس عقدًا. وتتقدّم اتفاقية المستشفى الموقّعة واتفاقية معالجة البيانات على أي شيء مكتوب هنا.",
     contact: "توجَّه الأسئلة حول هذا المستند إلى مسؤول حماية البيانات في ESAP على dpo@esap.ai. وإذا كان مستشفى يعالجك، فمسؤول الخصوصية لديه هو غالبًا الطريق الأسرع.",
+    helpLead: "للمساعدة في حسابك، راسلنا على", billingLead: "وتُوجَّه أسئلة الدفع والفواتير إلى",
     readPrivacy: "اقرأ سياسة الخصوصية", readTerms: "اقرأ الشروط والأحكام",
   },
 };

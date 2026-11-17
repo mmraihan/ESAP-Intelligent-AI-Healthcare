@@ -13,7 +13,7 @@ import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ROLES } from "@/lib/rbac";
 import { useSession } from "@/lib/session";
-import { t } from "@/i18n";
+import { currentLang, t } from "@/i18n";
 import { Banner } from "@/components/ui/primitives";
 import { AlertIcon, ArrowRight, EyeIcon, EyeOffIcon, HeartPulseIcon, LockIcon, MailIcon, ShieldIcon, StethoscopeIcon } from "@/components/ui/icons";
 import { api } from "@/api/client";
@@ -47,7 +47,7 @@ export function LoginPage() {
       return;
     }
     try {
-      await api.post("/api/v1/auth/password/forgot", { email: email.trim() }, { anonymous: true });
+      await api.post("/api/v1/auth/password/forgot", { email: email.trim(), lang: currentLang() }, { anonymous: true });
       setResetNote(t("If that address has an account, we have emailed it a link to choose a new password. The link works for 60 minutes. Hospital staff accounts are reset by the hospital's administrator, who has been told."));
     } catch {
       setResetNote(t("Could not reach the ESAP API."));
