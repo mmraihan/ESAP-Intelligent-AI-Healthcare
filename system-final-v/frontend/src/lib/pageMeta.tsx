@@ -6,7 +6,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const ORIGIN = "https://care.esap.ai";
+const ORIGIN = "https://rasdiya.health";
 const SITE = "ESAP Clinical AI";
 
 const PUBLIC: Record<string, string> = {

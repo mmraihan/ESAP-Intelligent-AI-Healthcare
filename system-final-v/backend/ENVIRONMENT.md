@@ -121,7 +121,7 @@ LLM_TIMEOUT_S=30
 Then `systemctl restart esap-backend`, and verify:
 
 ```bash
-curl https://esap-api.159-195-83-232.sslip.io/readyz        # status ok, model_mode
+curl https://api.rasdiya.health/readyz        # status ok, model_mode
 # sign in, then POST /api/v1/chat — expect "llm_used": true
 ```
 
@@ -133,6 +133,6 @@ The frontend has one build-time variable, set in Vercel project settings:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `VITE_API_BASE` | `http://localhost:8000` | ESAP API the browser calls. Production: `https://esap-api.159-195-83-232.sslip.io`. Baked in at build time — **redeploy after changing it**. |
+| `VITE_API_BASE` | `http://localhost:8000` | ESAP API the browser calls. Production: `https://api.rasdiya.health`. Baked in at build time — **redeploy after changing it**. |
 
 The frontend never talks to the LLM directly; only the backend does.

@@ -7,7 +7,7 @@
  * every one of those buttons behaves the same way — and none of them claims to
  * have sent something it did not.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { t } from "@/i18n";
 import { Button, Field, TextArea } from "@/components/ui/primitives";
 import { Modal } from "@/components/ui/overlays";
@@ -37,6 +37,17 @@ export function RequestDialog({
   const [detail, setDetail] = useState("");
   const [sending, setSending] = useState(false);
   const [lastKind, setLastKind] = useState<string | null>(null);
+  const [dest, setDest] = useState<{ routedTo: string; hospital: string | null } | null>(null);
+
+  // Say where the request goes before Send, not only after (QA issue 23).
+  const open = spec !== null;
+  useEffect(() => {
+    if (!open) return;
+    const ctl = new AbortController();
+    api.get<{ routedTo: string; hospital: string | null }>("/api/v1/requests/destination", ctl.signal)
+      .then(setDest).catch(() => setDest(null));
+    return () => ctl.abort();
+  }, [open]);
 
   // A new request starts from its own text, not the previous dialog's.
   const key = spec ? `${spec.kind}:${spec.ref ?? ""}` : null;
@@ -77,6 +88,15 @@ export function RequestDialog({
         <Field label={spec.label} hint={spec.hint} required>
           <TextArea rows={4} style={{ fontSize: 16 }} value={detail} onChange={(e) => setDetail(e.currentTarget.value)} />
         </Field>
+      )}
+      {spec && dest && (
+        <p className="muted" data-testid="request-destination" style={{ margin: "10px 0 0", fontSize: 13.5 }}>
+          {dest.routedTo === "esap_support"
+            ? t("This goes to ESAP support, because you are not connected to a hospital yet. They will reply to you here.")
+            : dest.hospital
+              ? t("This goes to your care team at {hospital}.", { hospital: dest.hospital })
+              : t("This goes to your care team.")}
+        </p>
       )}
     </Modal>
   );

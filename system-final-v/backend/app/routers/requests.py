@@ -171,6 +171,20 @@ def create_request(body: ServiceRequest, request: Request, actor: Actor = Depend
     return doc
 
 
+@router.get("/requests/destination")
+def request_destination(actor: Actor = Depends(current_actor)):
+    """Where a patient's request would go, so the dialog can say so before Send.
+
+    Same rule as `create_request`: no care team means ESAP support (QA issue 23).
+    """
+    if actor.role != "patient":
+        return {"routedTo": "care_team", "hospital": None}
+    if not has_care_team(actor.user_id, actor.email):
+        return {"routedTo": "esap_support", "hospital": None}
+    tenant = db.one_doc("SELECT doc FROM tenants WHERE id=?", (_target_tenant(actor),)) or {}
+    return {"routedTo": "care_team", "hospital": tenant.get("name")}
+
+
 @router.get("/requests")
 def list_requests(
     actor: Actor = Depends(current_actor),

@@ -21,4 +21,4 @@ Disallow: /invite/
 Disallow: /caregiver/
 Disallow: /reset-password
 
-Sitemap: https://care.esap.ai/sitemap.xml
+Sitemap: https://rasdiya.health/sitemap.xml

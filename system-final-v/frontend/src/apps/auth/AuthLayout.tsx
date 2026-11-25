@@ -17,7 +17,7 @@ import { BedIcon, HeartPulseIcon, InfoIcon, RefreshIcon } from "@/components/ui/
 const COPY = {
   signin: {
     title: "Decision support at the moment of admission.",
-    lede: "Five estimates from what is known at intake, each with its reasoning and its limits on the same card. The models in this demo are placeholders, not yet calibrated.",
+    lede: "Five estimates from what is known at intake, each with its reasoning and its limits on the same card. Each result card names the model behind it and says whether it is calibrated or a placeholder.",
   },
   signup: {
     title: "Run it on your own cases, today.",
@@ -36,7 +36,7 @@ function AuthPreview() {
   return (
     <div className="auth-preview" aria-hidden="true">
       <div className="auth-preview-head">
-        <span>{t("Calibrated")}</span>
+        <span>{t("Example result card")}</span>
         <span className="auth-preview-tag">{t("Illustrative")}</span>
       </div>
       {PREVIEW.map((r, i) => (

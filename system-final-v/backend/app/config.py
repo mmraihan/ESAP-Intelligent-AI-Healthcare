@@ -81,7 +81,11 @@ class Settings:
         "https://care.esap.ai" if os.environ.get("ESAP_SMTP_HOST") else "http://localhost:5175").rstrip("/"))
     #: Session cookie. HttpOnly always; Secure and SameSite=None over HTTPS so a
     #: website on another host can still send it (QA issue 13).
-    cookie_name: str = "esap_session"
+    cookie_name: str = field(default_factory=lambda: os.environ.get("ESAP_COOKIE_NAME", "esap_session"))
+    #: Where the browser sends the cookie. A second API behind a path prefix
+    #: (the placeholder-model QA server at /qa) sets /qa/api so the two
+    #: sessions never meet.
+    cookie_path: str = field(default_factory=lambda: os.environ.get("ESAP_COOKIE_PATH", "/api"))
     cookie_secure: bool = field(default_factory=lambda: _bool("ESAP_COOKIE_SECURE", False))
     cookie_samesite: str = field(default_factory=lambda: os.environ.get(
         "ESAP_COOKIE_SAMESITE", "").strip().lower())

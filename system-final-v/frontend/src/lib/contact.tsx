@@ -1,5 +1,5 @@
 /**
- * The public contact addresses for ESAP Clinical AI (care.esap.ai).
+ * The public contact addresses for ESAP Clinical AI (rasdiya.health).
  *
  *  - care@esap.ai     customer help: contact, privacy and terms pages
  *  - billing@esap.ai  payment and invoice questions

@@ -29,7 +29,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://tally.so; frame-src https://tally.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://esap-api.159-195-83-232.sslip.io https://api.care.esap.ai; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://tally.so; frame-src https://tally.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.rasdiya.health; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
         },
         {
           "key": "X-Frame-Options",
@@ -57,7 +57,7 @@
         },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://care.esap.ai"
+          "value": "https://rasdiya.health"
         }
       ]
     },

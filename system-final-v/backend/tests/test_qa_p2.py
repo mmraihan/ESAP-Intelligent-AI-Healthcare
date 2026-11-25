@@ -262,6 +262,13 @@ def test_solo_patient_request_goes_to_esap_support_and_says_so(client):
     assert s["sharedWith"] == "nobody" and "no care team" in s["note"]
 
 
+def test_request_destination_is_known_before_send(client, auth):
+    _, h = _signup(client)
+    assert client.get("/api/v1/requests/destination", headers=h).json()["routedTo"] == "esap_support"
+    d = client.get("/api/v1/requests/destination", headers=auth("patient")).json()
+    assert d["routedTo"] == "care_team"
+
+
 # --- Issue 24: real clock -----------------------------------------------------
 
 def test_bootstrap_reports_the_real_time(client, auth):

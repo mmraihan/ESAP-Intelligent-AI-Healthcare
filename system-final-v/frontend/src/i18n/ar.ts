@@ -482,6 +482,9 @@ export const AR: Record<string, string> = {
     "إذا كان في سجلك شيء غير صحيح، مثل حالة لا تعاني منها أو دواء توقفت عنه منذ سنوات، يمكنك طلب تصحيحه. السجل الخاطئ ليس مشكلة ورقية، فكل ما يفعله فريق رعايتك مبني عليه.",
   "Correction request started": "بدأ طلب التصحيح",
   "Ask for a correction": "طلب تصحيح",
+  "This goes to ESAP support, because you are not connected to a hospital yet. They will reply to you here.": "سيُرسل هذا إلى دعم ESAP لأنك غير مرتبط بمستشفى بعد. سيردّون عليك هنا.",
+  "This goes to your care team at {hospital}.": "سيُرسل هذا إلى فريق رعايتك في {hospital}.",
+  "This goes to your care team.": "سيُرسل هذا إلى فريق رعايتك.",
   "What a download contains": "ما الذي يتضمنه التنزيل",
   "Two formats, both yours": "صيغتان، وكلتاهما لك",
   "**A readable PDF** — what you would print, or take to a new doctor.": "**ملف PDF سهل القراءة**: ما يمكنك طباعته أو أخذه إلى طبيب جديد.",
@@ -946,8 +949,9 @@ export const AR: Record<string, string> = {
 
   // --- Sign-in / sign-up redesign, unlisted demo picker --------------------
   "Decision support at the moment of admission.": "دعم القرار لحظة الإدخال إلى المستشفى.",
-  "Five estimates from what is known at intake, each with its reasoning and its limits on the same card. The models in this demo are placeholders, not yet calibrated.":
-    "خمسة تقديرات مبنية على ما هو معروف عند الإدخال، لكلٍّ منها أسبابه وحدوده على البطاقة نفسها. النماذج في هذا العرض التجريبي مؤقتة ولم تُعايَر بعد.",
+  "Five estimates from what is known at intake, each with its reasoning and its limits on the same card. Each result card names the model behind it and says whether it is calibrated or a placeholder.":
+    "خمسة تقديرات مبنية على ما هو معروف عند الإدخال، لكلٍّ منها أسبابه وحدوده على البطاقة نفسها. تذكر كل بطاقة نتيجة النموذج الذي أنتجها، وهل هو معايَر أم نموذج مؤقت.",
+  "Example result card": "مثال على بطاقة نتيجة",
   "Run it on your own cases, today.": "جرّبه على حالاتك الخاصة، اليوم.",
   "An individual seat takes a minute. Clinicians get the clinical interface; patients get the plain-language portal.":
     "إنشاء حساب فردي يستغرق دقيقة. يحصل الأطباء على الواجهة السريرية، ويحصل المرضى على البوابة بلغة مبسّطة.",

@@ -55,8 +55,8 @@ def apply(box: dict, request: Request, response: Response) -> None:
     if box.get("token"):
         response.set_cookie(
             cfg.cookie_name, box["token"], max_age=box["max_age"], httponly=True,
-            secure=secure, samesite=samesite, path="/api", domain=cfg.cookie_domain,
+            secure=secure, samesite=samesite, path=cfg.cookie_path, domain=cfg.cookie_domain,
         )
     elif box.get("clear"):
-        response.delete_cookie(cfg.cookie_name, path="/api", domain=cfg.cookie_domain,
+        response.delete_cookie(cfg.cookie_name, path=cfg.cookie_path, domain=cfg.cookie_domain,
                                secure=secure, httponly=True, samesite=samesite)

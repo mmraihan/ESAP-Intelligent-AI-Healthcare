@@ -46,11 +46,17 @@ def deliverable(email: str | None) -> bool:
     return bool(domain) and not domain.endswith(_RESERVED_TLDS) and domain not in _RESERVED_DOMAINS
 
 
+def _site() -> str:
+    """The website host for the footer, from ESAP_PUBLIC_URL (e.g. rasdiya.health)."""
+    url = settings().public_url
+    return url.split("://", 1)[-1].split("/", 1)[0] or "care.esap.ai"
+
+
 def _footer(reply_to: str, lang: str = "en") -> str:
     if lang == "ar":
-        return ("\n\n--\nESAP Clinical AI · care.esap.ai\n"
+        return (f"\n\n--\nESAP Clinical AI · {_site()}\n"
                 f"هذا العنوان لا يستقبل الردود. لأي سؤال راسلنا على {reply_to}.")
-    return ("\n\n--\nESAP Clinical AI · care.esap.ai\n"
+    return (f"\n\n--\nESAP Clinical AI · {_site()}\n"
             f"This address does not take replies. Questions? Write to {reply_to}.")
 
 
